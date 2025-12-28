@@ -125,7 +125,7 @@ const Index = () => {
         <div className="container py-4">
           <div className="flex flex-col md:flex-row items-end justify-between gap-4">
             <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
-            <div className="text-center md:text-right">
+            <div className="text-center flex-1">
               <p className="font-semibold text-foreground text-sm">Noga Engineering & Technology Ltd.</p>
               <p className="text-xs text-muted-foreground">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
               <a 
@@ -137,6 +137,7 @@ const Index = () => {
                 www.nogamt.com
               </a>
             </div>
+            <div className="w-12 hidden md:block"></div>
           </div>
         </div>
       </footer>

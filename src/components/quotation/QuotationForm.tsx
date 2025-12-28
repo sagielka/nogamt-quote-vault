@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
-import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency } from '@/lib/quotation-utils';
+import { LineItem, QuotationFormData, Currency, CURRENCIES, LineItemAttachment } from '@/types/quotation';
+import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount } from '@/lib/quotation-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemRow } from './LineItemRow';
-import { Plus, FileText, Users } from 'lucide-react';
+import { Plus, FileText, Users, Upload, X, Paperclip } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,6 +32,8 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
     initialData?.items || [createEmptyLineItem()]
   );
   const [taxRate, setTaxRate] = useState(initialData?.taxRate || 0);
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>(initialData?.discountType || 'percentage');
+  const [discountValue, setDiscountValue] = useState(initialData?.discountValue || 0);
   const [notes, setNotes] = useState(initialData?.notes || '');
   const [validUntil, setValidUntil] = useState<Date>(
     initialData?.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -39,6 +41,8 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
   const [currency, setCurrency] = useState<Currency>(initialData?.currency || 'USD');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [saveCustomer, setSaveCustomer] = useState(true);
+  const [attachments, setAttachments] = useState<LineItemAttachment[]>(initialData?.attachments || []);
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -79,6 +83,54 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, lineItemIndex: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('quotation-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('quotation-attachments')
+        .getPublicUrl(filePath);
+
+      const newAttachment: LineItemAttachment = {
+        id: crypto.randomUUID(),
+        fileName: file.name,
+        fileUrl: publicUrl,
+        lineItemIndex,
+      };
+
+      setAttachments([...attachments, newAttachment]);
+      toast({
+        title: 'File Uploaded',
+        description: `${file.name} attached to line ${lineItemIndex + 1}`,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload file. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveAttachment = (attachmentId: string) => {
+    setAttachments(attachments.filter(a => a.id !== attachmentId));
+  };
+
   const saveCustomerToDatabase = async () => {
     if (!clientName || !clientEmail) return;
 
@@ -117,16 +169,25 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
       clientAddress,
       items,
       taxRate,
+      discountType,
+      discountValue,
       notes,
       validUntil,
       status: 'draft',
       currency,
+      attachments,
     });
   };
 
   const subtotal = calculateSubtotal(items);
-  const tax = calculateTax(subtotal, taxRate);
-  const total = calculateTotal(items, taxRate);
+  const discount = calculateDiscount(subtotal, discountType, discountValue);
+  const afterDiscount = subtotal - discount;
+  const tax = calculateTax(afterDiscount, taxRate);
+  const total = calculateTotal(items, taxRate, discountType, discountValue);
+
+  const getAttachmentsForLine = (index: number) => {
+    return attachments.filter(a => a.lineItemIndex === index);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
@@ -244,23 +305,103 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
         <CardContent className="space-y-4">
           {/* Header */}
           <div className="grid grid-cols-12 gap-3 text-sm font-medium text-muted-foreground border-b pb-2">
-            <div className="col-span-5">Description</div>
+            <div className="col-span-4">Description</div>
             <div className="col-span-2 text-center">Quantity</div>
             <div className="col-span-2 text-right">Unit Price</div>
             <div className="col-span-2 text-right">Total</div>
-            <div className="col-span-1"></div>
+            <div className="col-span-2 text-center">Attach</div>
           </div>
 
           {/* Items */}
           <div className="space-y-3">
-            {items.map((item) => (
-              <LineItemRow
-                key={item.id}
-                item={item}
-                onUpdate={handleUpdateItem}
-                onRemove={handleRemoveItem}
-                canRemove={items.length > 1}
-              />
+            {items.map((item, index) => (
+              <div key={item.id} className="space-y-2">
+                <div className="grid grid-cols-12 gap-3 items-center animate-fade-in">
+                  <div className="col-span-4">
+                    <Input
+                      placeholder="Item description"
+                      value={item.description}
+                      onChange={(e) => handleUpdateItem(item.id, { description: e.target.value })}
+                      className="input-focus"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="Qty"
+                      value={item.quantity || ''}
+                      onChange={(e) => handleUpdateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
+                      className="input-focus text-center"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Price"
+                      value={item.unitPrice || ''}
+                      onChange={(e) => handleUpdateItem(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
+                      className="input-focus text-right"
+                    />
+                  </div>
+                  <div className="col-span-2 text-right font-medium text-foreground">
+                    {formatCurrency(item.quantity * item.unitPrice, currency)}
+                  </div>
+                  <div className="col-span-2 flex items-center justify-center gap-1">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, index)}
+                        disabled={uploading}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary"
+                        asChild
+                      >
+                        <span>
+                          <Upload className="h-4 w-4" />
+                        </span>
+                      </Button>
+                    </label>
+                    {items.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {/* Attachments for this line */}
+                {getAttachmentsForLine(index).map((att) => (
+                  <div key={att.id} className="flex items-center gap-2 pl-4 text-sm text-muted-foreground">
+                    <Paperclip className="h-3 w-3" />
+                    <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">
+                      {att.fileName}
+                    </a>
+                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded">Index {index + 1}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleRemoveAttachment(att.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             ))}
           </div>
 
@@ -275,6 +416,32 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">{formatCurrency(subtotal, currency)}</span>
             </div>
+            
+            {/* Discount */}
+            <div className="flex justify-between items-center text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Discount</span>
+                <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percentage' | 'fixed')}>
+                  <SelectTrigger className="w-24 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentage">%</SelectItem>
+                    <SelectItem value="fixed">Fixed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={discountValue || ''}
+                  onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
+                  className="w-20 h-8 text-center input-focus"
+                />
+              </div>
+              <span className="font-medium text-destructive">-{formatCurrency(discount, currency)}</span>
+            </div>
+
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">Tax Rate (%)</span>

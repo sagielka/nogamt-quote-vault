@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemRow } from './LineItemRow';
-import { Plus, FileText, Users, Upload, X, Paperclip } from 'lucide-react';
+import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -193,30 +193,31 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
       {/* Client Details */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="heading-display text-lg flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-primary" />
+      <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
+        <CardHeader className="border-b border-primary/10">
+          <CardTitle className="heading-display text-lg flex items-center gap-3">
+            <span className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center animate-glow-pulse">
+              <Users className="w-5 h-5 text-primary" />
             </span>
-            Client Details
+            <span className="glow-text text-primary">Client Details</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent ml-4" />
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {/* Existing Customers Selector */}
           {customers.length > 0 && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
+              <Label className="flex items-center gap-2 text-primary/80 uppercase text-xs tracking-wider">
+                <Database className="w-3 h-3" />
                 Select Existing Customer
               </Label>
               <Select onValueChange={handleSelectCustomer}>
-                <SelectTrigger className="input-focus">
+                <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors">
                   <SelectValue placeholder="Choose a saved customer..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card border-primary/20">
                   {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
+                    <SelectItem key={customer.id} value={customer.id} className="hover:bg-primary/10">
                       {customer.name} ({customer.email})
                     </SelectItem>
                   ))}
@@ -227,18 +228,18 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="clientName">Client Name</Label>
+              <Label htmlFor="clientName" className="text-muted-foreground uppercase text-xs tracking-wider">Client Name</Label>
               <Input
                 id="clientName"
                 placeholder="Company or client name"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 required
-                className="input-focus"
+                className="input-focus bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="clientEmail">Email</Label>
+              <Label htmlFor="clientEmail" className="text-muted-foreground uppercase text-xs tracking-wider">Email</Label>
               <Input
                 id="clientEmail"
                 type="email"
@@ -246,18 +247,18 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
                 required
-                className="input-focus"
+                className="input-focus bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="clientAddress">Address</Label>
+              <Label htmlFor="clientAddress" className="text-muted-foreground uppercase text-xs tracking-wider">Address</Label>
               <Textarea
                 id="clientAddress"
                 placeholder="Client address"
                 value={clientAddress}
                 onChange={(e) => setClientAddress(e.target.value)}
                 rows={2}
-                className="input-focus resize-none"
+                className="input-focus resize-none bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
               />
             </div>
           </div>
@@ -268,7 +269,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
               id="saveCustomer"
               checked={saveCustomer}
               onChange={(e) => setSaveCustomer(e.target.checked)}
-              className="rounded border-border"
+              className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
             />
             <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
               Save customer for future quotations
@@ -278,18 +279,24 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       </Card>
 
       {/* Currency Selection */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="heading-display text-lg">Currency</CardTitle>
+      <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
+        <CardHeader className="border-b border-primary/10">
+          <CardTitle className="heading-display text-lg flex items-center gap-3">
+            <span className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-accent" />
+            </span>
+            <span className="text-accent">Currency</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-accent/50 to-transparent ml-4" />
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)}>
-            <SelectTrigger className="w-full md:w-64 input-focus">
+            <SelectTrigger className="w-full md:w-64 input-focus bg-secondary/50 border-accent/20 hover:border-accent/40 transition-colors">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-card border-accent/20">
               {CURRENCIES.map((curr) => (
-                <SelectItem key={curr.value} value={curr.value}>
+                <SelectItem key={curr.value} value={curr.value} className="hover:bg-accent/10">
                   {curr.symbol} {curr.label} ({curr.value})
                 </SelectItem>
               ))}
@@ -299,13 +306,19 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       </Card>
 
       {/* Line Items */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="heading-display text-lg">Line Items</CardTitle>
+      <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
+        <CardHeader className="border-b border-primary/10">
+          <CardTitle className="heading-display text-lg flex items-center gap-3">
+            <span className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <CircuitBoard className="w-5 h-5 text-primary" />
+            </span>
+            <span className="glow-text text-primary">Line Items</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent ml-4" />
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {/* Header */}
-          <div className="grid grid-cols-14 gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
+          <div className="grid grid-cols-14 gap-2 text-xs font-medium text-primary/70 uppercase tracking-wider border-b border-primary/10 pb-3">
             <div className="col-span-3">Description</div>
             <div className="col-span-2 text-center">Qty</div>
             <div className="col-span-2 text-right">Unit Price</div>
@@ -317,14 +330,14 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           {/* Items */}
           <div className="space-y-3">
             {items.map((item, index) => (
-              <div key={item.id} className="space-y-2">
-                <div className="grid grid-cols-14 gap-2 items-center animate-fade-in">
+              <div key={item.id} className="space-y-2 group/item">
+                <div className="grid grid-cols-14 gap-2 items-center animate-fade-in p-2 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
                   <div className="col-span-3">
                     <Input
                       placeholder="Item description"
                       value={item.description}
                       onChange={(e) => handleUpdateItem(item.id, { description: e.target.value })}
-                      className="input-focus"
+                      className="input-focus bg-background/50 border-primary/20"
                     />
                   </div>
                   <div className="col-span-2">
@@ -334,7 +347,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                       placeholder="Qty"
                       value={item.quantity || ''}
                       onChange={(e) => handleUpdateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
-                      className="input-focus text-center"
+                      className="input-focus text-center bg-background/50 border-primary/20"
                     />
                   </div>
                   <div className="col-span-2">
@@ -345,7 +358,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                       placeholder="Price"
                       value={item.unitPrice || ''}
                       onChange={(e) => handleUpdateItem(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
-                      className="input-focus text-right"
+                      className="input-focus text-right bg-background/50 border-primary/20"
                     />
                   </div>
                   <div className="col-span-2">
@@ -357,10 +370,10 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                       placeholder="0"
                       value={item.discountPercent || ''}
                       onChange={(e) => handleUpdateItem(item.id, { discountPercent: parseFloat(e.target.value) || 0 })}
-                      className="input-focus text-center"
+                      className="input-focus text-center bg-background/50 border-primary/20"
                     />
                   </div>
-                  <div className="col-span-2 text-right font-medium text-foreground">
+                  <div className="col-span-2 text-right font-mono font-medium text-primary glow-text">
                     {formatCurrency(calculateLineTotal(item), currency)}
                   </div>
                   <div className="col-span-3 flex items-center justify-center gap-1">
@@ -375,7 +388,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground hover:text-primary"
+                        className="text-muted-foreground hover:text-primary hover:bg-primary/10"
                         asChild
                       >
                         <span>
@@ -389,7 +402,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveItem(item.id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -399,11 +412,11 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 {/* Attachments for this line */}
                 {getAttachmentsForLine(index).map((att) => (
                   <div key={att.id} className="flex items-center gap-2 pl-4 text-sm text-muted-foreground">
-                    <Paperclip className="h-3 w-3" />
-                    <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">
+                    <Paperclip className="h-3 w-3 text-primary" />
+                    <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary hover:glow-text transition-all">
                       {att.fileName}
                     </a>
-                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded">Index {index + 1}</span>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">Index {index + 1}</span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -419,27 +432,32 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
             ))}
           </div>
 
-          <Button type="button" variant="outline" onClick={handleAddItem} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={handleAddItem} 
+            className="w-full border-dashed border-primary/30 hover:border-primary hover:bg-primary/5 text-primary group"
+          >
+            <Plus className="w-4 h-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
             Add Line Item
           </Button>
 
           {/* Totals */}
-          <div className="border-t pt-4 space-y-2">
+          <div className="border-t border-primary/20 pt-4 space-y-3 bg-secondary/20 -mx-6 px-6 pb-2 rounded-b-lg">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-medium">{formatCurrency(subtotal, currency)}</span>
+              <span className="text-muted-foreground uppercase tracking-wider text-xs">Subtotal</span>
+              <span className="font-mono font-medium">{formatCurrency(subtotal, currency)}</span>
             </div>
             
             {/* Discount */}
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Discount</span>
+                <span className="text-muted-foreground uppercase tracking-wider text-xs">Discount</span>
                 <Select value={discountType} onValueChange={(v) => setDiscountType(v as 'percentage' | 'fixed')}>
-                  <SelectTrigger className="w-24 h-8">
+                  <SelectTrigger className="w-24 h-8 bg-background/50 border-primary/20">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border-primary/20">
                     <SelectItem value="percentage">%</SelectItem>
                     <SelectItem value="fixed">Fixed</SelectItem>
                   </SelectContent>
@@ -450,15 +468,15 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                   step="0.01"
                   value={discountValue || ''}
                   onChange={(e) => setDiscountValue(parseFloat(e.target.value) || 0)}
-                  className="w-20 h-8 text-center input-focus"
+                  className="w-20 h-8 text-center input-focus bg-background/50 border-primary/20"
                 />
               </div>
-              <span className="font-medium text-destructive">-{formatCurrency(discount, currency)}</span>
+              <span className="font-mono font-medium text-destructive">-{formatCurrency(discount, currency)}</span>
             </div>
 
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Tax Rate (%)</span>
+                <span className="text-muted-foreground uppercase tracking-wider text-xs">Tax Rate (%)</span>
                 <Input
                   type="number"
                   min="0"
@@ -466,51 +484,62 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                   step="0.1"
                   value={taxRate || ''}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                  className="w-20 h-8 text-center input-focus"
+                  className="w-20 h-8 text-center input-focus bg-background/50 border-primary/20"
                 />
               </div>
-              <span className="font-medium">{formatCurrency(tax, currency)}</span>
+              <span className="font-mono font-medium">{formatCurrency(tax, currency)}</span>
             </div>
-            <div className="flex justify-between text-lg font-semibold pt-2 border-t">
-              <span>Total</span>
-              <span className="text-primary">{formatCurrency(total, currency)}</span>
+            <div className="flex justify-between text-xl font-semibold pt-3 border-t border-primary/30">
+              <span className="uppercase tracking-wider">Total</span>
+              <span className="text-primary glow-text font-mono">{formatCurrency(total, currency)}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Additional Details */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle className="heading-display text-lg">Additional Details</CardTitle>
+      <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
+        <CardHeader className="border-b border-primary/10">
+          <CardTitle className="heading-display text-lg flex items-center gap-3">
+            <span className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <Terminal className="w-5 h-5 text-primary" />
+            </span>
+            <span className="glow-text text-primary">Additional Details</span>
+            <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent ml-4" />
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
+        <CardContent className="grid gap-4 md:grid-cols-2 pt-6">
           <div className="space-y-2">
-            <Label htmlFor="validUntil">Valid Until</Label>
+            <Label htmlFor="validUntil" className="text-muted-foreground uppercase text-xs tracking-wider">Valid Until</Label>
             <Input
               id="validUntil"
               type="date"
               value={validUntil.toISOString().split('T')[0]}
               onChange={(e) => setValidUntil(new Date(e.target.value))}
-              className="input-focus"
+              className="input-focus bg-secondary/50 border-primary/20"
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes" className="text-muted-foreground uppercase text-xs tracking-wider">Notes</Label>
             <Textarea
               id="notes"
               placeholder="Additional notes or terms..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="input-focus resize-none"
+              className="input-focus resize-none bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex gap-3 justify-end">
-        <Button type="submit" size="lg" className="min-w-[160px]">
+        <Button 
+          type="submit" 
+          size="lg" 
+          className="min-w-[180px] bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow hover:shadow-prominent transition-all duration-300 uppercase tracking-wider font-semibold"
+        >
+          <Zap className="w-4 h-4 mr-2" />
           {isEditing ? 'Update Quotation' : 'Create Quotation'}
         </Button>
       </div>

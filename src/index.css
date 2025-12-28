@@ -11,103 +11,66 @@
 
 @layer base {
   :root {
-    /* Professional slate blue theme */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Hi-tech dark cyan theme */
+    --background: 220 20% 7%;
+    --foreground: 180 100% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 220 25% 10%;
+    --card-foreground: 180 100% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 180 100% 95%;
 
-    /* Deep slate blue primary */
-    --primary: 222 47% 20%;
-    --primary-foreground: 210 40% 98%;
+    /* Cyan primary */
+    --primary: 180 100% 50%;
+    --primary-foreground: 220 25% 5%;
 
-    /* Light slate secondary */
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 222 47% 20%;
+    /* Dark secondary */
+    --secondary: 220 25% 15%;
+    --secondary-foreground: 180 100% 90%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 180 20% 60%;
 
-    /* Warm amber accent */
-    --accent: 38 92% 50%;
-    --accent-foreground: 222 47% 11%;
+    /* Electric accent */
+    --accent: 280 100% 65%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 20%;
+    --border: 180 50% 20%;
+    --input: 220 25% 15%;
+    --ring: 180 100% 50%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
     /* Custom tokens */
-    --success: 142 76% 36%;
+    --success: 142 76% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+    --warning-foreground: 220 25% 5%;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
+    /* Glow effects */
+    --glow-primary: 0 0 20px hsl(180 100% 50% / 0.4);
+    --glow-accent: 0 0 20px hsl(280 100% 65% / 0.4);
+    --glow-sm: 0 0 10px hsl(180 100% 50% / 0.2);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Grid pattern */
+    --grid-color: hsl(180 100% 50% / 0.05);
+
+    --sidebar-background: 220 25% 8%;
+    --sidebar-foreground: 180 100% 90%;
+    --sidebar-primary: 180 100% 50%;
+    --sidebar-primary-foreground: 220 25% 5%;
+    --sidebar-accent: 220 25% 15%;
+    --sidebar-accent-foreground: 180 100% 90%;
+    --sidebar-border: 180 50% 20%;
+    --sidebar-ring: 180 100% 50%;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 38 92% 50%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 212 27% 84%;
-
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Same as root - already dark theme */
   }
 }
 
@@ -119,6 +82,10 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    background-image: 
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -133,17 +100,67 @@
   }
 
   .card-elevated {
-    box-shadow: var(--shadow-md);
-    @apply bg-card border border-border rounded-lg;
+    box-shadow: var(--glow-sm);
+    @apply bg-card/80 backdrop-blur-sm border border-primary/20 rounded-lg relative overflow-hidden;
+  }
+
+  .card-elevated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(180 100% 50% / 0.5), transparent);
   }
 
   .card-subtle {
-    box-shadow: var(--shadow-sm);
-    @apply bg-card border border-border rounded-lg;
+    @apply bg-card/60 backdrop-blur-sm border border-border rounded-lg;
   }
 
   .input-focus {
-    @apply focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
+    @apply focus:ring-2 focus:ring-primary/30 focus:border-primary focus:shadow-[0_0_15px_hsl(180_100%_50%/0.2)] transition-all duration-300;
+  }
+
+  .glow-text {
+    text-shadow: 0 0 10px hsl(180 100% 50% / 0.5), 0 0 20px hsl(180 100% 50% / 0.3);
+  }
+
+  .glow-border {
+    box-shadow: 0 0 15px hsl(180 100% 50% / 0.3), inset 0 0 15px hsl(180 100% 50% / 0.05);
+  }
+
+  .cyber-line {
+    background: linear-gradient(90deg, transparent, hsl(180 100% 50% / 0.5), transparent);
+    height: 1px;
+  }
+
+  .tech-gradient {
+    background: linear-gradient(135deg, hsl(180 100% 50% / 0.1), hsl(280 100% 65% / 0.1));
+  }
+
+  .scan-line {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(180 100% 50% / 0.03) 50%,
+      transparent 100%
+    );
+    animation: scan 3s linear infinite;
+  }
+
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px hsl(180 100% 50% / 0.3); }
+    50% { box-shadow: 0 0 20px hsl(180 100% 50% / 0.5); }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
   }
 }
 
@@ -151,6 +168,7 @@
 @media print {
   body {
     @apply bg-white;
+    background-image: none;
   }
   
   .no-print {

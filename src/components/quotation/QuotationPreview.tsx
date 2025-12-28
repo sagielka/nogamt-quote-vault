@@ -2,7 +2,7 @@ import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor, calculateDiscount } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Mail, Paperclip } from 'lucide-react';
 
 interface QuotationPreviewProps {
@@ -84,9 +84,10 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
                 <tr className="border-b-2 border-border">
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-8">#</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground">Description</th>
-                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-20">Qty</th>
-                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28">Unit Price</th>
-                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28">Total</th>
+                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16">Qty</th>
+                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24">Unit Price</th>
+                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16">Disc %</th>
+                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,8 +107,11 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
                     </td>
                     <td className="py-4 text-center text-muted-foreground">{item.quantity}</td>
                     <td className="py-4 text-right text-muted-foreground">{formatCurrency(item.unitPrice, quotation.currency)}</td>
+                    <td className="py-4 text-center text-muted-foreground">
+                      {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                    </td>
                     <td className="py-4 text-right font-medium text-foreground">
-                      {formatCurrency(item.quantity * item.unitPrice, quotation.currency)}
+                      {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>
                 ))}

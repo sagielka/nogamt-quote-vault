@@ -2,8 +2,8 @@ import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
-import { ArrowLeft, Printer, Mail } from 'lucide-react';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor, calculateDiscount } from '@/lib/quotation-utils';
+import { ArrowLeft, Printer, Mail, Paperclip } from 'lucide-react';
 
 interface QuotationPreviewProps {
   quotation: Quotation;
@@ -12,11 +12,17 @@ interface QuotationPreviewProps {
 
 export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) => {
   const subtotal = calculateSubtotal(quotation.items);
-  const tax = calculateTax(subtotal, quotation.taxRate);
-  const total = calculateTotal(quotation.items, quotation.taxRate);
+  const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
+  const afterDiscount = subtotal - discount;
+  const tax = calculateTax(afterDiscount, quotation.taxRate);
+  const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const getAttachmentsForLine = (index: number) => {
+    return (quotation.attachments || []).filter(a => a.lineItemIndex === index);
   };
 
   return (
@@ -76,6 +82,7 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-border">
+                  <th className="text-left py-3 text-sm font-medium text-muted-foreground w-8">#</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground">Description</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-20">Qty</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28">Unit Price</th>
@@ -83,9 +90,20 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
                 </tr>
               </thead>
               <tbody>
-                {quotation.items.map((item) => (
+                {quotation.items.map((item, index) => (
                   <tr key={item.id} className="border-b border-border">
-                    <td className="py-4 text-foreground">{item.description || '—'}</td>
+                    <td className="py-4 text-muted-foreground">{index + 1}</td>
+                    <td className="py-4 text-foreground">
+                      <div>{item.description || '—'}</div>
+                      {getAttachmentsForLine(index).map((att) => (
+                        <div key={att.id} className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                          <Paperclip className="h-3 w-3" />
+                          <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">
+                            {att.fileName}
+                          </a>
+                        </div>
+                      ))}
+                    </td>
                     <td className="py-4 text-center text-muted-foreground">{item.quantity}</td>
                     <td className="py-4 text-right text-muted-foreground">{formatCurrency(item.unitPrice, quotation.currency)}</td>
                     <td className="py-4 text-right font-medium text-foreground">
@@ -104,6 +122,14 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="text-foreground">{formatCurrency(subtotal, quotation.currency)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Discount {quotation.discountType === 'percentage' ? `(${quotation.discountValue}%)` : ''}
+                  </span>
+                  <span className="text-destructive">-{formatCurrency(discount, quotation.currency)}</span>
+                </div>
+              )}
               {quotation.taxRate > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax ({quotation.taxRate}%)</span>

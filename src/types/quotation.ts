@@ -9,11 +9,19 @@ export const CURRENCIES: { value: Currency; label: string; symbol: string }[] = 
   { value: 'CNY', label: 'Chinese Yuan', symbol: '¥' },
 ];
 
+export interface LineItemAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  lineItemIndex: number;
+}
+
 export interface LineItem {
   id: string;
   description: string;
   quantity: number;
   unitPrice: number;
+  attachmentIndex?: number;
 }
 
 export interface Quotation {
@@ -24,11 +32,14 @@ export interface Quotation {
   clientAddress: string;
   items: LineItem[];
   taxRate: number;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
   notes: string;
   createdAt: Date;
   validUntil: Date;
   status: 'draft' | 'sent' | 'accepted' | 'declined';
   currency: Currency;
+  attachments: LineItemAttachment[];
 }
 
 export type QuotationFormData = Omit<Quotation, 'id' | 'createdAt' | 'quoteNumber'>;

@@ -14,6 +14,9 @@ const loadFromStorage = (): Quotation[] => {
         createdAt: new Date(q.createdAt),
         validUntil: new Date(q.validUntil),
         currency: q.currency || 'USD',
+        discountType: q.discountType || 'percentage',
+        discountValue: q.discountValue || 0,
+        attachments: q.attachments || [],
       }));
     }
   } catch (e) {

@@ -15,10 +15,28 @@ export const calculateTax = (subtotal: number, taxRate: number): number => {
   return subtotal * (taxRate / 100);
 };
 
-export const calculateTotal = (items: LineItem[], taxRate: number): number => {
+export const calculateDiscount = (
+  subtotal: number, 
+  discountType: 'percentage' | 'fixed', 
+  discountValue: number
+): number => {
+  if (discountType === 'percentage') {
+    return subtotal * (discountValue / 100);
+  }
+  return discountValue;
+};
+
+export const calculateTotal = (
+  items: LineItem[], 
+  taxRate: number,
+  discountType: 'percentage' | 'fixed' = 'percentage',
+  discountValue: number = 0
+): number => {
   const subtotal = calculateSubtotal(items);
-  const tax = calculateTax(subtotal, taxRate);
-  return subtotal + tax;
+  const discount = calculateDiscount(subtotal, discountType, discountValue);
+  const afterDiscount = subtotal - discount;
+  const tax = calculateTax(afterDiscount, taxRate);
+  return afterDiscount + tax;
 };
 
 export const formatCurrency = (amount: number, currency: Currency = 'USD'): string => {

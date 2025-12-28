@@ -7,7 +7,8 @@ import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, FileText, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
+import logo from '@/assets/logo.jpg';
 
 type View = 'list' | 'create' | 'preview';
 
@@ -49,13 +50,7 @@ const Index = () => {
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <FileText className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="heading-display text-xl text-foreground">QuoteCraft</h1>
-                <p className="text-sm text-muted-foreground">Professional Quotations</p>
-              </div>
+              <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
             </div>
             {currentView === 'list' && quotations.length > 0 && (
               <Button onClick={() => setCurrentView('create')}>

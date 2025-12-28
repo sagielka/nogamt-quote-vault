@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Mail } from 'lucide-react';
-import logo from '@/assets/logo.jpg';
 
 interface QuotationPreviewProps {
   quotation: Quotation;
@@ -46,7 +45,6 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start mb-8 pb-8 border-b">
             <div>
-              <img src={logo} alt="NogaMT Logo" className="h-16 w-auto mb-4" />
               <h1 className="heading-display text-3xl text-primary mb-2">QUOTATION</h1>
               <p className="text-lg font-medium text-foreground">{quotation.quoteNumber}</p>
             </div>

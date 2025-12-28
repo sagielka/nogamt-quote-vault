@@ -160,4 +160,13 @@
   .print-only {
     display: block !important;
   }
+
+  footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  footer img {
+    max-height: 40px !important;
+  }
 }

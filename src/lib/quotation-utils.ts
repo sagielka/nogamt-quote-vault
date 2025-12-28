@@ -7,8 +7,14 @@ export const generateQuoteNumber = (): string => {
   return `${prefix}-${timestamp}-${random}`;
 };
 
+export const calculateLineTotal = (item: LineItem): number => {
+  const gross = item.quantity * item.unitPrice;
+  const lineDiscount = gross * ((item.discountPercent || 0) / 100);
+  return gross - lineDiscount;
+};
+
 export const calculateSubtotal = (items: LineItem[]): number => {
-  return items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  return items.reduce((sum, item) => sum + calculateLineTotal(item), 0);
 };
 
 export const calculateTax = (subtotal: number, taxRate: number): number => {
@@ -74,4 +80,5 @@ export const createEmptyLineItem = (): LineItem => ({
   description: '',
   quantity: 1,
   unitPrice: 0,
+  discountPercent: 0,
 });

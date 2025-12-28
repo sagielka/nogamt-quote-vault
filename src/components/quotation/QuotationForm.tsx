@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES, LineItemAttachment } from '@/types/quotation';
-import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount } from '@/lib/quotation-utils';
+import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -304,20 +304,21 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Header */}
-          <div className="grid grid-cols-12 gap-3 text-sm font-medium text-muted-foreground border-b pb-2">
-            <div className="col-span-4">Description</div>
-            <div className="col-span-2 text-center">Quantity</div>
+          <div className="grid grid-cols-14 gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
+            <div className="col-span-3">Description</div>
+            <div className="col-span-2 text-center">Qty</div>
             <div className="col-span-2 text-right">Unit Price</div>
+            <div className="col-span-2 text-center">Disc %</div>
             <div className="col-span-2 text-right">Total</div>
-            <div className="col-span-2 text-center">Attach</div>
+            <div className="col-span-3 text-center">Actions</div>
           </div>
 
           {/* Items */}
           <div className="space-y-3">
             {items.map((item, index) => (
               <div key={item.id} className="space-y-2">
-                <div className="grid grid-cols-12 gap-3 items-center animate-fade-in">
-                  <div className="col-span-4">
+                <div className="grid grid-cols-14 gap-2 items-center animate-fade-in">
+                  <div className="col-span-3">
                     <Input
                       placeholder="Item description"
                       value={item.description}
@@ -346,10 +347,22 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
                       className="input-focus text-right"
                     />
                   </div>
-                  <div className="col-span-2 text-right font-medium text-foreground">
-                    {formatCurrency(item.quantity * item.unitPrice, currency)}
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      placeholder="0"
+                      value={item.discountPercent || ''}
+                      onChange={(e) => handleUpdateItem(item.id, { discountPercent: parseFloat(e.target.value) || 0 })}
+                      className="input-focus text-center"
+                    />
                   </div>
-                  <div className="col-span-2 flex items-center justify-center gap-1">
+                  <div className="col-span-2 text-right font-medium text-foreground">
+                    {formatCurrency(calculateLineTotal(item), currency)}
+                  </div>
+                  <div className="col-span-3 flex items-center justify-center gap-1">
                     <label className="cursor-pointer">
                       <input
                         type="file"

@@ -1,12 +1,128 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { useQuotations } from '@/hooks/useQuotations';
+import { QuotationFormData } from '@/types/quotation';
+import { QuotationForm } from '@/components/quotation/QuotationForm';
+import { QuotationCard } from '@/components/quotation/QuotationCard';
+import { QuotationPreview } from '@/components/quotation/QuotationPreview';
+import { EmptyState } from '@/components/quotation/EmptyState';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, FileText, ArrowLeft } from 'lucide-react';
+
+type View = 'list' | 'create' | 'preview';
 
 const Index = () => {
+  const { quotations, addQuotation, deleteQuotation, getQuotation } = useQuotations();
+  const [currentView, setCurrentView] = useState<View>('list');
+  const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleCreateQuotation = (data: QuotationFormData) => {
+    const newQuotation = addQuotation(data);
+    toast({
+      title: 'Quotation Created',
+      description: `Quote ${newQuotation.quoteNumber} has been created successfully.`,
+    });
+    setCurrentView('list');
+  };
+
+  const handleViewQuotation = (id: string) => {
+    setSelectedQuotationId(id);
+    setCurrentView('preview');
+  };
+
+  const handleDeleteQuotation = (id: string) => {
+    deleteQuotation(id);
+    toast({
+      title: 'Quotation Deleted',
+      description: 'The quotation has been removed.',
+      variant: 'destructive',
+    });
+  };
+
+  const selectedQuotation = selectedQuotationId ? getQuotation(selectedQuotationId) : null;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="heading-display text-xl text-foreground">QuoteCraft</h1>
+                <p className="text-sm text-muted-foreground">Professional Quotations</p>
+              </div>
+            </div>
+            {currentView === 'list' && quotations.length > 0 && (
+              <Button onClick={() => setCurrentView('create')}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Quote
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container py-8">
+        {currentView === 'list' && (
+          <>
+            {quotations.length === 0 ? (
+              <EmptyState onCreateNew={() => setCurrentView('create')} />
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="heading-display text-2xl text-foreground">
+                    Your Quotations
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {quotations.length} quotation{quotations.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {quotations.map((quotation) => (
+                    <QuotationCard
+                      key={quotation.id}
+                      quotation={quotation}
+                      onView={handleViewQuotation}
+                      onDelete={handleDeleteQuotation}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {currentView === 'create' && (
+          <div className="max-w-3xl mx-auto">
+            <div className="mb-6">
+              <Button variant="ghost" onClick={() => setCurrentView('list')}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Quotations
+              </Button>
+            </div>
+            <h2 className="heading-display text-2xl text-foreground mb-6">
+              Create New Quotation
+            </h2>
+            <QuotationForm onSubmit={handleCreateQuotation} />
+          </div>
+        )}
+
+        {currentView === 'preview' && selectedQuotation && (
+          <QuotationPreview
+            quotation={selectedQuotation}
+            onBack={() => {
+              setSelectedQuotationId(null);
+              setCurrentView('list');
+            }}
+          />
+        )}
+      </main>
     </div>
   );
 };

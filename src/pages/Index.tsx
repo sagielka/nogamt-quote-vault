@@ -123,7 +123,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t bg-muted/30 mt-auto">
         <div className="container py-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-end justify-between gap-4">
             <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
             <div className="text-center md:text-right">
               <p className="font-semibold text-foreground text-sm">Noga Engineering & Technology Ltd.</p>

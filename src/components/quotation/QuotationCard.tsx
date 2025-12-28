@@ -3,16 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
-import { Eye, Trash2, Calendar, User } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil } from 'lucide-react';
 
 interface QuotationCardProps {
   quotation: Quotation;
   onView: (id: string) => void;
+  onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export const QuotationCard = ({ quotation, onView, onDelete }: QuotationCardProps) => {
-  const total = calculateTotal(quotation.items, quotation.taxRate);
+export const QuotationCard = ({ quotation, onView, onEdit, onDelete }: QuotationCardProps) => {
+  const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   return (
     <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in">
@@ -44,11 +45,14 @@ export const QuotationCard = ({ quotation, onView, onDelete }: QuotationCardProp
 
         <div className="flex items-center justify-between pt-4 border-t">
           <span className="text-xl font-semibold text-primary">
-            {formatCurrency(total)}
+            {formatCurrency(total, quotation.currency)}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <Button variant="outline" size="sm" onClick={() => onView(quotation.id)}>
               <Eye className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onEdit(quotation.id)}>
+              <Pencil className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"

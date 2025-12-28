@@ -13,6 +13,7 @@ const loadFromStorage = (): Quotation[] => {
         ...q,
         createdAt: new Date(q.createdAt),
         validUntil: new Date(q.validUntil),
+        currency: q.currency || 'USD',
       }));
     }
   } catch (e) {

@@ -87,9 +87,9 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
                   <tr key={item.id} className="border-b border-border">
                     <td className="py-4 text-foreground">{item.description || '—'}</td>
                     <td className="py-4 text-center text-muted-foreground">{item.quantity}</td>
-                    <td className="py-4 text-right text-muted-foreground">{formatCurrency(item.unitPrice)}</td>
+                    <td className="py-4 text-right text-muted-foreground">{formatCurrency(item.unitPrice, quotation.currency)}</td>
                     <td className="py-4 text-right font-medium text-foreground">
-                      {formatCurrency(item.quantity * item.unitPrice)}
+                      {formatCurrency(item.quantity * item.unitPrice, quotation.currency)}
                     </td>
                   </tr>
                 ))}
@@ -102,17 +102,17 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
             <div className="w-64 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="text-foreground">{formatCurrency(subtotal)}</span>
+                <span className="text-foreground">{formatCurrency(subtotal, quotation.currency)}</span>
               </div>
               {quotation.taxRate > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax ({quotation.taxRate}%)</span>
-                  <span className="text-foreground">{formatCurrency(tax)}</span>
+                  <span className="text-foreground">{formatCurrency(tax, quotation.currency)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-semibold pt-2 border-t-2 border-border">
                 <span className="text-foreground">Total</span>
-                <span className="text-primary">{formatCurrency(total)}</span>
+                <span className="text-primary">{formatCurrency(total, quotation.currency)}</span>
               </div>
             </div>
           </div>

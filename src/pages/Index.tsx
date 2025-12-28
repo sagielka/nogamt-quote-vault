@@ -11,10 +11,10 @@ import { Plus, ArrowLeft } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
-type View = 'list' | 'create' | 'preview';
+type View = 'list' | 'create' | 'edit' | 'preview';
 
 const Index = () => {
-  const { quotations, addQuotation, deleteQuotation, getQuotation } = useQuotations();
+  const { quotations, addQuotation, updateQuotation, deleteQuotation, getQuotation } = useQuotations();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -28,9 +28,26 @@ const Index = () => {
     setCurrentView('list');
   };
 
+  const handleUpdateQuotation = (data: QuotationFormData) => {
+    if (selectedQuotationId) {
+      updateQuotation(selectedQuotationId, data);
+      toast({
+        title: 'Quotation Updated',
+        description: 'The quotation has been updated successfully.',
+      });
+      setSelectedQuotationId(null);
+      setCurrentView('list');
+    }
+  };
+
   const handleViewQuotation = (id: string) => {
     setSelectedQuotationId(id);
     setCurrentView('preview');
+  };
+
+  const handleEditQuotation = (id: string) => {
+    setSelectedQuotationId(id);
+    setCurrentView('edit');
   };
 
   const handleDeleteQuotation = (id: string) => {
@@ -85,6 +102,7 @@ const Index = () => {
                       key={quotation.id}
                       quotation={quotation}
                       onView={handleViewQuotation}
+                      onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}
                     />
                   ))}
@@ -109,12 +127,37 @@ const Index = () => {
           </div>
         )}
 
+        {currentView === 'edit' && selectedQuotation && (
+          <div className="max-w-3xl mx-auto">
+            <div className="mb-6">
+              <Button variant="ghost" onClick={() => {
+                setSelectedQuotationId(null);
+                setCurrentView('list');
+              }}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Quotations
+              </Button>
+            </div>
+            <h2 className="heading-display text-2xl text-foreground mb-6">
+              Edit Quotation - {selectedQuotation.quoteNumber}
+            </h2>
+            <QuotationForm 
+              onSubmit={handleUpdateQuotation} 
+              initialData={selectedQuotation}
+              isEditing
+            />
+          </div>
+        )}
+
         {currentView === 'preview' && selectedQuotation && (
           <QuotationPreview
             quotation={selectedQuotation}
             onBack={() => {
               setSelectedQuotationId(null);
               setCurrentView('list');
+            }}
+            onEdit={() => {
+              setCurrentView('edit');
             }}
           />
         )}

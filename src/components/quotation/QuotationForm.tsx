@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
   initialData?: Partial<QuotationFormData>;
+  isEditing?: boolean;
 }
 
 interface Customer {
@@ -24,7 +25,7 @@ interface Customer {
   address: string | null;
 }
 
-export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => {
+export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFormProps) => {
   const [clientName, setClientName] = useState(initialData?.clientName || '');
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || '');
   const [clientAddress, setClientAddress] = useState(initialData?.clientAddress || '');
@@ -510,7 +511,7 @@ export const QuotationForm = ({ onSubmit, initialData }: QuotationFormProps) => 
 
       <div className="flex gap-3 justify-end">
         <Button type="submit" size="lg" className="min-w-[160px]">
-          Create Quotation
+          {isEditing ? 'Update Quotation' : 'Create Quotation'}
         </Button>
       </div>
     </form>

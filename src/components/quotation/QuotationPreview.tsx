@@ -3,14 +3,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
-import { ArrowLeft, Printer, Mail, Paperclip } from 'lucide-react';
+import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
 
 interface QuotationPreviewProps {
   quotation: Quotation;
   onBack: () => void;
+  onEdit?: () => void;
 }
 
-export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) => {
+export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreviewProps) => {
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;
@@ -34,6 +35,12 @@ export const QuotationPreview = ({ quotation, onBack }: QuotationPreviewProps) =
           Back to Quotations
         </Button>
         <div className="flex gap-2">
+          {onEdit && (
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+          )}
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" />
             Print

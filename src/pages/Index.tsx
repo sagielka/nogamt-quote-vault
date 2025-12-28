@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, ArrowLeft } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
+import thinkingInside from '@/assets/thinking-inside.png';
 
 type View = 'list' | 'create' | 'preview';
 
@@ -118,6 +119,27 @@ const Index = () => {
           />
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t bg-muted/30 mt-auto">
+        <div className="container py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-center md:text-left">
+              <p className="font-semibold text-foreground">Noga Engineering & Technology Ltd.</p>
+              <p className="text-sm text-muted-foreground">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
+              <a 
+                href="https://www.nogamt.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                www.nogamt.com
+              </a>
+            </div>
+            <img src={thinkingInside} alt="Thinking Inside" className="h-16 w-auto" />
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { LineItem, Quotation } from '@/types/quotation';
+import { LineItem, Quotation, Currency } from '@/types/quotation';
 
 export const generateQuoteNumber = (): string => {
   const prefix = 'QT';
@@ -21,10 +21,10 @@ export const calculateTotal = (items: LineItem[], taxRate: number): number => {
   return subtotal + tax;
 };
 
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number, currency: Currency = 'USD'): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: currency,
   }).format(amount);
 };
 

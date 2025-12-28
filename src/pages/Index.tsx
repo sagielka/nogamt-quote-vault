@@ -122,21 +122,21 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t bg-muted/30 mt-auto">
-        <div className="container py-6">
+        <div className="container py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-center md:text-left">
-              <p className="font-semibold text-foreground">Noga Engineering & Technology Ltd.</p>
-              <p className="text-sm text-muted-foreground">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
+            <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
+            <div className="text-center md:text-right">
+              <p className="font-semibold text-foreground text-sm">Noga Engineering & Technology Ltd.</p>
+              <p className="text-xs text-muted-foreground">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
               <a 
                 href="https://www.nogamt.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 www.nogamt.com
               </a>
             </div>
-            <img src={thinkingInside} alt="Thinking Inside" className="h-16 w-auto" />
           </div>
         </div>
       </footer>

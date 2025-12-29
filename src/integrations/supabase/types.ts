@@ -44,6 +44,66 @@ export type Database = {
         }
         Relationships: []
       }
+      quotations: {
+        Row: {
+          attachments: Json | null
+          client_address: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          currency: string
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          items: Json
+          notes: string | null
+          quote_number: string
+          status: string | null
+          tax_rate: number
+          updated_at: string
+          user_id: string
+          valid_until: string
+        }
+        Insert: {
+          attachments?: Json | null
+          client_address?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          currency?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items: Json
+          notes?: string | null
+          quote_number: string
+          status?: string | null
+          tax_rate?: number
+          updated_at?: string
+          user_id: string
+          valid_until: string
+        }
+        Update: {
+          attachments?: Json | null
+          client_address?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          currency?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          quote_number?: string
+          status?: string | null
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

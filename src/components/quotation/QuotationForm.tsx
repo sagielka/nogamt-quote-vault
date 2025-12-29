@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES, LineItemAttachment } from '@/types/quotation';
 import { searchProducts, ProductItem } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
+import { quotationSchema } from '@/lib/validation-schemas';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -150,13 +151,35 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, lineItemIndex: number) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Maximum file size is 5MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Only images (JPEG, PNG, GIF, WebP) and PDFs are allowed.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      // Use user ID as folder for proper RLS enforcement
+      const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('quotation-attachments')
@@ -164,14 +187,17 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      // Use signed URL instead of public URL for security
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('quotation-attachments')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600 * 24 * 7); // 7 days expiry
+
+      if (signedUrlError) throw signedUrlError;
 
       const newAttachment: LineItemAttachment = {
         id: crypto.randomUUID(),
         fileName: file.name,
-        fileUrl: publicUrl,
+        fileUrl: signedUrlData.signedUrl,
         lineItemIndex,
       };
 
@@ -253,22 +279,51 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate form data using Zod schema
+    const formData = {
+      clientName,
+      clientEmail,
+      clientAddress,
+      items: items.map(item => ({
+        ...item,
+        discountPercent: item.discountPercent || 0,
+      })),
+      taxRate,
+      discountType,
+      discountValue,
+      notes,
+      currency,
+      validUntil,
+    };
+
+    const validationResult = quotationSchema.safeParse(formData);
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      toast({
+        title: 'Validation Error',
+        description: firstError.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     if (saveCustomer) {
       await saveCustomerToDatabase();
     }
 
     onSubmit({
-      clientName,
-      clientEmail,
-      clientAddress,
+      clientName: validationResult.data.clientName,
+      clientEmail: validationResult.data.clientEmail,
+      clientAddress: validationResult.data.clientAddress || '',
       items,
-      taxRate,
-      discountType,
-      discountValue,
-      notes,
-      validUntil,
+      taxRate: validationResult.data.taxRate,
+      discountType: validationResult.data.discountType,
+      discountValue: validationResult.data.discountValue,
+      notes: validationResult.data.notes || '',
+      validUntil: validationResult.data.validUntil,
       status: 'draft',
-      currency,
+      currency: currency,
       attachments,
     });
   };

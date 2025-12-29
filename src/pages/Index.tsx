@@ -42,12 +42,20 @@ const Index = () => {
     }
   };
 
-  const handleCreateQuotation = (data: QuotationFormData) => {
-    const newQuotation = addQuotation(data);
-    toast({
-      title: 'Quotation Created',
-      description: `Quote ${newQuotation.quoteNumber} has been created successfully.`,
-    });
+  const handleCreateQuotation = async (data: QuotationFormData) => {
+    const newQuotation = await addQuotation(data);
+    if (newQuotation) {
+      toast({
+        title: 'Quotation Created',
+        description: `Quote ${newQuotation.quoteNumber} has been created successfully.`,
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to create quotation. Please try again.',
+        variant: 'destructive',
+      });
+    }
     setCurrentView('list');
   };
 

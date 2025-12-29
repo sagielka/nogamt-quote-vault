@@ -2,6 +2,7 @@ import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
+import { escapeHtml } from '@/lib/html-sanitize';
 import { ArrowLeft, Printer, Download, Paperclip, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
@@ -47,6 +48,13 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       color: #1a1a1a;
     `;
 
+    // Escape all user-provided content to prevent XSS
+    const safeClientName = escapeHtml(quotation.clientName);
+    const safeClientEmail = escapeHtml(quotation.clientEmail);
+    const safeClientAddress = escapeHtml(quotation.clientAddress);
+    const safeNotes = escapeHtml(quotation.notes);
+    const safeQuoteNumber = escapeHtml(quotation.quoteNumber.replace(/^QT/i, ''));
+
     printContainer.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
         <img src="${logo}" alt="NogaMT Logo" style="height: 48px; width: auto;" crossorigin="anonymous" />
@@ -54,7 +62,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       </div>
 
       <h1 style="text-align: center; color: #0891b2; font-size: 24px; margin-bottom: 16px; font-weight: bold;">
-        QUOTATION <span style="color: #1a1a1a;">${quotation.quoteNumber.replace(/^QT/i, '')}</span>
+        QUOTATION <span style="color: #1a1a1a;">${safeQuoteNumber}</span>
       </h1>
 
       <div style="display: flex; justify-content: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e5e5;">
@@ -66,9 +74,9 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
 
       <div style="margin-bottom: 24px;">
         <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">BILL TO</h2>
-        <p style="font-weight: 600; margin: 0;">${quotation.clientName}</p>
-        <p style="color: #666; margin: 0;">${quotation.clientEmail}</p>
-        ${quotation.clientAddress ? `<p style="color: #666; margin: 0; white-space: pre-line;">${quotation.clientAddress}</p>` : ''}
+        <p style="font-weight: 600; margin: 0;">${safeClientName}</p>
+        <p style="color: #666; margin: 0;">${safeClientEmail}</p>
+        ${safeClientAddress ? `<p style="color: #666; margin: 0; white-space: pre-line;">${safeClientAddress}</p>` : ''}
       </div>
 
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 10px;">
@@ -87,8 +95,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           ${quotation.items.map((item, index) => `
             <tr style="border-bottom: 1px solid #e5e5e5;">
               <td style="padding: 12px 4px; color: #666;">${index + 1}</td>
-              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">${item.sku || '—'}</td>
-              <td style="padding: 12px 4px;">${item.description || '—'}</td>
+              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">${escapeHtml(item.sku) || '—'}</td>
+              <td style="padding: 12px 4px;">${escapeHtml(item.description) || '—'}</td>
               <td style="padding: 12px 4px; text-align: center; color: #666;">${item.quantity}</td>
               <td style="padding: 12px 4px; text-align: right; color: #666;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
               <td style="padding: 12px 4px; text-align: center; color: #666;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
@@ -123,10 +131,10 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
         </div>
       </div>
 
-      ${quotation.notes ? `
+      ${safeNotes ? `
         <div style="padding-top: 16px; border-top: 1px solid #e5e5e5;">
           <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">NOTES</h2>
-          <p style="color: #666; white-space: pre-line; font-size: 10px;">${quotation.notes}</p>
+          <p style="color: #666; white-space: pre-line; font-size: 10px;">${safeNotes}</p>
         </div>
       ` : ''}
 

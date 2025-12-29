@@ -74,8 +74,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none">
         <CardContent className="p-8 md:p-12">
           {/* Print Header with Logo */}
-          <div className="hidden print:flex justify-between items-start mb-8 pb-4 border-b border-gray-200">
-            <img src={logo} alt="NogaMT Logo" className="h-14 w-auto" />
+          <div className="hidden print:flex justify-end items-start mb-6">
+            <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
           </div>
 
           {/* Header */}
@@ -134,16 +134,13 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                         {lineAttachments.map((att) => (
                           <div key={att.id} className="mt-2">
                             {isImage(att.fileName) ? (
-                              <div className="flex items-start gap-2">
-                                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer">
-                                  <img 
-                                    src={att.fileUrl} 
-                                    alt={att.fileName} 
-                                    className="max-w-[120px] max-h-[80px] object-cover rounded border border-primary/20 hover:border-primary transition-colors print:max-w-[100px] print:max-h-[60px] print:border-gray-300"
-                                  />
-                                </a>
-                                <span className="text-xs text-muted-foreground print:text-gray-500">{att.fileName}</span>
-                              </div>
+                              <a href={att.fileUrl} target="_blank" rel="noopener noreferrer">
+                                <img 
+                                  src={att.fileUrl} 
+                                  alt="Attachment" 
+                                  className="max-w-[120px] max-h-[80px] object-cover rounded hover:opacity-80 transition-opacity print:max-w-[100px] print:max-h-[60px]"
+                                />
+                              </a>
                             ) : (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground print:text-gray-500">
                                 <Paperclip className="h-3 w-3" />
@@ -208,10 +205,10 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
 
           {/* Print Footer */}
           <div className="hidden print:block mt-12 pt-6 border-t border-gray-200 text-center">
-            <img src={thinkingInside} alt="Thinking Inside" className="h-10 w-auto mx-auto mb-2" />
-            <p className="font-semibold text-gray-900 text-sm">Noga Engineering & Technology Ltd.</p>
-            <p className="text-xs text-gray-600">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
-            <p className="text-xs text-cyan-600">www.nogamt.com</p>
+            <img src={thinkingInside} alt="Thinking Inside" className="h-8 w-auto mx-auto mb-2" />
+            <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>
+            <p className="text-[10px] text-gray-600">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
+            <p className="text-[10px] text-cyan-600">www.nogamt.com</p>
           </div>
         </CardContent>
       </Card>

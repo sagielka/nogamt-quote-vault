@@ -155,7 +155,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       useCORS: true,
       logging: false,
       background: '#ffffff',
-      scale: 1,
+      // Higher scale = sharper PDF (bigger file)
+      scale: 2,
     } as Parameters<typeof html2canvas>[1]);
 
     document.body.removeChild(printContainer);
@@ -174,8 +175,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 10;
 
-    // Use JPEG with compression for smaller file size
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.7), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    // JPEG keeps size manageable while remaining sharp at scale=2
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
     const fileName = `Quotation_${quotation.quoteNumber}.pdf`;
     return {

@@ -70,12 +70,15 @@ const Index = () => {
             <div className="flex items-center gap-3">
               <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
             </div>
-            {currentView === 'list' && quotations.length > 0 && (
-              <Button onClick={() => setCurrentView('create')}>
-                <Plus className="w-4 h-4 mr-2" />
-                New Quote
-              </Button>
-            )}
+            <div className="flex items-center gap-4">
+              {currentView === 'list' && quotations.length > 0 && (
+                <Button onClick={() => setCurrentView('create')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Quote
+                </Button>
+              )}
+              <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
+            </div>
           </div>
         </div>
       </header>

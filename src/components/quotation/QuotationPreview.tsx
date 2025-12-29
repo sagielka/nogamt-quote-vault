@@ -122,30 +122,50 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                 </tr>
               </thead>
               <tbody>
-                {quotation.items.map((item, index) => (
-                  <tr key={item.id} className="border-b border-border print:border-gray-200">
-                    <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
-                    <td className="py-4 text-foreground print:text-gray-900">
-                      <div>{item.description || '—'}</div>
-                      {getAttachmentsForLine(index).map((att) => (
-                        <div key={att.id} className="flex items-center gap-1 text-xs text-muted-foreground mt-1 print:text-gray-500">
-                          <Paperclip className="h-3 w-3" />
-                          <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary print:text-cyan-600">
-                            {att.fileName}
-                          </a>
-                        </div>
-                      ))}
-                    </td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.quantity}</td>
-                    <td className="py-4 text-right text-muted-foreground print:text-gray-600">{formatCurrency(item.unitPrice, quotation.currency)}</td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">
-                      {item.discountPercent ? `${item.discountPercent}%` : '—'}
-                    </td>
-                    <td className="py-4 text-right font-medium text-foreground print:text-gray-900">
-                      {formatCurrency(calculateLineTotal(item), quotation.currency)}
-                    </td>
-                  </tr>
-                ))}
+                {quotation.items.map((item, index) => {
+                  const lineAttachments = getAttachmentsForLine(index);
+                  const isImage = (fileName: string) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileName);
+                  
+                  return (
+                    <tr key={item.id} className="border-b border-border print:border-gray-200">
+                      <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
+                      <td className="py-4 text-foreground print:text-gray-900">
+                        <div>{item.description || '—'}</div>
+                        {lineAttachments.map((att) => (
+                          <div key={att.id} className="mt-2">
+                            {isImage(att.fileName) ? (
+                              <div className="flex items-start gap-2">
+                                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer">
+                                  <img 
+                                    src={att.fileUrl} 
+                                    alt={att.fileName} 
+                                    className="max-w-[120px] max-h-[80px] object-cover rounded border border-primary/20 hover:border-primary transition-colors print:max-w-[100px] print:max-h-[60px] print:border-gray-300"
+                                  />
+                                </a>
+                                <span className="text-xs text-muted-foreground print:text-gray-500">{att.fileName}</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground print:text-gray-500">
+                                <Paperclip className="h-3 w-3" />
+                                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary print:text-cyan-600">
+                                  {att.fileName}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </td>
+                      <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.quantity}</td>
+                      <td className="py-4 text-right text-muted-foreground print:text-gray-600">{formatCurrency(item.unitPrice, quotation.currency)}</td>
+                      <td className="py-4 text-center text-muted-foreground print:text-gray-600">
+                        {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                      </td>
+                      <td className="py-4 text-right font-medium text-foreground print:text-gray-900">
+                        {formatCurrency(calculateLineTotal(item), quotation.currency)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

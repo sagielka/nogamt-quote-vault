@@ -71,8 +71,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       </div>
 
       {/* Quotation Document */}
-      <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none print:min-h-screen print:flex print:flex-col">
-        <CardContent className="p-8 md:p-12 print:flex print:flex-col print:flex-1">
+      <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none">
+        <CardContent className="p-8 md:p-12">
           {/* Print Header with Logos */}
           <div className="hidden print:flex justify-between items-start mb-6">
             <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
@@ -80,22 +80,23 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           </div>
 
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start mb-8 pb-8 border-b print:pt-0">
-            <div>
-              <h1 className="heading-display text-3xl text-primary mb-2 print:text-cyan-600">
-                QUOTATION <span className="text-foreground print:text-gray-900">{quotation.quoteNumber}</span>
-              </h1>
-            </div>
-            <div className="mt-4 md:mt-0 text-right">
-              <Badge className={`${getStatusColor(quotation.status)} no-print`} variant="secondary">
-                {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-              </Badge>
-              <p className="text-sm text-muted-foreground mt-2 print:text-gray-600">
-                Created: {formatDate(quotation.createdAt)}
-              </p>
-              <p className="text-sm text-muted-foreground print:text-gray-600">
-                Valid Until: {formatDate(quotation.validUntil)}
-              </p>
+          <div className="mb-8 pb-8 border-b print:pt-0">
+            <h1 className="heading-display text-3xl text-primary mb-4 print:text-cyan-600 print:text-center">
+              QUOTATION <span className="text-foreground print:text-gray-900">{quotation.quoteNumber}</span>
+            </h1>
+            <div className="flex flex-col md:flex-row justify-between items-start">
+              <div></div>
+              <div className="mt-4 md:mt-0 text-right print:text-left">
+                <Badge className={`${getStatusColor(quotation.status)} no-print`} variant="secondary">
+                  {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                </Badge>
+                <p className="text-sm text-muted-foreground mt-2 print:text-gray-600 print:mt-0">
+                  Created: {formatDate(quotation.createdAt)}
+                </p>
+                <p className="text-sm text-muted-foreground print:text-gray-600">
+                  Valid Until: {formatDate(quotation.validUntil)}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -204,8 +205,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             </div>
           )}
 
-          {/* Print Footer - Fixed to bottom */}
-          <div className="hidden print:block mt-auto pt-6 border-t border-gray-200 text-center">
+          {/* Print Footer */}
+          <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">
             <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>
             <p className="text-[10px] text-gray-600">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
             <p className="text-[10px] text-cyan-600">www.nogamt.com</p>

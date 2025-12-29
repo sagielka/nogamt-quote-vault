@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
@@ -14,6 +15,7 @@ interface QuotationPreviewProps {
 }
 
 export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreviewProps) => {
+  const { toast } = useToast();
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;
@@ -22,6 +24,20 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSendToClient = () => {
+    const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`);
+    const body = encodeURIComponent(
+      `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
+    );
+    
+    window.open(`mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`, '_blank');
+    
+    toast({
+      title: 'Email Client Opened',
+      description: `Compose email to ${quotation.clientEmail}`,
+    });
   };
 
   const getAttachmentsForLine = (index: number) => {
@@ -47,7 +63,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="accent">
+          <Button variant="accent" onClick={handleSendToClient}>
             <Mail className="w-4 h-4 mr-2" />
             Send to Client
           </Button>
@@ -65,8 +81,9 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start mb-8 pb-8 border-b print:pt-0">
             <div>
-              <h1 className="heading-display text-3xl text-primary mb-2 print:text-cyan-600">QUOTATION</h1>
-              <p className="text-lg font-medium text-foreground print:text-gray-900">{quotation.quoteNumber}</p>
+              <h1 className="heading-display text-3xl text-primary mb-2 print:text-cyan-600">
+                QUOTATION <span className="text-foreground print:text-gray-900">{quotation.quoteNumber}</span>
+              </h1>
             </div>
             <div className="mt-4 md:mt-0 text-right">
               <Badge className={getStatusColor(quotation.status)} variant="secondary">

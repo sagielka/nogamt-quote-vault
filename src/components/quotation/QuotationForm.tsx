@@ -508,7 +508,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
             <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent ml-4" />
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 pt-6">
+        <CardContent className="space-y-4 pt-6">
           <div className="space-y-2">
             <Label htmlFor="validUntil" className="text-muted-foreground uppercase text-xs tracking-wider">Valid Until</Label>
             <Input
@@ -516,11 +516,67 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
               type="date"
               value={validUntil.toISOString().split('T')[0]}
               onChange={(e) => setValidUntil(new Date(e.target.value))}
-              className="input-focus bg-secondary/50 border-primary/20"
+              className="input-focus bg-secondary/50 border-primary/20 w-full md:w-64"
             />
           </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="notes" className="text-muted-foreground uppercase text-xs tracking-wider">Notes</Label>
+          
+          {/* Standard Terms Checkboxes */}
+          <div className="space-y-3">
+            <Label className="text-muted-foreground uppercase text-xs tracking-wider">Standard Terms</Label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notes.includes("Payment Terms: Net 30 EOM")}
+                  onChange={(e) => {
+                    const term = "Payment Terms: Net 30 EOM";
+                    if (e.target.checked) {
+                      setNotes(notes ? `${notes}\n· ${term}.` : `· ${term}.`);
+                    } else {
+                      setNotes(notes.replace(`· ${term}.`, "").replace(/\n+/g, "\n").trim());
+                    }
+                  }}
+                  className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
+                />
+                <span className="text-sm text-foreground">Payment Terms: Net 30 EOM</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notes.includes("Delivery Terms: Shipment via air freight")}
+                  onChange={(e) => {
+                    const term = "Delivery Terms: Shipment via air freight (unless otherwise agreed)";
+                    if (e.target.checked) {
+                      setNotes(notes ? `${notes}\n· ${term}.` : `· ${term}.`);
+                    } else {
+                      setNotes(notes.replace(`· ${term}.`, "").replace(/\n+/g, "\n").trim());
+                    }
+                  }}
+                  className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
+                />
+                <span className="text-sm text-foreground">Delivery: Air freight (unless otherwise agreed)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notes.includes("Shipment Costs: FOB")}
+                  onChange={(e) => {
+                    const term = "Shipment Costs: FOB";
+                    if (e.target.checked) {
+                      setNotes(notes ? `${notes}\n· ${term}.` : `· ${term}.`);
+                    } else {
+                      setNotes(notes.replace(`· ${term}.`, "").replace(/\n+/g, "\n").trim());
+                    }
+                  }}
+                  className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
+                />
+                <span className="text-sm text-foreground">Shipment Costs: FOB</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes" className="text-muted-foreground uppercase text-xs tracking-wider">Additional Notes</Label>
             <Textarea
               id="notes"
               placeholder="Additional notes or terms..."

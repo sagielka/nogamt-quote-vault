@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-secret",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
@@ -18,11 +18,11 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: "mt@test.com",
-      password: "mt1234",
-      email_confirm: true,
-    });
+    // Update existing user's email
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+      "0c35e898-43c3-4de9-b90b-bd17607ecb72",
+      { email: "nogamt@test.com" }
+    );
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {

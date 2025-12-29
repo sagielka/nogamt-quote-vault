@@ -149,7 +149,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       useCORS: true,
       logging: false,
       background: '#ffffff',
-      scale: 2,
+      scale: 1,
     } as Parameters<typeof html2canvas>[1]);
     
     document.body.removeChild(printContainer);
@@ -168,7 +168,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 10;
     
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    // Use JPEG with compression for smaller file size
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.7), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
     
     // Return base64 without the data URL prefix
     return pdf.output('datauristring').split(',')[1];

@@ -21,7 +21,7 @@ serve(async (req) => {
     // Update existing user's email
     const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
       "0c35e898-43c3-4de9-b90b-bd17607ecb72",
-      { email: "nogamt@test.com" }
+      { email: "nogamt@x.co" }
     );
 
     if (error) {

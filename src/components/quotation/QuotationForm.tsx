@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemRow } from './LineItemRow';
-import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal } from 'lucide-react';
+import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,6 +44,8 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [saveCustomer, setSaveCustomer] = useState(true);
   const [attachments, setAttachments] = useState<LineItemAttachment[]>(initialData?.attachments || []);
   const [uploading, setUploading] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,9 +66,64 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const handleSelectCustomer = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     if (customer) {
+      setSelectedCustomerId(customerId);
       setClientName(customer.name);
       setClientEmail(customer.email);
       setClientAddress(customer.address || '');
+    }
+  };
+
+  const handleEditCustomer = async () => {
+    if (!selectedCustomerId || !clientName || !clientEmail) return;
+    
+    const { error } = await supabase
+      .from('customers')
+      .update({ 
+        name: clientName, 
+        email: clientEmail, 
+        address: clientAddress || null 
+      })
+      .eq('id', selectedCustomerId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update customer.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Customer Updated',
+        description: 'Customer details have been updated.',
+      });
+      fetchCustomers();
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!selectedCustomerId) return;
+    
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', selectedCustomerId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete customer.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Customer Deleted',
+        description: 'Customer has been removed.',
+      });
+      setSelectedCustomerId(null);
+      setClientName('');
+      setClientEmail('');
+      setClientAddress('');
+      fetchCustomers();
     }
   };
 
@@ -211,18 +268,44 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 <Database className="w-3 h-3" />
                 Select Existing Customer
               </Label>
-              <Select onValueChange={handleSelectCustomer}>
-                <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors">
-                  <SelectValue placeholder="Choose a saved customer..." />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-primary/20">
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id} className="hover:bg-primary/10">
-                      {customer.name} ({customer.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select onValueChange={handleSelectCustomer} value={selectedCustomerId || undefined}>
+                  <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors flex-1">
+                    <SelectValue placeholder="Choose a saved customer..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-primary/20">
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id} className="hover:bg-primary/10">
+                        {customer.name} ({customer.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCustomerId && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleEditCustomer}
+                      className="border-primary/30 hover:bg-primary/10 hover:text-primary"
+                      title="Update customer with current details"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDeleteCustomer}
+                      className="border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      title="Delete customer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
@@ -524,6 +607,22 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           <div className="space-y-3">
             <Label className="text-muted-foreground uppercase text-xs tracking-wider">Standard Terms</Label>
             <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notes.includes("Payment Terms: Net Prices")}
+                  onChange={(e) => {
+                    const term = "Payment Terms: Net Prices";
+                    if (e.target.checked) {
+                      setNotes(notes ? `${notes}\n· ${term}.` : `· ${term}.`);
+                    } else {
+                      setNotes(notes.replace(`· ${term}.`, "").replace(/\n+/g, "\n").trim());
+                    }
+                  }}
+                  className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
+                />
+                <span className="text-sm text-foreground">Payment Terms: Net Prices</span>
+              </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"

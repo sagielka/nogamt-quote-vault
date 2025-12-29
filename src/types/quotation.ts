@@ -18,6 +18,7 @@ export interface LineItemAttachment {
 
 export interface LineItem {
   id: string;
+  sku: string;
   description: string;
   quantity: number;
   unitPrice: number;

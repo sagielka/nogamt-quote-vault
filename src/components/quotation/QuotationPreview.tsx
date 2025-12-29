@@ -54,7 +54,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       </div>
 
       <h1 style="text-align: center; color: #0891b2; font-size: 24px; margin-bottom: 16px; font-weight: bold;">
-        QUOTATION <span style="color: #1a1a1a;">${quotation.quoteNumber}</span>
+        QUOTATION <span style="color: #1a1a1a;">${quotation.quoteNumber.replace(/^QT/i, '')}</span>
       </h1>
 
       <div style="display: flex; justify-content: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e5e5;">
@@ -259,7 +259,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           {/* Header */}
           <div className="mb-8 pb-8 border-b print:pt-0">
             <h1 className="heading-display text-3xl text-primary mb-4 print:text-cyan-600 text-center">
-              QUOTATION <span className="text-foreground print:text-gray-900">{quotation.quoteNumber}</span>
+              QUOTATION <span className="text-foreground print:text-gray-900">{quotation.quoteNumber.replace(/^QT/i, '')}</span>
             </h1>
             <div className="flex flex-col md:flex-row justify-between items-start">
               <div></div>

@@ -86,7 +86,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
               </h1>
             </div>
             <div className="mt-4 md:mt-0 text-right">
-              <Badge className={getStatusColor(quotation.status)} variant="secondary">
+              <Badge className={`${getStatusColor(quotation.status)} no-print`} variant="secondary">
                 {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
               </Badge>
               <p className="text-sm text-muted-foreground mt-2 print:text-gray-600">

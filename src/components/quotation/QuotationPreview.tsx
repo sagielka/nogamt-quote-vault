@@ -117,7 +117,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                 <tr className="border-b-2 border-border print:border-gray-300">
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-8 print:text-gray-500">#</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground print:text-gray-500">Description</th>
-                  <th className="text-left py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500 hidden print:table-cell">Application</th>
+                  <th className="text-left py-3 text-sm font-medium text-muted-foreground w-32 print:text-gray-500">Application</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Qty</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">Unit Price</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>
@@ -134,42 +134,26 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                       <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
                       <td className="py-4 text-foreground print:text-gray-900">
                         <div>{item.description || '—'}</div>
-                        {/* Show attachments under description only on screen */}
-                        <div className="print:hidden">
-                          {lineAttachments.map((att) => (
-                            <div key={att.id} className="mt-2">
-                              {isImage(att.fileName) ? (
-                                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer">
-                                  <img 
-                                    src={att.fileUrl} 
-                                    alt="Attachment" 
-                                    className="max-w-[120px] max-h-[80px] object-cover rounded hover:opacity-80 transition-opacity"
-                                  />
-                                </a>
-                              ) : (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Paperclip className="h-3 w-3" />
-                                  <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary">
-                                    {att.fileName}
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
                       </td>
-                      {/* Application column - only visible in print */}
-                      <td className="py-4 text-foreground print:text-gray-900 hidden print:table-cell">
+                      {/* Application column - visible on screen and print */}
+                      <td className="py-4 text-foreground print:text-gray-900">
                         {lineAttachments.map((att) => (
                           <div key={att.id}>
                             {isImage(att.fileName) ? (
-                              <img 
-                                src={att.fileUrl} 
-                                alt="Attachment" 
-                                className="max-w-[80px] max-h-[50px] object-cover"
-                              />
+                              <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                                <img 
+                                  src={att.fileUrl} 
+                                  alt="Attachment" 
+                                  className="max-w-[100px] max-h-[60px] object-cover rounded print:max-w-[80px] print:max-h-[50px]"
+                                />
+                              </a>
                             ) : (
-                              <span className="text-xs">{att.fileName}</span>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground print:text-gray-500">
+                                <Paperclip className="h-3 w-3" />
+                                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary print:text-cyan-600">
+                                  {att.fileName}
+                                </a>
+                              </div>
                             )}
                           </div>
                         ))}

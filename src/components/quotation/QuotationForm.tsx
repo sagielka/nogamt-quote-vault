@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemRow } from './LineItemRow';
-import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal } from 'lucide-react';
+import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,6 +45,10 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [saveCustomer, setSaveCustomer] = useState(true);
   const [attachments, setAttachments] = useState<LineItemAttachment[]>(initialData?.attachments || []);
   const [uploading, setUploading] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editAddress, setEditAddress] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,6 +72,62 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       setClientName(customer.name);
       setClientEmail(customer.email);
       setClientAddress(customer.address || '');
+    }
+  };
+
+  const handleEditCustomer = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setEditName(customer.name);
+    setEditEmail(customer.email);
+    setEditAddress(customer.address || '');
+  };
+
+  const handleSaveCustomer = async () => {
+    if (!editingCustomer) return;
+
+    const { error } = await supabase
+      .from('customers')
+      .update({ 
+        name: editName, 
+        email: editEmail, 
+        address: editAddress || null 
+      })
+      .eq('id', editingCustomer.id);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update customer.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Customer Updated',
+        description: 'Customer details have been updated.',
+      });
+      fetchCustomers();
+      setEditingCustomer(null);
+    }
+  };
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', customerId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete customer.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Customer Deleted',
+        description: 'Customer has been removed.',
+      });
+      fetchCustomers();
     }
   };
 
@@ -211,18 +272,47 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 <Database className="w-3 h-3" />
                 Select Existing Customer
               </Label>
-              <Select onValueChange={handleSelectCustomer}>
-                <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors">
-                  <SelectValue placeholder="Choose a saved customer..." />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-primary/20">
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id} className="hover:bg-primary/10">
-                      {customer.name} ({customer.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select onValueChange={handleSelectCustomer}>
+                  <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors flex-1">
+                    <SelectValue placeholder="Choose a saved customer..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-primary/20">
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id} className="hover:bg-primary/10">
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <span>{customer.name} ({customer.email})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {customers.map((customer) => (
+                  <div key={customer.id} className="flex items-center gap-1 bg-secondary/50 border border-primary/20 rounded-md px-2 py-1 text-xs">
+                    <span className="text-foreground">{customer.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-muted-foreground hover:text-primary"
+                      onClick={() => handleEditCustomer(customer)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteCustomer(customer.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -527,6 +617,22 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={notes.includes("Payment Terms: Net prices")}
+                  onChange={(e) => {
+                    const term = "Payment Terms: Net prices";
+                    if (e.target.checked) {
+                      setNotes(notes ? `${notes}\n· ${term}.` : `· ${term}.`);
+                    } else {
+                      setNotes(notes.replace(`· ${term}.`, "").replace(/\n+/g, "\n").trim());
+                    }
+                  }}
+                  className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
+                />
+                <span className="text-sm text-foreground">Payment Terms: Net prices</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={notes.includes("Payment Terms: Net 30 EOM")}
                   onChange={(e) => {
                     const term = "Payment Terms: Net 30 EOM";
@@ -599,6 +705,50 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           {isEditing ? 'Update Quotation' : 'Create Quotation'}
         </Button>
       </div>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={!!editingCustomer} onOpenChange={(open) => !open && setEditingCustomer(null)}>
+        <DialogContent className="bg-card border-primary/20">
+          <DialogHeader>
+            <DialogTitle className="text-primary">Edit Customer</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editName">Name</Label>
+              <Input
+                id="editName"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="input-focus bg-secondary/50 border-primary/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editEmail">Email</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                className="input-focus bg-secondary/50 border-primary/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editAddress">Address</Label>
+              <Textarea
+                id="editAddress"
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+                className="input-focus bg-secondary/50 border-primary/20"
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCustomer(null)}>Cancel</Button>
+            <Button onClick={handleSaveCustomer}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };

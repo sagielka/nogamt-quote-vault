@@ -81,7 +81,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
 
           {/* Header */}
           <div className="mb-8 pb-8 border-b print:pt-0">
-            <h1 className="heading-display text-3xl text-primary mb-4 print:text-cyan-600 print:text-center">
+            <h1 className="heading-display text-3xl text-primary mb-4 print:text-cyan-600 text-center">
               QUOTATION <span className="text-foreground print:text-gray-900">{quotation.quoteNumber}</span>
             </h1>
             <div className="flex flex-col md:flex-row justify-between items-start">

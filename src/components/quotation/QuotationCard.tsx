@@ -28,9 +28,11 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete }: Quotation
               {quotation.clientName}
             </div>
           </div>
-          <Badge className={getStatusColor(quotation.status)} variant="secondary">
-            {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-          </Badge>
+          {quotation.status !== 'draft' && (
+            <Badge className={getStatusColor(quotation.status)} variant="secondary">
+              {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+            </Badge>
+          )}
         </div>
 
         <div className="space-y-2 mb-4">

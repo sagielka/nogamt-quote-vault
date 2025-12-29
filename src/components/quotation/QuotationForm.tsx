@@ -272,47 +272,46 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 <Database className="w-3 h-3" />
                 Select Existing Customer
               </Label>
-              <div className="flex gap-2">
-                <Select onValueChange={handleSelectCustomer}>
-                  <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors flex-1">
-                    <SelectValue placeholder="Choose a saved customer..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-primary/20">
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id} className="hover:bg-primary/10">
-                        <div className="flex items-center justify-between w-full gap-4">
-                          <span>{customer.name} ({customer.email})</span>
-                        </div>
+              <Select onValueChange={handleSelectCustomer}>
+                <SelectTrigger className="input-focus bg-secondary/50 border-primary/20 hover:border-primary/40 transition-colors">
+                  <SelectValue placeholder="Choose a saved customer..." />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-primary/20">
+                  {customers.map((customer) => (
+                    <div key={customer.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-primary/10 rounded-sm group">
+                      <SelectItem value={customer.id} className="flex-1 p-0 focus:bg-transparent">
+                        {customer.name} ({customer.email})
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {customers.map((customer) => (
-                  <div key={customer.id} className="flex items-center gap-1 bg-secondary/50 border border-primary/20 rounded-md px-2 py-1 text-xs">
-                    <span className="text-foreground">{customer.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-primary"
-                      onClick={() => handleEditCustomer(customer)}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteCustomer(customer.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCustomer(customer);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomer(customer.id);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

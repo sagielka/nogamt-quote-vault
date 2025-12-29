@@ -4,6 +4,9 @@
 @import '@fontsource/outfit/700.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
+@import '@fontsource/roboto-condensed/400.css';
+@import '@fontsource/roboto-condensed/500.css';
+@import '@fontsource/roboto-condensed/700.css';
 
 @tailwind base;
 @tailwind components;
@@ -180,6 +183,7 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    font-family: 'Roboto Condensed', system-ui, sans-serif !important;
   }
 
   html, body {
@@ -187,6 +191,7 @@
     background-image: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    font-size: 12px !important;
   }
 
   body {

@@ -318,7 +318,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
           {/* Header */}
-          <div className="grid grid-cols-14 gap-2 text-xs font-medium text-primary/70 uppercase tracking-wider border-b border-primary/10 pb-3">
+          <div className="grid grid-cols-14 gap-2 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-2">
             <div className="col-span-3">Description</div>
             <div className="col-span-2 text-center">Qty</div>
             <div className="col-span-2 text-right">Unit Price</div>

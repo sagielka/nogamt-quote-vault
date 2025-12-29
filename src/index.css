@@ -166,9 +166,15 @@
 
 /* Print styles for quotations */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
-    @apply bg-white;
-    background-image: none;
+    background: white !important;
+    background-image: none !important;
+    color: #1a1a1a !important;
   }
   
   .no-print {
@@ -179,12 +185,74 @@
     display: block !important;
   }
 
+  /* Reset dark theme colors for print */
+  .card-elevated {
+    background: white !important;
+    border: 1px solid #e5e5e5 !important;
+    box-shadow: none !important;
+  }
+
+  .card-elevated::before {
+    display: none !important;
+  }
+
+  /* Text colors for print */
+  .text-foreground,
+  .text-primary,
+  .heading-display {
+    color: #1a1a1a !important;
+    text-shadow: none !important;
+  }
+
+  .text-muted-foreground {
+    color: #666666 !important;
+  }
+
+  .glow-text {
+    text-shadow: none !important;
+  }
+
+  /* Primary color for accent */
+  h1.text-primary,
+  .text-primary {
+    color: #0891b2 !important;
+  }
+
+  /* Borders */
+  .border-b,
+  .border-t,
+  .border-border {
+    border-color: #e5e5e5 !important;
+  }
+
+  /* Footer print styles */
   footer {
     break-inside: avoid;
     page-break-inside: avoid;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white !important;
+    border-top: 1px solid #e5e5e5 !important;
+    padding: 12px 24px;
   }
 
   footer img {
     max-height: 40px !important;
+  }
+
+  footer p,
+  footer a {
+    color: #1a1a1a !important;
+  }
+
+  footer .text-muted-foreground {
+    color: #666666 !important;
+  }
+
+  /* Add bottom margin for footer space */
+  main {
+    margin-bottom: 100px !important;
   }
 }

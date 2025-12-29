@@ -64,7 +64,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b no-print">
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -163,8 +163,8 @@ const Index = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t bg-muted/30 mt-auto">
+      {/* Footer - hidden in print, shown in app */}
+      <footer className="border-t bg-muted/30 mt-auto no-print">
         <div className="container py-4">
           <div className="flex flex-col items-center justify-center gap-2 text-center">
             <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />

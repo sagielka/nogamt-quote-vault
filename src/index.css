@@ -171,9 +171,14 @@
     print-color-adjust: exact !important;
   }
 
-  body {
+  html, body {
     background: white !important;
     background-image: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
     color: #1a1a1a !important;
   }
   
@@ -181,14 +186,19 @@
     display: none !important;
   }
   
-  .print-only {
+  .print\:block {
     display: block !important;
   }
 
-  /* Reset dark theme colors for print */
-  .card-elevated {
+  .print\:flex {
+    display: flex !important;
+  }
+
+  /* Remove card styling for print */
+  .card-elevated,
+  .print\:shadow-none {
     background: white !important;
-    border: 1px solid #e5e5e5 !important;
+    border: none !important;
     box-shadow: none !important;
   }
 
@@ -196,63 +206,8 @@
     display: none !important;
   }
 
-  /* Text colors for print */
-  .text-foreground,
-  .text-primary,
-  .heading-display {
-    color: #1a1a1a !important;
-    text-shadow: none !important;
-  }
-
-  .text-muted-foreground {
-    color: #666666 !important;
-  }
-
-  .glow-text {
-    text-shadow: none !important;
-  }
-
-  /* Primary color for accent */
-  h1.text-primary,
-  .text-primary {
-    color: #0891b2 !important;
-  }
-
-  /* Borders */
-  .border-b,
-  .border-t,
-  .border-border {
-    border-color: #e5e5e5 !important;
-  }
-
-  /* Footer print styles */
-  footer {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white !important;
-    border-top: 1px solid #e5e5e5 !important;
-    padding: 12px 24px;
-  }
-
-  footer img {
-    max-height: 40px !important;
-  }
-
-  footer p,
-  footer a {
-    color: #1a1a1a !important;
-  }
-
-  footer .text-muted-foreground {
-    color: #666666 !important;
-  }
-
-  /* Add bottom margin for footer space */
-  main {
-    margin-bottom: 100px !important;
+  /* Ensure proper page margins */
+  @page {
+    margin: 1cm;
   }
 }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logo from '@/assets/logo.jpg';
@@ -27,6 +28,152 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     window.print();
   };
 
+  const generatePrintStylePdf = async (): Promise<string> => {
+    // Create a hidden container with print styles
+    const printContainer = document.createElement('div');
+    printContainer.style.cssText = `
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 794px;
+      background: white;
+      padding: 40px;
+      font-family: 'Roboto Condensed', sans-serif;
+      font-size: 11px;
+      color: #1a1a1a;
+    `;
+    
+    printContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+        <img src="${logo}" alt="NogaMT Logo" style="height: 48px; width: auto;" crossorigin="anonymous" />
+        <img src="${thinkingInside}" alt="Thinking Inside" style="height: 48px; width: auto;" crossorigin="anonymous" />
+      </div>
+      
+      <h1 style="text-align: center; color: #0891b2; font-size: 24px; margin-bottom: 16px; font-weight: bold;">
+        QUOTATION <span style="color: #1a1a1a;">${quotation.quoteNumber}</span>
+      </h1>
+      
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e5e5;">
+        <div style="text-align: left;">
+          <p style="color: #666; font-size: 11px; margin: 0;">Created: ${formatDate(quotation.createdAt)}</p>
+          <p style="color: #666; font-size: 11px; margin: 0;">Valid Until: ${formatDate(quotation.validUntil)}</p>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">BILL TO</h2>
+        <p style="font-weight: 600; margin: 0;">${quotation.clientName}</p>
+        <p style="color: #666; margin: 0;">${quotation.clientEmail}</p>
+        ${quotation.clientAddress ? `<p style="color: #666; margin: 0; white-space: pre-line;">${quotation.clientAddress}</p>` : ''}
+      </div>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 10px;">
+        <thead>
+          <tr style="border-bottom: 2px solid #d1d5db;">
+            <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 30px;">#</th>
+            <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">SKU</th>
+            <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500;">Description</th>
+            <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">Qty</th>
+            <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Unit Price</th>
+            <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">Disc %</th>
+            <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${quotation.items.map((item, index) => `
+            <tr style="border-bottom: 1px solid #e5e5e5;">
+              <td style="padding: 12px 4px; color: #666;">${index + 1}</td>
+              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">${item.sku || '—'}</td>
+              <td style="padding: 12px 4px;">${item.description || '—'}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.quantity}</td>
+              <td style="padding: 12px 4px; text-align: right; color: #666;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
+              <td style="padding: 12px 4px; text-align: right; font-weight: 500;">${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
+        <div style="width: 220px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
+            <span style="color: #666;">Subtotal</span>
+            <span>${formatCurrency(subtotal, quotation.currency)}</span>
+          </div>
+          ${discount > 0 ? `
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
+              <span style="color: #666;">Discount ${quotation.discountType === 'percentage' ? `(${quotation.discountValue}%)` : ''}</span>
+              <span style="color: #dc2626;">-${formatCurrency(discount, quotation.currency)}</span>
+            </div>
+          ` : ''}
+          ${quotation.taxRate > 0 ? `
+            <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
+              <span style="color: #666;">Tax (${quotation.taxRate}%)</span>
+              <span>${formatCurrency(tax, quotation.currency)}</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; padding-top: 8px; border-top: 2px solid #d1d5db;">
+            <span>Total</span>
+            <span style="color: #0891b2;">${formatCurrency(total, quotation.currency)}</span>
+          </div>
+        </div>
+      </div>
+      
+      ${quotation.notes ? `
+        <div style="padding-top: 16px; border-top: 1px solid #e5e5e5;">
+          <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">NOTES</h2>
+          <p style="color: #666; white-space: pre-line; font-size: 10px;">${quotation.notes}</p>
+        </div>
+      ` : ''}
+      
+      <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e5e5; text-align: center;">
+        <p style="font-weight: 600; font-size: 10px; margin: 0;">Noga Engineering & Technology Ltd.</p>
+        <p style="font-size: 9px; color: #666; margin: 4px 0;">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
+        <p style="font-size: 9px; color: #0891b2; margin: 0;">www.nogamt.com</p>
+      </div>
+    `;
+    
+    document.body.appendChild(printContainer);
+    
+    // Wait for images to load
+    const images = printContainer.querySelectorAll('img');
+    await Promise.all(Array.from(images).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    }));
+    
+    const canvas = await html2canvas(printContainer, {
+      useCORS: true,
+      logging: false,
+      background: '#ffffff',
+      scale: 2,
+    } as Parameters<typeof html2canvas>[1]);
+    
+    document.body.removeChild(printContainer);
+    
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+    
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 20) / imgHeight);
+    const imgX = (pdfWidth - imgWidth * ratio) / 2;
+    const imgY = 10;
+    
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    
+    // Return base64 without the data URL prefix
+    return pdf.output('datauristring').split(',')[1];
+  };
+
   const handleSendToClient = async () => {
     toast({
       title: 'Generating PDF...',
@@ -34,58 +181,37 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     });
 
     try {
-      // Find the quotation card element
-      const element = document.querySelector('.card-elevated') as HTMLElement;
-      if (!element) {
-        throw new Error('Could not find quotation element');
+      const pdfBase64 = await generatePrintStylePdf();
+      
+      toast({
+        title: 'Sending email...',
+        description: 'Attaching PDF and sending to client.',
+      });
+
+      const response = await supabase.functions.invoke('send-quotation-email', {
+        body: {
+          to: quotation.clientEmail,
+          clientName: quotation.clientName,
+          quoteNumber: quotation.quoteNumber,
+          total: formatCurrency(total, quotation.currency),
+          validUntil: formatDate(quotation.validUntil),
+          pdfBase64,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
       }
 
-      // Generate canvas from the element
-      const canvas = await html2canvas(element, {
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      } as Parameters<typeof html2canvas>[1]);
-
-      // Create PDF
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      
-      // Save PDF
-      const fileName = `Quotation_${quotation.quoteNumber}.pdf`;
-      pdf.save(fileName);
-
       toast({
-        title: 'PDF Downloaded',
-        description: `${fileName} has been saved. Please attach it to your email.`,
+        title: 'Email Sent!',
+        description: `Quotation ${quotation.quoteNumber} has been sent to ${quotation.clientEmail}.`,
       });
-
-      // Open email client
-      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`);
-      const body = encodeURIComponent(
-        `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
-      );
-      
-      window.open(`mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`, '_blank');
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error sending quotation:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate PDF. Please try printing instead.',
+        description: 'Failed to send email. Please try again or use print.',
         variant: 'destructive',
       });
     }

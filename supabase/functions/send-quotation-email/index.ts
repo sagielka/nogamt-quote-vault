@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -17,6 +18,35 @@ interface SendQuotationRequest {
   pdfBase64: string;
 }
 
+// Simple email validation
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+// Input validation
+const validateRequest = (data: any): { valid: boolean; error?: string } => {
+  if (!data.to || typeof data.to !== 'string' || !isValidEmail(data.to)) {
+    return { valid: false, error: 'Invalid email address' };
+  }
+  if (!data.clientName || typeof data.clientName !== 'string' || data.clientName.length > 200) {
+    return { valid: false, error: 'Invalid client name' };
+  }
+  if (!data.quoteNumber || typeof data.quoteNumber !== 'string' || data.quoteNumber.length > 50) {
+    return { valid: false, error: 'Invalid quote number' };
+  }
+  if (!data.total || typeof data.total !== 'string' || data.total.length > 100) {
+    return { valid: false, error: 'Invalid total' };
+  }
+  if (!data.validUntil || typeof data.validUntil !== 'string') {
+    return { valid: false, error: 'Invalid valid until date' };
+  }
+  if (!data.pdfBase64 || typeof data.pdfBase64 !== 'string' || data.pdfBase64.length > 10485760) {
+    return { valid: false, error: 'Invalid or too large PDF (max 10MB)' };
+  }
+  return { valid: true };
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -24,7 +54,63 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, clientName, quoteNumber, total, validUntil, pdfBase64 }: SendQuotationRequest = await req.json();
+    // Verify JWT token - authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create Supabase client with user's auth context
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log(`Authenticated user: ${user.id}`);
+
+    // Parse and validate request body
+    const requestData = await req.json();
+    const validation = validateRequest(requestData);
+    if (!validation.valid) {
+      console.error('Validation failed:', validation.error);
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { to, clientName, quoteNumber, total, validUntil, pdfBase64 }: SendQuotationRequest = requestData;
+
+    // Verify user owns this quotation
+    const { data: quotation, error: quotationError } = await supabase
+      .from('quotations')
+      .select('id')
+      .eq('quote_number', quoteNumber)
+      .eq('user_id', user.id)
+      .single();
+
+    if (quotationError || !quotation) {
+      console.error('Quotation not found or unauthorized:', quotationError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Quotation not found or unauthorized' }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     console.log(`Sending quotation ${quoteNumber} to ${to}`);
 

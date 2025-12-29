@@ -1,10 +1,11 @@
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, getStatusColor, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside-new.png';
 
@@ -26,18 +27,68 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     window.print();
   };
 
-  const handleSendToClient = () => {
-    const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`);
-    const body = encodeURIComponent(
-      `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
-    );
-    
-    window.open(`mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`, '_blank');
-    
+  const handleSendToClient = async () => {
     toast({
-      title: 'Email Client Opened',
-      description: `Compose email to ${quotation.clientEmail}`,
+      title: 'Generating PDF...',
+      description: 'Please wait while we prepare the quotation.',
     });
+
+    try {
+      // Find the quotation card element
+      const element = document.querySelector('.card-elevated') as HTMLElement;
+      if (!element) {
+        throw new Error('Could not find quotation element');
+      }
+
+      // Generate canvas from the element
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      } as Parameters<typeof html2canvas>[1]);
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      // Save PDF
+      const fileName = `Quotation_${quotation.quoteNumber}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: 'PDF Downloaded',
+        description: `${fileName} has been saved. Please attach it to your email.`,
+      });
+
+      // Open email client
+      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`);
+      const body = encodeURIComponent(
+        `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
+      );
+      
+      window.open(`mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`, '_blank');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF. Please try printing instead.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getAttachmentsForLine = (index: number) => {
@@ -87,9 +138,6 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             <div className="flex flex-col md:flex-row justify-between items-start">
               <div></div>
               <div className="mt-4 md:mt-0 text-right print:text-left">
-                <Badge className={`${getStatusColor(quotation.status)} no-print`} variant="secondary">
-                  {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-                </Badge>
                 <p className="text-sm text-muted-foreground mt-2 print:text-gray-600 print:mt-0">
                   Created: {formatDate(quotation.createdAt)}
                 </p>

@@ -180,22 +180,21 @@
 
 /* Print styles for quotations */
 @media print {
-  * {
+  *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     font-family: 'Roboto Condensed', system-ui, sans-serif !important;
+    background-color: white !important;
+    color: #1a1a1a !important;
   }
 
   html, body {
     background: white !important;
+    background-color: white !important;
     background-image: none !important;
     margin: 0 !important;
     padding: 0 !important;
     font-size: 12px !important;
-  }
-
-  body {
-    color: #1a1a1a !important;
   }
   
   .no-print {
@@ -212,8 +211,10 @@
 
   /* Remove card styling for print */
   .card-elevated,
-  .print\:shadow-none {
+  .print\:shadow-none,
+  [class*="card"] {
     background: white !important;
+    background-color: white !important;
     border: none !important;
     box-shadow: none !important;
   }
@@ -222,8 +223,26 @@
     display: none !important;
   }
 
+  /* Print-specific text colors */
+  .print\:text-cyan-600 {
+    color: #0891b2 !important;
+  }
+
+  .print\:text-gray-900 {
+    color: #111827 !important;
+  }
+
+  .print\:text-gray-600 {
+    color: #4b5563 !important;
+  }
+
+  .print\:text-gray-500 {
+    color: #6b7280 !important;
+  }
+
   /* Ensure proper page margins */
   @page {
     margin: 1cm;
+    background: white;
   }
 }

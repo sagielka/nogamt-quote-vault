@@ -74,7 +74,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none">
         <CardContent className="p-8 md:p-12">
           {/* Print Header with Logo */}
-          <div className="hidden print:flex justify-end items-start mb-6">
+          <div className="hidden print:flex justify-start items-start mb-6">
             <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
           </div>
 
@@ -205,7 +205,6 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
 
           {/* Print Footer */}
           <div className="hidden print:block mt-12 pt-6 border-t border-gray-200 text-center">
-            <img src={thinkingInside} alt="Thinking Inside" className="h-8 w-auto mx-auto mb-2" />
             <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>
             <p className="text-[10px] text-gray-600">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
             <p className="text-[10px] text-cyan-600">www.nogamt.com</p>

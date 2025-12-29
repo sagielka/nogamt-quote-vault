@@ -2,7 +2,7 @@ import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
-import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Paperclip, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -155,8 +155,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       useCORS: true,
       logging: false,
       background: '#ffffff',
-      // Higher scale = sharper PDF (bigger file)
-      scale: 2,
+      // Higher scale = sharper PDF
+      scale: 3,
     } as Parameters<typeof html2canvas>[1]);
 
     document.body.removeChild(printContainer);
@@ -175,8 +175,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 10;
 
-    // JPEG keeps size manageable while remaining sharp at scale=2
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    // Use PNG for maximum quality
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
     const fileName = `Quotation_${quotation.quoteNumber}.pdf`;
     return {
@@ -185,16 +185,15 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     };
   };
 
-  const handleSendToClient = async () => {
+  const handleDownloadPdf = async () => {
     toast({
-      title: 'Preparing email...',
-      description: 'Generating PDF and opening your email program.',
+      title: 'Generating PDF...',
+      description: 'Please wait while the PDF is being created.',
     });
 
     try {
       const { blob, fileName } = await generatePrintStylePdf();
 
-      // 1) Download the PDF (email clients cannot reliably attach files automatically)
       const pdfUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = pdfUrl;
@@ -204,20 +203,12 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       a.remove();
       URL.revokeObjectURL(pdfUrl);
 
-      // 2) Open the user's email program with prefilled details
-      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber}`);
-      const body = encodeURIComponent(
-        `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber}.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
-      );
-      const to = encodeURIComponent(quotation.clientEmail || '');
-      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
-
       toast({
-        title: 'Email program opened',
-        description: 'Attach the downloaded PDF and send.',
+        title: 'PDF Downloaded',
+        description: `${fileName} has been saved.`,
       });
     } catch (error) {
-      console.error('Error preparing email:', error);
+      console.error('Error generating PDF:', error);
       toast({
         title: 'Error',
         description: 'Failed to generate PDF. Please try again or use print.',
@@ -249,9 +240,9 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="accent" onClick={handleSendToClient}>
-            <Mail className="w-4 h-4 mr-2" />
-            Send to Client
+          <Button variant="accent" onClick={handleDownloadPdf}>
+            <Download className="w-4 h-4 mr-2" />
+            Download PDF
           </Button>
         </div>
       </div>

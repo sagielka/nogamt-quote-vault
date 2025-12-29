@@ -6,7 +6,7 @@ import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateT
 import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import logo from '@/assets/logo.jpg';
-import thinkingInside from '@/assets/thinking-inside.png';
+import thinkingInside from '@/assets/thinking-inside-new.png';
 
 interface QuotationPreviewProps {
   quotation: Quotation;
@@ -71,11 +71,12 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       </div>
 
       {/* Quotation Document */}
-      <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none">
-        <CardContent className="p-8 md:p-12">
-          {/* Print Header with Logo */}
-          <div className="hidden print:flex justify-start items-start mb-6">
+      <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none print:min-h-screen print:flex print:flex-col">
+        <CardContent className="p-8 md:p-12 print:flex print:flex-col print:flex-1">
+          {/* Print Header with Logos */}
+          <div className="hidden print:flex justify-between items-start mb-6">
             <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
+            <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
           </div>
 
           {/* Header */}
@@ -203,8 +204,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             </div>
           )}
 
-          {/* Print Footer */}
-          <div className="hidden print:block mt-12 pt-6 border-t border-gray-200 text-center">
+          {/* Print Footer - Fixed to bottom */}
+          <div className="hidden print:block mt-auto pt-6 border-t border-gray-200 text-center">
             <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>
             <p className="text-[10px] text-gray-600">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
             <p className="text-[10px] text-cyan-600">www.nogamt.com</p>

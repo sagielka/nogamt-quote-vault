@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Mail, Paperclip, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logo from '@/assets/logo.jpg';
@@ -15,6 +14,11 @@ interface QuotationPreviewProps {
   onBack: () => void;
   onEdit?: () => void;
 }
+
+type GeneratedPdf = {
+  blob: Blob;
+  fileName: string;
+};
 
 export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreviewProps) => {
   const { toast } = useToast();
@@ -28,7 +32,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     window.print();
   };
 
-  const generatePrintStylePdf = async (): Promise<string> => {
+  const generatePrintStylePdf = async (): Promise<GeneratedPdf> => {
     // Create a hidden container with print styles
     const printContainer = document.createElement('div');
     printContainer.style.cssText = `
@@ -42,31 +46,31 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       font-size: 11px;
       color: #1a1a1a;
     `;
-    
+
     printContainer.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
         <img src="${logo}" alt="NogaMT Logo" style="height: 48px; width: auto;" crossorigin="anonymous" />
         <img src="${thinkingInside}" alt="Thinking Inside" style="height: 48px; width: auto;" crossorigin="anonymous" />
       </div>
-      
+
       <h1 style="text-align: center; color: #0891b2; font-size: 24px; margin-bottom: 16px; font-weight: bold;">
         QUOTATION <span style="color: #1a1a1a;">${quotation.quoteNumber}</span>
       </h1>
-      
+
       <div style="display: flex; justify-content: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e5e5;">
         <div style="text-align: left;">
           <p style="color: #666; font-size: 11px; margin: 0;">Created: ${formatDate(quotation.createdAt)}</p>
           <p style="color: #666; font-size: 11px; margin: 0;">Valid Until: ${formatDate(quotation.validUntil)}</p>
         </div>
       </div>
-      
+
       <div style="margin-bottom: 24px;">
         <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">BILL TO</h2>
         <p style="font-weight: 600; margin: 0;">${quotation.clientName}</p>
         <p style="color: #666; margin: 0;">${quotation.clientEmail}</p>
         ${quotation.clientAddress ? `<p style="color: #666; margin: 0; white-space: pre-line;">${quotation.clientAddress}</p>` : ''}
       </div>
-      
+
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 10px;">
         <thead>
           <tr style="border-bottom: 2px solid #d1d5db;">
@@ -93,7 +97,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           `).join('')}
         </tbody>
       </table>
-      
+
       <div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
         <div style="width: 220px;">
           <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
@@ -118,48 +122,50 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           </div>
         </div>
       </div>
-      
+
       ${quotation.notes ? `
         <div style="padding-top: 16px; border-top: 1px solid #e5e5e5;">
           <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">NOTES</h2>
           <p style="color: #666; white-space: pre-line; font-size: 10px;">${quotation.notes}</p>
         </div>
       ` : ''}
-      
+
       <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e5e5; text-align: center;">
         <p style="font-weight: 600; font-size: 10px; margin: 0;">Noga Engineering & Technology Ltd.</p>
         <p style="font-size: 9px; color: #666; margin: 4px 0;">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
         <p style="font-size: 9px; color: #0891b2; margin: 0;">www.nogamt.com</p>
       </div>
     `;
-    
+
     document.body.appendChild(printContainer);
-    
+
     // Wait for images to load
     const images = printContainer.querySelectorAll('img');
-    await Promise.all(Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
-      return new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-    }));
-    
+    await Promise.all(
+      Array.from(images).map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+
     const canvas = await html2canvas(printContainer, {
       useCORS: true,
       logging: false,
       background: '#ffffff',
       scale: 1,
     } as Parameters<typeof html2canvas>[1]);
-    
+
     document.body.removeChild(printContainer);
-    
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
     });
-    
+
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = canvas.width;
@@ -167,52 +173,53 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 20) / imgHeight);
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 10;
-    
+
     // Use JPEG with compression for smaller file size
     pdf.addImage(canvas.toDataURL('image/jpeg', 0.7), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-    
-    // Return base64 without the data URL prefix
-    return pdf.output('datauristring').split(',')[1];
+
+    const fileName = `Quotation_${quotation.quoteNumber}.pdf`;
+    return {
+      blob: pdf.output('blob'),
+      fileName,
+    };
   };
 
   const handleSendToClient = async () => {
     toast({
-      title: 'Generating PDF...',
-      description: 'Please wait while we prepare the quotation.',
+      title: 'Preparing email...',
+      description: 'Generating PDF and opening your email program.',
     });
 
     try {
-      const pdfBase64 = await generatePrintStylePdf();
-      
-      toast({
-        title: 'Sending email...',
-        description: 'Attaching PDF and sending to client.',
-      });
+      const { blob, fileName } = await generatePrintStylePdf();
 
-      const response = await supabase.functions.invoke('send-quotation-email', {
-        body: {
-          to: quotation.clientEmail,
-          clientName: quotation.clientName,
-          quoteNumber: quotation.quoteNumber,
-          total: formatCurrency(total, quotation.currency),
-          validUntil: formatDate(quotation.validUntil),
-          pdfBase64,
-        },
-      });
+      // 1) Download the PDF (email clients cannot reliably attach files automatically)
+      const pdfUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(pdfUrl);
 
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
+      // 2) Open the user's email program with prefilled details
+      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber}`);
+      const body = encodeURIComponent(
+        `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber}.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
+      );
+      const to = encodeURIComponent(quotation.clientEmail || '');
+      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
 
       toast({
-        title: 'Email Sent!',
-        description: `Quotation ${quotation.quoteNumber} has been sent to ${quotation.clientEmail}.`,
+        title: 'Email program opened',
+        description: 'Attach the downloaded PDF and send.',
       });
     } catch (error) {
-      console.error('Error sending quotation:', error);
+      console.error('Error preparing email:', error);
       toast({
         title: 'Error',
-        description: 'Failed to send email. Please try again or use print.',
+        description: 'Failed to generate PDF. Please try again or use print.',
         variant: 'destructive',
       });
     }

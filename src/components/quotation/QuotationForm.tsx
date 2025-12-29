@@ -13,6 +13,7 @@ import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Databas
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
@@ -51,6 +52,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [editEmail, setEditEmail] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchCustomers();
@@ -195,27 +197,56 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   };
 
   const saveCustomerToDatabase = async () => {
-    if (!clientName || !clientEmail) return;
+    if (!clientName || !clientEmail || !user) return;
 
-    const { error } = await supabase
+    // Check if customer already exists for this user
+    const { data: existingCustomer } = await supabase
       .from('customers')
-      .upsert(
-        { 
+      .select('id')
+      .eq('email', clientEmail)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingCustomer) {
+      // Update existing customer
+      const { error } = await supabase
+        .from('customers')
+        .update({ 
           name: clientName, 
           email: clientEmail, 
           address: clientAddress || null 
-        },
-        { onConflict: 'email' }
-      );
+        })
+        .eq('id', existingCustomer.id);
 
-    if (error) {
-      console.error('Error saving customer:', error);
+      if (error) {
+        console.error('Error updating customer:', error);
+      } else {
+        toast({
+          title: 'Customer Updated',
+          description: 'Customer details updated.',
+        });
+        fetchCustomers();
+      }
     } else {
-      toast({
-        title: 'Customer Saved',
-        description: 'Customer details saved for future quotations.',
-      });
-      fetchCustomers();
+      // Insert new customer
+      const { error } = await supabase
+        .from('customers')
+        .insert({ 
+          name: clientName, 
+          email: clientEmail, 
+          address: clientAddress || null,
+          user_id: user.id
+        });
+
+      if (error) {
+        console.error('Error saving customer:', error);
+      } else {
+        toast({
+          title: 'Customer Saved',
+          description: 'Customer details saved for future quotations.',
+        });
+        fetchCustomers();
+      }
     }
   };
 

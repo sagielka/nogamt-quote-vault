@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
+import { useAuth } from '@/hooks/useAuth';
 import { QuotationFormData } from '@/types/quotation';
 import { QuotationForm } from '@/components/quotation/QuotationForm';
 import { QuotationCard } from '@/components/quotation/QuotationCard';
@@ -7,7 +9,7 @@ import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
@@ -15,9 +17,30 @@ type View = 'list' | 'create' | 'edit' | 'preview';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, getQuotation } = useQuotations();
+  const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to sign out. Please try again.',
+        variant: 'destructive',
+      });
+    } else {
+      navigate('/auth');
+    }
+  };
 
   const handleCreateQuotation = (data: QuotationFormData) => {
     const newQuotation = addQuotation(data);
@@ -61,6 +84,18 @@ const Index = () => {
 
   const selectedQuotation = selectedQuotationId ? getQuotation(selectedQuotationId) : null;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -77,6 +112,10 @@ const Index = () => {
                   New Quote
                 </Button>
               )}
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
               <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
             </div>
           </div>

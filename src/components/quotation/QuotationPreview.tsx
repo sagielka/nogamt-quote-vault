@@ -164,6 +164,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
               <thead>
                 <tr className="border-b-2 border-border print:border-gray-300">
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-8 print:text-gray-500">#</th>
+                  <th className="text-left py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">SKU</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground print:text-gray-500">Description</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-32 print:text-gray-500">Application</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Qty</th>
@@ -180,6 +181,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                   return (
                     <tr key={item.id} className="border-b border-border print:border-gray-200">
                       <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
+                      <td className="py-4 text-foreground font-mono text-sm print:text-gray-900">{item.sku || '—'}</td>
                       <td className="py-4 text-foreground print:text-gray-900">
                         <div>{item.description || '—'}</div>
                       </td>

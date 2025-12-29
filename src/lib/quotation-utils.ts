@@ -78,6 +78,7 @@ export const getStatusColor = (status: Quotation['status']): string => {
 
 export const createEmptyLineItem = (): LineItem => ({
   id: crypto.randomUUID(),
+  sku: '',
   description: '',
   quantity: 1,
   unitPrice: 0,

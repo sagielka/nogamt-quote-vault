@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES, LineItemAttachment } from '@/types/quotation';
+import { searchProducts, ProductItem } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LineItemRow } from './LineItemRow';
+import { LineItemWithSku } from './LineItemWithSku';
 import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -408,11 +409,12 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         <CardContent className="space-y-4 pt-6">
           {/* Header */}
           <div className="hidden md:grid md:grid-cols-12 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-2">
-            <div className="col-span-4">Description</div>
+            <div className="col-span-2">SKU</div>
+            <div className="col-span-3">Description</div>
             <div className="col-span-1 text-center">Qty</div>
             <div className="col-span-2 text-right">Unit Price</div>
             <div className="col-span-1 text-center">Disc %</div>
-            <div className="col-span-2 text-right">Total</div>
+            <div className="col-span-1 text-right">Total</div>
             <div className="col-span-2 text-center">Actions</div>
           </div>
 
@@ -420,84 +422,16 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           <div className="space-y-3">
             {items.map((item, index) => (
               <div key={item.id} className="space-y-2 group/item">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
-                  <div className="md:col-span-4">
-                    <Input
-                      placeholder="Item description"
-                      value={item.description}
-                      onChange={(e) => handleUpdateItem(item.id, { description: e.target.value })}
-                      className="input-focus bg-background/50 border-primary/20"
-                    />
-                  </div>
-                  <div className="md:col-span-1">
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="Qty"
-                      value={item.quantity || ''}
-                      onChange={(e) => handleUpdateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
-                      className="input-focus text-center bg-background/50 border-primary/20"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Price"
-                      value={item.unitPrice || ''}
-                      onChange={(e) => handleUpdateItem(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
-                      className="input-focus text-right bg-background/50 border-primary/20"
-                    />
-                  </div>
-                  <div className="md:col-span-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="0"
-                      value={item.discountPercent || ''}
-                      onChange={(e) => handleUpdateItem(item.id, { discountPercent: parseFloat(e.target.value) || 0 })}
-                      className="input-focus text-center bg-background/50 border-primary/20"
-                    />
-                  </div>
-                  <div className="md:col-span-2 text-right font-mono font-medium text-primary glow-text">
-                    {formatCurrency(calculateLineTotal(item), currency)}
-                  </div>
-                  <div className="md:col-span-2 flex items-center justify-center gap-1">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(e, index)}
-                        disabled={uploading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-                        asChild
-                      >
-                        <span>
-                          <Upload className="h-4 w-4" />
-                        </span>
-                      </Button>
-                    </label>
-                    {items.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                <LineItemWithSku
+                  item={item}
+                  index={index}
+                  currency={currency}
+                  onUpdate={handleUpdateItem}
+                  onRemove={handleRemoveItem}
+                  onFileUpload={handleFileUpload}
+                  canRemove={items.length > 1}
+                  uploading={uploading}
+                />
                 {/* Attachments for this line */}
                 {getAttachmentsForLine(index).map((att) => (
                   <div key={att.id} className="flex items-center gap-2 pl-4 text-sm text-muted-foreground">

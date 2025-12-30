@@ -5,6 +5,7 @@ export const lineItemSchema = z.object({
   id: z.string(),
   sku: z.string().max(50, 'SKU must be 50 characters or less').optional().nullable(),
   description: z.string().min(1, 'Description is required').max(500, 'Description must be 500 characters or less'),
+  moq: z.number().positive('MOQ must be positive').int('MOQ must be a whole number').max(999999, 'MOQ too large').optional().default(1),
   quantity: z.number().positive('Quantity must be positive').int('Quantity must be a whole number').max(999999, 'Quantity too large'),
   unitPrice: z.number().nonnegative('Unit price cannot be negative').max(999999999, 'Unit price too large'),
   discountPercent: z.number().min(0, 'Discount cannot be negative').max(100, 'Discount cannot exceed 100%').optional().default(0),

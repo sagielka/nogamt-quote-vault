@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Upload, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
-import { searchProducts, ProductItem, productCatalog } from '@/data/product-catalog';
+import { searchProducts, ProductItem } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
 
 interface LineItemWithSkuProps {
@@ -13,9 +13,7 @@ interface LineItemWithSkuProps {
   currency: Currency;
   onUpdate: (id: string, updates: Partial<LineItem>) => void;
   onRemove: (id: string) => void;
-  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>, lineItemIndex: number) => void;
   canRemove: boolean;
-  uploading: boolean;
 }
 
 export const LineItemWithSku = ({
@@ -24,9 +22,7 @@ export const LineItemWithSku = ({
   currency,
   onUpdate,
   onRemove,
-  onFileUpload,
   canRemove,
-  uploading,
 }: LineItemWithSkuProps) => {
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -130,6 +126,18 @@ export const LineItemWithSku = ({
         />
       </div>
       
+      {/* MOQ */}
+      <div className="md:col-span-1">
+        <Input
+          type="number"
+          min="1"
+          placeholder="MOQ"
+          value={item.moq || ''}
+          onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
+          className="input-focus text-center bg-background/50 border-primary/20"
+        />
+      </div>
+      
       {/* Quantity */}
       <div className="md:col-span-1">
         <Input
@@ -175,26 +183,7 @@ export const LineItemWithSku = ({
       </div>
       
       {/* Actions */}
-      <div className="md:col-span-2 flex items-center justify-center gap-1">
-        <label className="cursor-pointer">
-          <input
-            type="file"
-            className="hidden"
-            onChange={(e) => onFileUpload(e, index)}
-            disabled={uploading}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-primary hover:bg-primary/10"
-            asChild
-          >
-            <span>
-              <Upload className="h-4 w-4" />
-            </span>
-          </Button>
-        </label>
+      <div className="md:col-span-1 flex items-center justify-center">
         {canRemove && (
           <Button
             type="button"

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { LineItem, QuotationFormData, Currency, CURRENCIES, LineItemAttachment } from '@/types/quotation';
+import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
 import { searchProducts, ProductItem } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { quotationSchema } from '@/lib/validation-schemas';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemWithSku } from './LineItemWithSku';
-import { Plus, FileText, Users, Upload, X, Paperclip, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2 } from 'lucide-react';
+import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -46,8 +46,6 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [currency, setCurrency] = useState<Currency>(initialData?.currency || 'USD');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [saveCustomer, setSaveCustomer] = useState(true);
-  const [attachments, setAttachments] = useState<LineItemAttachment[]>(initialData?.attachments || []);
-  const [uploading, setUploading] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -147,79 +145,6 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     if (items.length > 1) {
       setItems(items.filter((item) => item.id !== id));
     }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, lineItemIndex: number) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: 'File Too Large',
-        description: 'Maximum file size is 5MB.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: 'Invalid File Type',
-        description: 'Only images (JPEG, PNG, GIF, WebP) and PDFs are allowed.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      // Use user ID as folder for proper RLS enforcement
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('quotation-attachments')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Use signed URL instead of public URL for security
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('quotation-attachments')
-        .createSignedUrl(filePath, 3600 * 24 * 7); // 7 days expiry
-
-      if (signedUrlError) throw signedUrlError;
-
-      const newAttachment: LineItemAttachment = {
-        id: crypto.randomUUID(),
-        fileName: file.name,
-        fileUrl: signedUrlData.signedUrl,
-        lineItemIndex,
-      };
-
-      setAttachments([...attachments, newAttachment]);
-      toast({
-        title: 'File Uploaded',
-        description: `${file.name} attached to line ${lineItemIndex + 1}`,
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Upload Failed',
-        description: 'Failed to upload file. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemoveAttachment = (attachmentId: string) => {
-    setAttachments(attachments.filter(a => a.id !== attachmentId));
   };
 
   const saveCustomerToDatabase = async () => {
@@ -324,7 +249,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       validUntil: validationResult.data.validUntil,
       status: 'draft',
       currency: currency,
-      attachments,
+      attachments: [],
     });
   };
 
@@ -333,10 +258,6 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const afterDiscount = subtotal - discount;
   const tax = calculateTax(afterDiscount, taxRate);
   const total = calculateTotal(items, taxRate, discountType, discountValue);
-
-  const getAttachmentsForLine = (index: number) => {
-    return attachments.filter(a => a.lineItemIndex === index);
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
@@ -497,47 +418,26 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           <div className="hidden md:grid md:grid-cols-12 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-2">
             <div className="col-span-2">SKU</div>
             <div className="col-span-3">Description</div>
+            <div className="col-span-1 text-center">MOQ</div>
             <div className="col-span-1 text-center">Qty</div>
             <div className="col-span-2 text-right">Unit Price</div>
             <div className="col-span-1 text-center">Disc %</div>
             <div className="col-span-1 text-right">Total</div>
-            <div className="col-span-2 text-center">Actions</div>
+            <div className="col-span-1 text-center">Actions</div>
           </div>
 
           {/* Items */}
           <div className="space-y-3">
             {items.map((item, index) => (
-              <div key={item.id} className="space-y-2 group/item">
-                <LineItemWithSku
-                  item={item}
-                  index={index}
-                  currency={currency}
-                  onUpdate={handleUpdateItem}
-                  onRemove={handleRemoveItem}
-                  onFileUpload={handleFileUpload}
-                  canRemove={items.length > 1}
-                  uploading={uploading}
-                />
-                {/* Attachments for this line */}
-                {getAttachmentsForLine(index).map((att) => (
-                  <div key={att.id} className="flex items-center gap-2 pl-4 text-sm text-muted-foreground">
-                    <Paperclip className="h-3 w-3 text-primary" />
-                    <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary hover:glow-text transition-all">
-                      {att.fileName}
-                    </a>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">Index {index + 1}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleRemoveAttachment(att.id)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <LineItemWithSku
+                key={item.id}
+                item={item}
+                index={index}
+                currency={currency}
+                onUpdate={handleUpdateItem}
+                onRemove={handleRemoveItem}
+                canRemove={items.length > 1}
+              />
             ))}
           </div>
 

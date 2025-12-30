@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { escapeHtml } from '@/lib/html-sanitize';
-import { ArrowLeft, Printer, Download, Paperclip, Pencil } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -85,6 +85,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 30px;">#</th>
             <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">SKU</th>
             <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500;">Description</th>
+            <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">MOQ</th>
             <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">Qty</th>
             <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Unit Price</th>
             <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">Disc %</th>
@@ -92,17 +93,18 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           </tr>
         </thead>
         <tbody>
-          ${quotation.items.map((item, index) => `
+          \${quotation.items.map((item, index) => \`
             <tr style="border-bottom: 1px solid #e5e5e5;">
-              <td style="padding: 12px 4px; color: #666;">${index + 1}</td>
-              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">${escapeHtml(item.sku) || '—'}</td>
-              <td style="padding: 12px 4px;">${escapeHtml(item.description) || '—'}</td>
-              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.quantity}</td>
-              <td style="padding: 12px 4px; text-align: right; color: #666;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
-              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
-              <td style="padding: 12px 4px; text-align: right; font-weight: 500;">${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+              <td style="padding: 12px 4px; color: #666;">\${index + 1}</td>
+              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">\${escapeHtml(item.sku) || '—'}</td>
+              <td style="padding: 12px 4px;">\${escapeHtml(item.description) || '—'}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">\${item.moq || 1}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">\${item.quantity}</td>
+              <td style="padding: 12px 4px; text-align: right; color: #666;">\${formatCurrency(item.unitPrice, quotation.currency)}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">\${item.discountPercent ? \`\${item.discountPercent}%\` : '—'}</td>
+              <td style="padding: 12px 4px; text-align: right; font-weight: 500;">\${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
             </tr>
-          `).join('')}
+          \`).join('')}
         </tbody>
       </table>
 
@@ -225,9 +227,6 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     }
   };
 
-  const getAttachmentsForLine = (index: number) => {
-    return (quotation.attachments || []).filter(a => a.lineItemIndex === index);
-  };
 
   return (
     <div className="animate-fade-in">
@@ -300,7 +299,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-8 print:text-gray-500">#</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">SKU</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground print:text-gray-500">Description</th>
-                  <th className="text-left py-3 text-sm font-medium text-muted-foreground w-32 print:text-gray-500">Application</th>
+                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">MOQ</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Qty</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">Unit Price</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>
@@ -308,51 +307,24 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                 </tr>
               </thead>
               <tbody>
-                {quotation.items.map((item, index) => {
-                  const lineAttachments = getAttachmentsForLine(index);
-                  const isImage = (fileName: string) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileName);
-                  
-                  return (
-                    <tr key={item.id} className="border-b border-border print:border-gray-200">
-                      <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
-                      <td className="py-4 text-foreground font-mono text-sm print:text-gray-900">{item.sku || '—'}</td>
-                      <td className="py-4 text-foreground print:text-gray-900">
-                        <div>{item.description || '—'}</div>
-                      </td>
-                      {/* Application column - visible on screen and print */}
-                      <td className="py-4 text-foreground print:text-gray-900">
-                        {lineAttachments.map((att) => (
-                          <div key={att.id}>
-                            {isImage(att.fileName) ? (
-                              <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                                <img 
-                                  src={att.fileUrl} 
-                                  alt="Attachment" 
-                                  className="max-w-[100px] max-h-[60px] object-cover rounded print:max-w-[80px] print:max-h-[50px]"
-                                />
-                              </a>
-                            ) : (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground print:text-gray-500">
-                                <Paperclip className="h-3 w-3" />
-                                <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-primary print:text-cyan-600">
-                                  {att.fileName}
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </td>
-                      <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.quantity}</td>
-                      <td className="py-4 text-right text-muted-foreground print:text-gray-600">{formatCurrency(item.unitPrice, quotation.currency)}</td>
-                      <td className="py-4 text-center text-muted-foreground print:text-gray-600">
-                        {item.discountPercent ? `${item.discountPercent}%` : '—'}
-                      </td>
-                      <td className="py-4 text-right font-medium text-foreground print:text-gray-900">
-                        {formatCurrency(calculateLineTotal(item), quotation.currency)}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {quotation.items.map((item, index) => (
+                  <tr key={item.id} className="border-b border-border print:border-gray-200">
+                    <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
+                    <td className="py-4 text-foreground font-mono text-sm print:text-gray-900">{item.sku || '—'}</td>
+                    <td className="py-4 text-foreground print:text-gray-900">
+                      <div>{item.description || '—'}</div>
+                    </td>
+                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.moq || 1}</td>
+                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.quantity}</td>
+                    <td className="py-4 text-right text-muted-foreground print:text-gray-600">{formatCurrency(item.unitPrice, quotation.currency)}</td>
+                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">
+                      {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                    </td>
+                    <td className="py-4 text-right font-medium text-foreground print:text-gray-900">
+                      {formatCurrency(calculateLineTotal(item), quotation.currency)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

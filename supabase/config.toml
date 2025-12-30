@@ -2,6 +2,3 @@ project_id = "udxfhhdoekjoofadmngu"
 
 [functions.send-quotation-email]
 verify_jwt = true
-
-[functions.create-test-user]
-verify_jwt = false

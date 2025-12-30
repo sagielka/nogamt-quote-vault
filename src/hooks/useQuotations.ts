@@ -92,7 +92,7 @@ export const useQuotations = () => {
       for (const quote of parsed) {
         const dbRow = {
           user_id: user.id,
-          quote_number: quote.quoteNumber || generateQuoteNumber(),
+          quote_number: quote.quoteNumber || generateQuoteNumber(quote.clientName || ''),
           client_name: quote.clientName,
           client_email: quote.clientEmail,
           client_address: quote.clientAddress || null,
@@ -139,7 +139,7 @@ export const useQuotations = () => {
   const addQuotation = useCallback(async (data: QuotationFormData): Promise<Quotation | null> => {
     if (!user) return null;
 
-    const quoteNumber = generateQuoteNumber();
+    const quoteNumber = generateQuoteNumber(data.clientName);
     const dbRow = quotationToDbRow(data, user.id, quoteNumber);
 
     try {

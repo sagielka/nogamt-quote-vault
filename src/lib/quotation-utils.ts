@@ -1,11 +1,12 @@
 import { LineItem, Quotation, Currency } from '@/types/quotation';
 
-export const generateQuoteNumber = (): string => {
+export const generateQuoteNumber = (customerName: string = ''): string => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = String(now.getFullYear()).slice(-2);
-  return `MT${day}${month}${year}`;
+  const formattedName = customerName.trim().toUpperCase();
+  return formattedName ? `MT${day}${month}${year}-${formattedName}` : `MT${day}${month}${year}`;
 };
 
 export const calculateLineTotal = (item: LineItem): number => {

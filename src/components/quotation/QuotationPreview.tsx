@@ -188,7 +188,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     // Use PNG for maximum quality
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
-    const fileName = `Quotation_${quotation.quoteNumber}.pdf`;
+    const fileName = `${quotation.quoteNumber.replace(/^QT/i, '')}.pdf`;
     return {
       blob: pdf.output('blob'),
       fileName,

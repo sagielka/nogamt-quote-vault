@@ -166,8 +166,19 @@ export const useQuotations = () => {
   const updateQuotation = useCallback(async (id: string, data: Partial<QuotationFormData>) => {
     if (!user) return;
 
+    // Find the existing quotation to check if client name changed
+    const existingQuotation = quotations.find((q) => q.id === id);
+
     const updateData: any = {};
-    if (data.clientName !== undefined) updateData.client_name = data.clientName;
+    
+    // If client name changed, regenerate quote number
+    if (data.clientName !== undefined && existingQuotation && data.clientName !== existingQuotation.clientName) {
+      updateData.quote_number = generateQuoteNumber(data.clientName);
+      updateData.client_name = data.clientName;
+    } else if (data.clientName !== undefined) {
+      updateData.client_name = data.clientName;
+    }
+    
     if (data.clientEmail !== undefined) updateData.client_email = data.clientEmail;
     if (data.clientAddress !== undefined) updateData.client_address = data.clientAddress || null;
     if (data.items !== undefined) updateData.items = data.items;
@@ -191,13 +202,18 @@ export const useQuotations = () => {
         return;
       }
 
+      // Update local state with new quote number if it was regenerated
+      const updatedData = updateData.quote_number 
+        ? { ...data, quoteNumber: updateData.quote_number }
+        : data;
+
       setQuotations((prev) =>
-        prev.map((q) => (q.id === id ? { ...q, ...data } : q))
+        prev.map((q) => (q.id === id ? { ...q, ...updatedData } : q))
       );
     } catch (err) {
       console.error('Error updating quotation:', err);
     }
-  }, [user]);
+  }, [user, quotations]);
 
   const deleteQuotation = useCallback(async (id: string) => {
     if (!user) return;

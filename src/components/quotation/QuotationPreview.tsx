@@ -85,9 +85,9 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 30px;">#</th>
             <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">SKU</th>
             <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500;">Description</th>
-            <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 60px;">Lead Time</th>
+            <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">LT (wks)</th>
             <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">MOQ</th>
-            <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Unit Price</th>
+            <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Unit Price (${quotation.currency})</th>
             <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">Disc %</th>
             <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Total</th>
           </tr>
@@ -299,9 +299,9 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-8 print:text-gray-500">#</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">SKU</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground print:text-gray-500">Description</th>
-                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-20 print:text-gray-500">Lead Time</th>
+                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">LT (wks)</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">MOQ</th>
-                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">Unit Price</th>
+                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Unit Price ({quotation.currency})</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">Total</th>
                 </tr>

@@ -14,7 +14,7 @@ interface LineItemRowProps {
 }
 
 export const LineItemRow = ({ item, onUpdate, onRemove, canRemove }: LineItemRowProps) => {
-  const lineTotal = item.quantity * item.unitPrice;
+  const lineTotal = item.moq * item.unitPrice;
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -109,9 +109,9 @@ export const LineItemRow = ({ item, onUpdate, onRemove, canRemove }: LineItemRow
         <Input
           type="number"
           min="1"
-          placeholder="Qty"
-          value={item.quantity || ''}
-          onChange={(e) => onUpdate(item.id, { quantity: parseInt(e.target.value) || 0 })}
+          placeholder="MOQ"
+          value={item.moq || ''}
+          onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 0 })}
           className="input-focus text-center"
         />
       </div>

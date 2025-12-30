@@ -79,7 +79,7 @@ export const LineItemWithSku = ({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
+    <div className="grid grid-cols-1 md:grid-cols-11 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
       {/* SKU with autocomplete */}
       <div className="md:col-span-2 relative">
         <Input
@@ -126,6 +126,16 @@ export const LineItemWithSku = ({
         />
       </div>
       
+      {/* Lead Time */}
+      <div className="md:col-span-1">
+        <Input
+          placeholder="Lead Time"
+          value={item.leadTime || ''}
+          onChange={(e) => onUpdate(item.id, { leadTime: e.target.value })}
+          className="input-focus text-center bg-background/50 border-primary/20"
+        />
+      </div>
+      
       {/* MOQ */}
       <div className="md:col-span-1">
         <Input
@@ -134,18 +144,6 @@ export const LineItemWithSku = ({
           placeholder="MOQ"
           value={item.moq || ''}
           onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
-          className="input-focus text-center bg-background/50 border-primary/20"
-        />
-      </div>
-      
-      {/* Quantity */}
-      <div className="md:col-span-1">
-        <Input
-          type="number"
-          min="1"
-          placeholder="Qty"
-          value={item.quantity || ''}
-          onChange={(e) => onUpdate(item.id, { quantity: parseInt(e.target.value) || 0 })}
           className="input-focus text-center bg-background/50 border-primary/20"
         />
       </div>
@@ -180,21 +178,6 @@ export const LineItemWithSku = ({
       {/* Total */}
       <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text">
         {formatCurrency(calculateLineTotal(item), currency)}
-      </div>
-      
-      {/* Actions */}
-      <div className="md:col-span-1 flex items-center justify-center">
-        {canRemove && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => onRemove(item.id)}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
       </div>
     </div>
   );

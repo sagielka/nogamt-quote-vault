@@ -20,8 +20,8 @@ export interface LineItem {
   id: string;
   sku: string;
   description: string;
+  leadTime: string;
   moq: number;
-  quantity: number;
   unitPrice: number;
   discountPercent: number;
 }

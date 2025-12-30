@@ -9,7 +9,7 @@ export const generateQuoteNumber = (): string => {
 };
 
 export const calculateLineTotal = (item: LineItem): number => {
-  const gross = item.quantity * item.unitPrice;
+  const gross = item.moq * item.unitPrice;
   const lineDiscount = gross * ((item.discountPercent || 0) / 100);
   return gross - lineDiscount;
 };
@@ -80,8 +80,8 @@ export const createEmptyLineItem = (): LineItem => ({
   id: crypto.randomUUID(),
   sku: '',
   description: '',
+  leadTime: '',
   moq: 1,
-  quantity: 1,
   unitPrice: 0,
   discountPercent: 0,
 });

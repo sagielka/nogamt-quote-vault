@@ -20,10 +20,10 @@ export interface LineItem {
   id: string;
   sku: string;
   description: string;
+  moq: number;
   quantity: number;
   unitPrice: number;
   discountPercent: number;
-  attachmentIndex?: number;
 }
 
 export interface Quotation {

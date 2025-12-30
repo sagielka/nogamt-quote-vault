@@ -80,6 +80,7 @@ export const createEmptyLineItem = (): LineItem => ({
   id: crypto.randomUUID(),
   sku: '',
   description: '',
+  moq: 1,
   quantity: 1,
   unitPrice: 0,
   discountPercent: 0,

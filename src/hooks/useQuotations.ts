@@ -223,12 +223,58 @@ export const useQuotations = () => {
     return quotations.find((q) => q.id === id);
   }, [quotations]);
 
+  const duplicateQuotation = useCallback(async (id: string): Promise<Quotation | null> => {
+    if (!user) return null;
+    
+    const original = quotations.find((q) => q.id === id);
+    if (!original) return null;
+
+    const quoteNumber = generateQuoteNumber(original.clientName);
+    const dbRow = {
+      user_id: user.id,
+      quote_number: quoteNumber,
+      client_name: original.clientName,
+      client_email: original.clientEmail,
+      client_address: original.clientAddress || null,
+      items: original.items,
+      tax_rate: original.taxRate,
+      discount_type: original.discountType,
+      discount_value: original.discountValue,
+      notes: original.notes || null,
+      currency: original.currency,
+      status: 'draft',
+      attachments: [],
+      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    try {
+      const { data: newRow, error } = await supabase
+        .from('quotations')
+        .insert(dbRow as any)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error duplicating quotation:', error);
+        return null;
+      }
+
+      const newQuotation = dbRowToQuotation(newRow);
+      setQuotations((prev) => [newQuotation, ...prev]);
+      return newQuotation;
+    } catch (err) {
+      console.error('Error duplicating quotation:', err);
+      return null;
+    }
+  }, [user, quotations]);
+
   return {
     quotations,
     loading,
     addQuotation,
     updateQuotation,
     deleteQuotation,
+    duplicateQuotation,
     getQuotation,
     refreshQuotations: fetchQuotations,
   };

@@ -93,18 +93,18 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           </tr>
         </thead>
         <tbody>
-          \${quotation.items.map((item, index) => \`
+          ${quotation.items.map((item, index) => `
             <tr style="border-bottom: 1px solid #e5e5e5;">
-              <td style="padding: 12px 4px; color: #666;">\${index + 1}</td>
-              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">\${escapeHtml(item.sku) || '—'}</td>
-              <td style="padding: 12px 4px;">\${escapeHtml(item.description) || '—'}</td>
-              <td style="padding: 12px 4px; text-align: center; color: #666;">\${escapeHtml(item.leadTime) || '—'}</td>
-              <td style="padding: 12px 4px; text-align: center; color: #666;">\${item.moq || 1}</td>
-              <td style="padding: 12px 4px; text-align: right; color: #666;">\${formatCurrency(item.unitPrice, quotation.currency)}</td>
-              <td style="padding: 12px 4px; text-align: center; color: #666;">\${item.discountPercent ? \`\${item.discountPercent}%\` : '—'}</td>
-              <td style="padding: 12px 4px; text-align: right; font-weight: 500;">\${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+              <td style="padding: 12px 4px; color: #666;">${index + 1}</td>
+              <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">${escapeHtml(item.sku) || '—'}</td>
+              <td style="padding: 12px 4px;">${escapeHtml(item.description) || '—'}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.leadTime || '—'}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.moq || 1}</td>
+              <td style="padding: 12px 4px; text-align: right; color: #666;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
+              <td style="padding: 12px 4px; text-align: center; color: #666;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
+              <td style="padding: 12px 4px; text-align: right; font-weight: 500;">${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
             </tr>
-          \`).join('')}
+          `).join('')}
         </tbody>
       </table>
 

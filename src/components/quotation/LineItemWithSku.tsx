@@ -126,10 +126,12 @@ export const LineItemWithSku = ({
         />
       </div>
       
-      {/* Lead Time */}
+      {/* LT (weeks) */}
       <div className="md:col-span-1">
         <Input
-          placeholder="Lead Time"
+          type="number"
+          min="0"
+          placeholder="Weeks"
           value={item.leadTime || ''}
           onChange={(e) => onUpdate(item.id, { leadTime: e.target.value })}
           className="input-focus text-center bg-background/50 border-primary/20"

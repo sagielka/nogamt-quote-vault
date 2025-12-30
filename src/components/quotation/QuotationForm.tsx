@@ -418,9 +418,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           <div className="hidden md:grid md:grid-cols-11 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-2">
             <div className="col-span-2">SKU</div>
             <div className="col-span-3">Description</div>
-            <div className="col-span-1 text-center">Lead Time</div>
+            <div className="col-span-1 text-center">LT (weeks)</div>
             <div className="col-span-1 text-center">MOQ</div>
-            <div className="col-span-2 text-right">Unit Price</div>
+            <div className="col-span-2 text-right">Unit Price ({currency})</div>
             <div className="col-span-1 text-center">Disc %</div>
             <div className="col-span-1 text-right">Total</div>
           </div>

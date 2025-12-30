@@ -5,8 +5,12 @@ export const generateQuoteNumber = (customerName: string = ''): string => {
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = String(now.getFullYear()).slice(-2);
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
   const formattedName = customerName.trim().toUpperCase();
-  return formattedName ? `MT${day}${month}${year}-${formattedName}` : `MT${day}${month}${year}`;
+  const timestamp = `${hours}${minutes}${seconds}`;
+  return formattedName ? `MT${day}${month}${year}-${timestamp}-${formattedName}` : `MT${day}${month}${year}-${timestamp}`;
 };
 
 export const calculateLineTotal = (item: LineItem): number => {

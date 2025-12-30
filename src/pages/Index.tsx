@@ -16,7 +16,7 @@ import thinkingInside from '@/assets/thinking-inside.png';
 type View = 'list' | 'create' | 'edit' | 'preview';
 
 const Index = () => {
-  const { quotations, addQuotation, updateQuotation, deleteQuotation, getQuotation } = useQuotations();
+  const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation } = useQuotations();
   const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
@@ -90,6 +90,22 @@ const Index = () => {
     });
   };
 
+  const handleDuplicateQuotation = async (id: string) => {
+    const duplicated = await duplicateQuotation(id);
+    if (duplicated) {
+      toast({
+        title: 'Quotation Duplicated',
+        description: `Quote ${duplicated.quoteNumber} has been created.`,
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to duplicate quotation.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const selectedQuotation = selectedQuotationId ? getQuotation(selectedQuotationId) : null;
 
   if (loading) {
@@ -154,6 +170,7 @@ const Index = () => {
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}
+                      onDuplicate={handleDuplicateQuotation}
                     />
                   ))}
                 </div>

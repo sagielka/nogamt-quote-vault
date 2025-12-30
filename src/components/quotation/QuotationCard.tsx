@@ -3,16 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
-import { Eye, Trash2, Calendar, User, Pencil } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy } from 'lucide-react';
 
 interface QuotationCardProps {
   quotation: Quotation;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
 }
 
-export const QuotationCard = ({ quotation, onView, onEdit, onDelete }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate }: QuotationCardProps) => {
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   return (
@@ -55,6 +56,9 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete }: Quotation
             </Button>
             <Button variant="outline" size="sm" onClick={() => onEdit(quotation.id)}>
               <Pencil className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onDuplicate(quotation.id)}>
+              <Copy className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"

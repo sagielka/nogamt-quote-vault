@@ -44,6 +44,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     initialData?.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   );
   const [currency, setCurrency] = useState<Currency>(initialData?.currency || 'USD');
+  const [previousCurrency, setPreviousCurrency] = useState<Currency>(initialData?.currency || 'USD');
   const [priceList, setPriceList] = useState<PriceList>('DOLLAR');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [saveCustomer, setSaveCustomer] = useState(true);
@@ -57,6 +58,27 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  // Handle currency conversion when display currency changes
+  const handleCurrencyChange = (newCurrency: Currency) => {
+    if (newCurrency === previousCurrency) {
+      setCurrency(newCurrency);
+      return;
+    }
+
+    // Convert all item prices from previous currency to new currency
+    const convertedItems = items.map(item => {
+      if (item.unitPrice > 0) {
+        const convertedPrice = convertPrice(item.unitPrice, previousCurrency, newCurrency);
+        return { ...item, unitPrice: Math.round(convertedPrice * 100) / 100 };
+      }
+      return item;
+    });
+
+    setItems(convertedItems);
+    setPreviousCurrency(newCurrency);
+    setCurrency(newCurrency);
+  };
 
   const fetchCustomers = async () => {
     const { data, error } = await supabase
@@ -406,7 +428,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground uppercase text-xs tracking-wider">Display Currency</Label>
-              <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)}>
+              <Select value={currency} onValueChange={(value) => handleCurrencyChange(value as Currency)}>
                 <SelectTrigger className="w-full input-focus bg-secondary/50 border-accent/20 hover:border-accent/40 transition-colors">
                   <SelectValue />
                 </SelectTrigger>

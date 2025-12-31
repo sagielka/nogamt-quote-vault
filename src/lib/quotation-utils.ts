@@ -1,6 +1,6 @@
 import { LineItem, Quotation, Currency } from '@/types/quotation';
 
-export const generateQuoteNumber = (customerName: string = ''): string => {
+export const generateQuoteNumber = (customerName: string = '', isCopy: boolean = false): string => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -8,7 +8,8 @@ export const generateQuoteNumber = (customerName: string = ''): string => {
   // Remove email in parentheses from customer name
   const cleanName = customerName.replace(/\s*\([^)]*\)\s*/g, '').trim();
   const formattedName = cleanName.toUpperCase();
-  return formattedName ? `MT${day}${month}${year}-${formattedName}` : `MT${day}${month}${year}`;
+  const suffix = isCopy ? '-COPY' : '';
+  return formattedName ? `MT${day}${month}${year}-${formattedName}${suffix}` : `MT${day}${month}${year}${suffix}`;
 };
 
 export const calculateLineTotal = (item: LineItem): number => {

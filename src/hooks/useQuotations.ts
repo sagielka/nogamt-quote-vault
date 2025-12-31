@@ -171,9 +171,12 @@ export const useQuotations = () => {
 
     const updateData: any = {};
     
-    // If client name changed, regenerate quote number
-    if (data.clientName !== undefined && existingQuotation && data.clientName !== existingQuotation.clientName) {
-      updateData.quote_number = generateQuoteNumber(data.clientName);
+    // Check if this is a COPY quote (ends with -COPY)
+    const isCopyQuote = existingQuotation?.quoteNumber?.endsWith('-COPY');
+    
+    // If client name changed OR this is a COPY quote being updated, regenerate quote number (without -COPY)
+    if (data.clientName !== undefined && existingQuotation && (data.clientName !== existingQuotation.clientName || isCopyQuote)) {
+      updateData.quote_number = generateQuoteNumber(data.clientName, false);
       updateData.client_name = data.clientName;
     } else if (data.clientName !== undefined) {
       updateData.client_name = data.clientName;
@@ -245,7 +248,7 @@ export const useQuotations = () => {
     const original = quotations.find((q) => q.id === id);
     if (!original) return null;
 
-    const quoteNumber = generateQuoteNumber(original.clientName);
+    const quoteNumber = generateQuoteNumber(original.clientName, true);
     const dbRow = {
       user_id: user.id,
       quote_number: quoteNumber,

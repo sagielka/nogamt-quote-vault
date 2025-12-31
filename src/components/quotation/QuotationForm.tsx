@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
-import { searchProducts, ProductItem, PriceList, PRICE_LISTS, getPriceListBaseCurrency, convertPrice } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, PRICE_LISTS, getPriceListBaseCurrency, convertPrice, getProductPrice } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { quotationSchema } from '@/lib/validation-schemas';
 import { Input } from '@/components/ui/input';
@@ -59,6 +59,27 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     fetchCustomers();
   }, []);
 
+  // Handle price list change - update all existing items with prices from new list
+  const handlePriceListChange = (newPriceList: PriceList) => {
+    const baseCurrency = getPriceListBaseCurrency(newPriceList);
+    
+    // Update all item prices from the new price list
+    const updatedItems = items.map(item => {
+      if (item.sku) {
+        const newPrice = getProductPrice(item.sku, newPriceList);
+        if (newPrice !== null) {
+          // Convert from price list base currency to display currency
+          const convertedPrice = convertPrice(newPrice, baseCurrency, currency);
+          return { ...item, unitPrice: Math.round(convertedPrice * 100) / 100 };
+        }
+      }
+      return item;
+    });
+
+    setItems(updatedItems);
+    setPriceList(newPriceList);
+  };
+
   // Handle currency conversion when display currency changes
   const handleCurrencyChange = (newCurrency: Currency) => {
     if (newCurrency === previousCurrency) {
@@ -66,8 +87,19 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       return;
     }
 
-    // Convert all item prices from previous currency to new currency
+    // Get base currency of current price list to convert properly
+    const baseCurrency = getPriceListBaseCurrency(priceList);
+
+    // Re-fetch prices from price list and convert to new currency
     const convertedItems = items.map(item => {
+      if (item.sku) {
+        const basePrice = getProductPrice(item.sku, priceList);
+        if (basePrice !== null) {
+          const convertedPrice = convertPrice(basePrice, baseCurrency, newCurrency);
+          return { ...item, unitPrice: Math.round(convertedPrice * 100) / 100 };
+        }
+      }
+      // Fallback: convert existing price if no SKU match
       if (item.unitPrice > 0) {
         const convertedPrice = convertPrice(item.unitPrice, previousCurrency, newCurrency);
         return { ...item, unitPrice: Math.round(convertedPrice * 100) / 100 };
@@ -413,7 +445,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-muted-foreground uppercase text-xs tracking-wider">Price List (auto-fill prices)</Label>
-              <Select value={priceList} onValueChange={(value) => setPriceList(value as PriceList)}>
+              <Select value={priceList} onValueChange={(value) => handlePriceListChange(value as PriceList)}>
                 <SelectTrigger className="w-full input-focus bg-secondary/50 border-accent/20 hover:border-accent/40 transition-colors">
                   <SelectValue />
                 </SelectTrigger>

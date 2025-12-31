@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
-import { searchProducts, ProductItem } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, PRICE_LISTS } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { quotationSchema } from '@/lib/validation-schemas';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     initialData?.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   );
   const [currency, setCurrency] = useState<Currency>(initialData?.currency || 'USD');
+  const [priceList, setPriceList] = useState<PriceList>('DOLLAR');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [saveCustomer, setSaveCustomer] = useState(true);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -375,30 +376,50 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         </CardContent>
       </Card>
 
-      {/* Currency Selection */}
+      {/* Price List & Currency Selection */}
       <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
         <CardHeader className="border-b border-primary/10">
           <CardTitle className="heading-display text-lg flex items-center gap-3">
             <span className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center">
               <Zap className="w-5 h-5 text-accent" />
             </span>
-            <span className="text-accent">Currency</span>
+            <span className="text-accent">Price List & Currency</span>
             <div className="flex-1 h-px bg-gradient-to-r from-accent/50 to-transparent ml-4" />
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6">
-          <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)}>
-            <SelectTrigger className="w-full md:w-64 input-focus bg-secondary/50 border-accent/20 hover:border-accent/40 transition-colors">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-accent/20">
-              {CURRENCIES.map((curr) => (
-                <SelectItem key={curr.value} value={curr.value} className="hover:bg-accent/10">
-                  {curr.symbol} {curr.label} ({curr.value})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="pt-6 space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground uppercase text-xs tracking-wider">Price List (auto-fill prices)</Label>
+              <Select value={priceList} onValueChange={(value) => setPriceList(value as PriceList)}>
+                <SelectTrigger className="w-full input-focus bg-secondary/50 border-accent/20 hover:border-accent/40 transition-colors">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-accent/20">
+                  {PRICE_LISTS.map((pl) => (
+                    <SelectItem key={pl.value} value={pl.value} className="hover:bg-accent/10">
+                      {pl.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground uppercase text-xs tracking-wider">Display Currency</Label>
+              <Select value={currency} onValueChange={(value) => setCurrency(value as Currency)}>
+                <SelectTrigger className="w-full input-focus bg-secondary/50 border-accent/20 hover:border-accent/40 transition-colors">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-accent/20">
+                  {CURRENCIES.map((curr) => (
+                    <SelectItem key={curr.value} value={curr.value} className="hover:bg-accent/10">
+                      {curr.symbol} {curr.label} ({curr.value})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -433,6 +454,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 item={item}
                 index={index}
                 currency={currency}
+                priceList={priceList}
                 onUpdate={handleUpdateItem}
                 onRemove={handleRemoveItem}
                 canRemove={items.length > 1}

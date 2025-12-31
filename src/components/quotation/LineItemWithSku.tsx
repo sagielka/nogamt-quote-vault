@@ -4,13 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
-import { searchProducts, ProductItem } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, getProductPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
 
 interface LineItemWithSkuProps {
   item: LineItem;
   index: number;
   currency: Currency;
+  priceList: PriceList;
   onUpdate: (id: string, updates: Partial<LineItem>) => void;
   onRemove: (id: string) => void;
   canRemove: boolean;
@@ -20,6 +21,7 @@ export const LineItemWithSku = ({
   item,
   index,
   currency,
+  priceList,
   onUpdate,
   onRemove,
   canRemove,
@@ -39,7 +41,12 @@ export const LineItemWithSku = ({
   };
 
   const handleSelectSuggestion = (product: ProductItem) => {
-    onUpdate(item.id, { sku: product.sku, description: product.description });
+    const price = getProductPrice(product.sku, priceList);
+    onUpdate(item.id, { 
+      sku: product.sku, 
+      description: product.description,
+      unitPrice: price ?? 0
+    });
     setShowSuggestions(false);
     setSuggestions([]);
   };
@@ -98,20 +105,26 @@ export const LineItemWithSku = ({
             ref={suggestionsRef}
             className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
           >
-            {suggestions.map((product, idx) => (
-              <div
-                key={product.sku}
-                className={`px-3 py-2 cursor-pointer text-sm ${
-                  idx === highlightedIndex
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-muted'
-                }`}
-                onClick={() => handleSelectSuggestion(product)}
-              >
-                <span className="font-mono font-medium">{product.sku}</span>
-                <span className="text-muted-foreground"> - {product.description}</span>
-              </div>
-            ))}
+            {suggestions.map((product, idx) => {
+              const price = product.prices[priceList];
+              return (
+                <div
+                  key={product.sku}
+                  className={`px-3 py-2 cursor-pointer text-sm ${
+                    idx === highlightedIndex
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-muted'
+                  }`}
+                  onClick={() => handleSelectSuggestion(product)}
+                >
+                  <span className="font-mono font-medium">{product.sku}</span>
+                  <span className="text-muted-foreground"> - {product.description}</span>
+                  {price !== null && (
+                    <span className="text-primary ml-2 font-medium">({price.toFixed(2)})</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

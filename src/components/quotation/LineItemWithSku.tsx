@@ -37,7 +37,15 @@ export const LineItemWithSku = ({
     const results = searchProducts(value);
     setSuggestions(results);
     setShowSuggestions(results.length > 0);
-    setHighlightedIndex(-1);
+    setHighlightedIndex(results.length > 0 ? 0 : -1); // Auto-highlight first result
+  };
+
+  const handleDescriptionChange = (value: string) => {
+    onUpdate(item.id, { description: value });
+    const results = searchProducts(value);
+    setSuggestions(results);
+    setShowSuggestions(results.length > 0);
+    setHighlightedIndex(results.length > 0 ? 0 : -1); // Auto-highlight first result
   };
 
   const handleSelectSuggestion = (product: ProductItem) => {
@@ -56,8 +64,10 @@ export const LineItemWithSku = ({
     if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
-      if (showSuggestions && suggestions.length > 0 && highlightedIndex >= 0) {
-        handleSelectSuggestion(suggestions[highlightedIndex]);
+      // Select first suggestion if available, or the highlighted one
+      if (showSuggestions && suggestions.length > 0) {
+        const indexToSelect = highlightedIndex >= 0 ? highlightedIndex : 0;
+        handleSelectSuggestion(suggestions[indexToSelect]);
       }
       return;
     }
@@ -136,14 +146,45 @@ export const LineItemWithSku = ({
         )}
       </div>
       
-      {/* Description */}
-      <div className="md:col-span-3">
+      {/* Description with autocomplete */}
+      <div className="md:col-span-3 relative">
         <Input
           placeholder="Description"
           value={item.description}
-          onChange={(e) => onUpdate(item.id, { description: e.target.value })}
+          onChange={(e) => handleDescriptionChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (suggestions.length > 0) setShowSuggestions(true);
+          }}
           className="input-focus bg-background/50 border-primary/20"
         />
+        {showSuggestions && suggestions.length > 0 && (
+          <div
+            ref={suggestionsRef}
+            className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+          >
+            {suggestions.map((product, idx) => {
+              const price = product.prices[priceList];
+              return (
+                <div
+                  key={product.sku}
+                  className={`px-3 py-2 cursor-pointer text-sm ${
+                    idx === highlightedIndex
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-muted'
+                  }`}
+                  onClick={() => handleSelectSuggestion(product)}
+                >
+                  <span className="font-mono font-medium">{product.sku}</span>
+                  <span className="text-muted-foreground"> - {product.description}</span>
+                  {price !== null && (
+                    <span className="text-primary ml-2 font-medium">({price.toFixed(2)})</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       
       {/* LT (weeks) */}

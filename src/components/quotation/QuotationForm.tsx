@@ -66,7 +66,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     // Update all item prices from the new price list
     const updatedItems = items.map(item => {
       if (item.sku) {
-        const newPrice = getProductPrice(item.sku, newPriceList);
+        const newPrice = getProductPrice(item.sku, newPriceList, item.description);
         if (newPrice !== null) {
           // Convert from price list base currency to display currency
           const convertedPrice = convertPrice(newPrice, baseCurrency, currency);
@@ -93,7 +93,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     // Re-fetch prices from price list and convert to new currency
     const convertedItems = items.map(item => {
       if (item.sku) {
-        const basePrice = getProductPrice(item.sku, priceList);
+        const basePrice = getProductPrice(item.sku, priceList, item.description);
         if (basePrice !== null) {
           const convertedPrice = convertPrice(basePrice, baseCurrency, newCurrency);
           return { ...item, unitPrice: Math.round(convertedPrice * 100) / 100 };

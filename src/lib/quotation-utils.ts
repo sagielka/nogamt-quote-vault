@@ -6,7 +6,9 @@ export const generateQuoteNumber = (customerName: string = ''): string => {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = String(now.getFullYear()).slice(-2);
   const formattedName = customerName.trim().toUpperCase();
-  return formattedName ? `MT${day}${month}${year}-${formattedName}` : `MT${day}${month}${year}`;
+  // Add a short random suffix to ensure uniqueness
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return formattedName ? `MT${day}${month}${year}-${formattedName}-${randomSuffix}` : `MT${day}${month}${year}-${randomSuffix}`;
 };
 
 export const calculateLineTotal = (item: LineItem): number => {

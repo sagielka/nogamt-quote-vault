@@ -5,7 +5,9 @@ export const generateQuoteNumber = (customerName: string = ''): string => {
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = String(now.getFullYear()).slice(-2);
-  const formattedName = customerName.trim().toUpperCase();
+  // Remove email in parentheses from customer name
+  const cleanName = customerName.replace(/\s*\([^)]*\)\s*/g, '').trim();
+  const formattedName = cleanName.toUpperCase();
   // Add a short random suffix to ensure uniqueness
   const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
   return formattedName ? `MT${day}${month}${year}-${formattedName}-${randomSuffix}` : `MT${day}${month}${year}-${randomSuffix}`;

@@ -27,16 +27,17 @@ export const LineItemWithSku = ({
   canRemove,
 }: LineItemWithSkuProps) => {
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const skuInputRef = useRef<HTMLInputElement>(null);
+  const descInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const handleSkuChange = (value: string) => {
     onUpdate(item.id, { sku: value });
     const results = searchProducts(value);
     setSuggestions(results);
-    setShowSuggestions(results.length > 0);
+    setActiveField(results.length > 0 ? 'sku' : null);
     setHighlightedIndex(results.length > 0 ? 0 : -1);
     
     // Check for US SKU pricing when typing
@@ -52,7 +53,7 @@ export const LineItemWithSku = ({
     onUpdate(item.id, { description: value });
     const results = searchProducts(value);
     setSuggestions(results);
-    setShowSuggestions(results.length > 0);
+    setActiveField(results.length > 0 ? 'description' : null);
     setHighlightedIndex(results.length > 0 ? 0 : -1);
     
     // Check for US SKU pricing when description changes
@@ -71,7 +72,7 @@ export const LineItemWithSku = ({
       description: product.description,
       unitPrice: price ?? 0
     });
-    setShowSuggestions(false);
+    setActiveField(null);
     setSuggestions([]);
   };
 
@@ -81,14 +82,14 @@ export const LineItemWithSku = ({
       e.preventDefault();
       e.stopPropagation();
       // Select first suggestion if available, or the highlighted one
-      if (showSuggestions && suggestions.length > 0) {
+      if (activeField && suggestions.length > 0) {
         const indexToSelect = highlightedIndex >= 0 ? highlightedIndex : 0;
         handleSelectSuggestion(suggestions[indexToSelect]);
       }
       return;
     }
 
-    if (!showSuggestions || suggestions.length === 0) return;
+    if (!activeField || suggestions.length === 0) return;
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -97,7 +98,7 @@ export const LineItemWithSku = ({
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
     } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
+      setActiveField(null);
     }
   };
 
@@ -107,10 +108,12 @@ export const LineItemWithSku = ({
       if (
         suggestionsRef.current &&
         !suggestionsRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
+        skuInputRef.current &&
+        !skuInputRef.current.contains(e.target as Node) &&
+        descInputRef.current &&
+        !descInputRef.current.contains(e.target as Node)
       ) {
-        setShowSuggestions(false);
+        setActiveField(null);
       }
     };
 
@@ -123,17 +126,17 @@ export const LineItemWithSku = ({
       {/* SKU with autocomplete */}
       <div className="md:col-span-2 relative">
         <Input
-          ref={inputRef}
+          ref={skuInputRef}
           placeholder="Type SKU..."
           value={item.sku || ''}
           onChange={(e) => handleSkuChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (suggestions.length > 0) setShowSuggestions(true);
+            if (suggestions.length > 0) setActiveField('sku');
           }}
           className="input-focus bg-background/50 border-primary/20 font-mono text-sm"
         />
-        {showSuggestions && suggestions.length > 0 && (
+        {activeField === 'sku' && suggestions.length > 0 && (
           <div
             ref={suggestionsRef}
             className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
@@ -165,16 +168,17 @@ export const LineItemWithSku = ({
       {/* Description with autocomplete */}
       <div className="md:col-span-3 relative">
         <Input
+          ref={descInputRef}
           placeholder="Description"
           value={item.description}
           onChange={(e) => handleDescriptionChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (suggestions.length > 0) setShowSuggestions(true);
+            if (suggestions.length > 0) setActiveField('description');
           }}
           className="input-focus bg-background/50 border-primary/20"
         />
-        {showSuggestions && suggestions.length > 0 && (
+        {activeField === 'description' && suggestions.length > 0 && (
           <div
             ref={suggestionsRef}
             className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"

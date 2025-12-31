@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
-import { searchProducts, ProductItem, PriceList, getProductPrice } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
 
 interface LineItemWithSkuProps {
@@ -37,7 +37,15 @@ export const LineItemWithSku = ({
     const results = searchProducts(value);
     setSuggestions(results);
     setShowSuggestions(results.length > 0);
-    setHighlightedIndex(results.length > 0 ? 0 : -1); // Auto-highlight first result
+    setHighlightedIndex(results.length > 0 ? 0 : -1);
+    
+    // Check for US SKU pricing when typing
+    if (value.toUpperCase().startsWith('US')) {
+      const usPrice = getUSSkuPrice(value, item.description, priceList);
+      if (usPrice !== null) {
+        onUpdate(item.id, { sku: value, unitPrice: usPrice });
+      }
+    }
   };
 
   const handleDescriptionChange = (value: string) => {
@@ -45,11 +53,19 @@ export const LineItemWithSku = ({
     const results = searchProducts(value);
     setSuggestions(results);
     setShowSuggestions(results.length > 0);
-    setHighlightedIndex(results.length > 0 ? 0 : -1); // Auto-highlight first result
+    setHighlightedIndex(results.length > 0 ? 0 : -1);
+    
+    // Check for US SKU pricing when description changes
+    if (item.sku?.toUpperCase().startsWith('US')) {
+      const usPrice = getUSSkuPrice(item.sku, value, priceList);
+      if (usPrice !== null) {
+        onUpdate(item.id, { description: value, unitPrice: usPrice });
+      }
+    }
   };
 
   const handleSelectSuggestion = (product: ProductItem) => {
-    const price = getProductPrice(product.sku, priceList);
+    const price = getProductPrice(product.sku, priceList, product.description);
     onUpdate(item.id, { 
       sku: product.sku, 
       description: product.description,

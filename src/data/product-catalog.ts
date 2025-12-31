@@ -52,6 +52,61 @@ export const convertPrice = (
   return priceInUsd * toRate;
 };
 
+// US SKU pricing table based on number (2-7) or letter (B-G)
+const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number }> = {
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 215.64 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 253.51 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 298.05 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 350.49 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 412.20 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
+};
+
+// Map letters to their corresponding number for US SKU pricing
+const US_LETTER_TO_NUMBER: Record<string, string> = {
+  'B': '2', 'b': '2',
+  'C': '3', 'c': '3',
+  'D': '4', 'd': '4',
+  'E': '5', 'e': '5',
+  'F': '6', 'f': '6',
+  'G': '7', 'g': '7',
+};
+
+// Get price for US SKUs based on SKU number or description letter
+export const getUSSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
+  if (!sku.toUpperCase().startsWith('US')) return null;
+  
+  // Try to find the first digit after "US" in the SKU (position 2)
+  const skuAfterUS = sku.substring(2);
+  const firstDigit = skuAfterUS.match(/[2-7]/)?.[0];
+  
+  if (firstDigit && US_SKU_PRICES[firstDigit]) {
+    return US_SKU_PRICES[firstDigit][priceList];
+  }
+  
+  // Try to find the letter in the description (format: US-...-...-X-...-...)
+  // The letter is typically the 4th segment after splitting by '-'
+  const descParts = description.split('-');
+  if (descParts.length >= 4) {
+    const letterPart = descParts[3]; // Get the 4th part (index 3)
+    if (letterPart && letterPart.length === 1) {
+      const mappedNumber = US_LETTER_TO_NUMBER[letterPart];
+      if (mappedNumber && US_SKU_PRICES[mappedNumber]) {
+        return US_SKU_PRICES[mappedNumber][priceList];
+      }
+    }
+  }
+  
+  // Also try to find any matching letter anywhere in description
+  for (const [letter, number] of Object.entries(US_LETTER_TO_NUMBER)) {
+    if (description.includes(`-${letter}-`)) {
+      return US_SKU_PRICES[number][priceList];
+    }
+  }
+  
+  return null;
+};
+
 export const productCatalog: ProductItem[] = [
   { sku: "UF1106", description: "UF-FB-G-D006-L30", prices: { EURO: 35.76, DOLLAR: 41.12, NOGA_BV_EURO: 17.43, SHEKEL: 135.89 } },
   { sku: "UF1206", description: "UF-FB-P-D006-L30", prices: { EURO: 35.76, DOLLAR: 41.12, NOGA_BV_EURO: 17.43, SHEKEL: 135.89 } },
@@ -401,7 +456,14 @@ export const searchProducts = (query: string): ProductItem[] => {
 };
 
 // Get price for a specific product and price list
-export const getProductPrice = (sku: string, priceList: PriceList): number | null => {
+export const getProductPrice = (sku: string, priceList: PriceList, description?: string): number | null => {
+  // First check if it's a US SKU with dynamic pricing
+  if (sku.toUpperCase().startsWith('US')) {
+    const usPrice = getUSSkuPrice(sku, description || '', priceList);
+    if (usPrice !== null) return usPrice;
+  }
+  
+  // Otherwise look up in catalog
   const product = productCatalog.find(p => p.sku === sku);
   return product?.prices[priceList] ?? null;
 };

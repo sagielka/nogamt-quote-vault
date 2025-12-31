@@ -52,6 +52,16 @@ export const LineItemWithSku = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Always prevent form submission on Enter in this input
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (showSuggestions && suggestions.length > 0 && highlightedIndex >= 0) {
+        handleSelectSuggestion(suggestions[highlightedIndex]);
+      }
+      return;
+    }
+
     if (!showSuggestions || suggestions.length === 0) return;
 
     if (e.key === 'ArrowDown') {
@@ -60,9 +70,6 @@ export const LineItemWithSku = ({
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
-    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
-      e.preventDefault();
-      handleSelectSuggestion(suggestions[highlightedIndex]);
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
     }

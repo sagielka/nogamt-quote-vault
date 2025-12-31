@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
-import { searchProducts, ProductItem, PriceList, PRICE_LISTS } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, PRICE_LISTS, getPriceListBaseCurrency, convertPrice } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { quotationSchema } from '@/lib/validation-schemas';
 import { Input } from '@/components/ui/input';

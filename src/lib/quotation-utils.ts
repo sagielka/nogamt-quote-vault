@@ -8,9 +8,7 @@ export const generateQuoteNumber = (customerName: string = ''): string => {
   // Remove email in parentheses from customer name
   const cleanName = customerName.replace(/\s*\([^)]*\)\s*/g, '').trim();
   const formattedName = cleanName.toUpperCase();
-  // Add a short random suffix to ensure uniqueness
-  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return formattedName ? `MT${day}${month}${year}-${formattedName}-${randomSuffix}` : `MT${day}${month}${year}-${randomSuffix}`;
+  return formattedName ? `MT${day}${month}${year}-${formattedName}` : `MT${day}${month}${year}`;
 };
 
 export const calculateLineTotal = (item: LineItem): number => {

@@ -442,6 +442,9 @@ export const productCatalog: ProductItem[] = [
   { sku: "UB2062", description: "UB-TSB-5-PL-NCT", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.57, SHEKEL: 51.61 } },
   { sku: "UB2063", description: "UB-TSB-5-ML-NCT", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.57, SHEKEL: 51.61 } },
   { sku: "UB2067", description: "UB-SCB-5-PL-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 95.57 } },
+  { sku: "UB2069", description: "UB-SCB-5-ML-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 95.57 } },
+  { sku: "UF9000", description: "UFIBER KIT", prices: { EURO: 306.00, DOLLAR: 358.00, NOGA_BV_EURO: 562.50, SHEKEL: 1360.40 } },
+  { sku: "UX9000", description: "AGENT KIT", prices: { EURO: 750.00, DOLLAR: 877.50, NOGA_BV_EURO: 229.50, SHEKEL: 3334.50 } },
 ];
 
 // Search function for product catalog

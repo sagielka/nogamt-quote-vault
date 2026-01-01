@@ -241,13 +241,18 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       // Generate PDF
       const { blob } = await generatePrintStylePdf();
       
-      // Convert blob to base64
-      const arrayBuffer = await blob.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      uint8Array.forEach(byte => binary += String.fromCharCode(byte));
-      const pdfBase64 = btoa(binary);
+      // Convert blob to base64 using FileReader (more reliable)
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
 
+      console.log('PDF base64 length:', pdfBase64.length);
       // Send via edge function
       const { data, error } = await supabase.functions.invoke('send-quotation-email', {
         body: {

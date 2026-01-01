@@ -1,10 +1,10 @@
 // Preload script for Electron
-// This runs in a sandboxed environment with access to Node.js APIs
+// Runs in an isolated context; only expose what you explicitly need.
 
-const { contextBridge } = require('electron');
+import { contextBridge } from "electron";
 
-// Expose any APIs you need to the renderer process
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld("electronAPI", {
   platform: process.platform,
-  isElectron: true
+  isElectron: true,
 });
+

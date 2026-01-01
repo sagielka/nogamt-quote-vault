@@ -41,8 +41,10 @@ const validateRequest = (data: any): { valid: boolean; error?: string } => {
   if (!data.validUntil || typeof data.validUntil !== 'string') {
     return { valid: false, error: 'Invalid valid until date' };
   }
-  if (!data.pdfBase64 || typeof data.pdfBase64 !== 'string' || data.pdfBase64.length > 10485760) {
-    return { valid: false, error: 'Invalid or too large PDF (max 10MB)' };
+  const maxPdfBytes = 15 * 1024 * 1024; // 15MB
+  const maxPdfBase64Length = Math.ceil((maxPdfBytes * 4) / 3);
+  if (!data.pdfBase64 || typeof data.pdfBase64 !== 'string' || data.pdfBase64.length > maxPdfBase64Length) {
+    return { valid: false, error: 'Invalid or too large PDF (max 15MB)' };
   }
   return { valid: true };
 };

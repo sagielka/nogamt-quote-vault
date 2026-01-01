@@ -36,7 +36,17 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     window.print();
   };
 
-  const generatePrintStylePdf = async (): Promise<GeneratedPdf> => {
+  type PdfRenderOptions = {
+    scale?: number;
+    imageType?: 'png' | 'jpeg';
+    jpegQuality?: number;
+  };
+
+  const generatePrintStylePdf = async (options?: PdfRenderOptions): Promise<GeneratedPdf> => {
+    const scale = options?.scale ?? 3;
+    const imageType = options?.imageType ?? 'png';
+    const jpegQuality = options?.jpegQuality ?? 0.78;
+
     // Create a hidden container with print styles
     const printContainer = document.createElement('div');
     printContainer.style.cssText = `
@@ -168,8 +178,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       useCORS: true,
       logging: false,
       background: '#ffffff',
-      // Higher scale = sharper PDF
-      scale: 3,
+      scale,
     } as Parameters<typeof html2canvas>[1]);
 
     document.body.removeChild(printContainer);
@@ -188,8 +197,19 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 10;
 
-    // Use PNG for maximum quality
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+    const dataUrl =
+      imageType === 'jpeg'
+        ? canvas.toDataURL('image/jpeg', jpegQuality)
+        : canvas.toDataURL('image/png');
+
+    pdf.addImage(
+      dataUrl,
+      imageType === 'jpeg' ? 'JPEG' : 'PNG',
+      imgX,
+      imgY,
+      imgWidth * ratio,
+      imgHeight * ratio
+    );
 
     const fileName = `${quotation.quoteNumber.replace(/^QT/i, '')}.pdf`;
     return {
@@ -238,9 +258,13 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     });
 
     try {
-      // Generate PDF
-      const { blob } = await generatePrintStylePdf();
-      
+      // Generate a smaller PDF for email to stay under limits
+      const { blob } = await generatePrintStylePdf({
+        scale: 2,
+        imageType: 'jpeg',
+        jpegQuality: 0.72,
+      });
+
       // Convert blob to base64 using FileReader (more reliable)
       const pdfBase64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -252,7 +276,6 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
         reader.readAsDataURL(blob);
       });
 
-      console.log('PDF base64 length:', pdfBase64.length);
       // Send via edge function
       const { data, error } = await supabase.functions.invoke('send-quotation-email', {
         body: {

@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { escapeHtml } from '@/lib/html-sanitize';
-import { ArrowLeft, Printer, Download, Pencil } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -227,6 +227,53 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     }
   };
 
+  const handleEmailQuote = async () => {
+    toast({
+      title: 'Preparing email...',
+      description: 'Downloading PDF and opening email client.',
+    });
+
+    try {
+      // First download the PDF
+      const { blob, fileName } = await generatePrintStylePdf();
+      const pdfUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(pdfUrl);
+
+      // Then open mailto with pre-filled content
+      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber.replace(/^QT/i, '')}`);
+      const body = encodeURIComponent(
+        `Dear ${quotation.clientName},\n\n` +
+        `Please find attached quotation ${quotation.quoteNumber.replace(/^QT/i, '')}.\n\n` +
+        `Quote Summary:\n` +
+        `- Valid Until: ${formatDate(quotation.validUntil)}\n` +
+        `- Total: ${formatCurrency(total, quotation.currency)}\n\n` +
+        `Please don't hesitate to contact us if you have any questions.\n\n` +
+        `Best regards,\n` +
+        `Noga Engineering & Technology Ltd.`
+      );
+      
+      window.open(`mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`, '_self');
+
+      toast({
+        title: 'PDF Downloaded',
+        description: `Please attach ${fileName} to your email.`,
+      });
+    } catch (error) {
+      console.error('Error preparing email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to prepare email. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   return (
     <div className="animate-fade-in">
@@ -250,6 +297,10 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           <Button variant="accent" onClick={handleDownloadPdf}>
             <Download className="w-4 h-4 mr-2" />
             Download PDF
+          </Button>
+          <Button onClick={handleEmailQuote}>
+            <Mail className="w-4 h-4 mr-2" />
+            Email Quote
           </Button>
         </div>
       </div>

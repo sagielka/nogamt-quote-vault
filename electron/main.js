@@ -24,6 +24,11 @@ function createWindow() {
     title: "Thinking Inside Quotation System",
   });
 
+  // Enable print preview by handling the print in the renderer
+  mainWindow.webContents.on("will-print", (event, webContents, details) => {
+    // Allow default print behavior
+  });
+
   // In production, load the built files
   // In development, you can load from localhost
   if (app.isPackaged) {

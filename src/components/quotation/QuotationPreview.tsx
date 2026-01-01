@@ -3,14 +3,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { escapeHtml } from '@/lib/html-sanitize';
-import { ArrowLeft, Printer, Download, Pencil, Mail, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside-new.png';
-import { supabase } from '@/integrations/supabase/client';
-import { useState } from 'react';
 
 interface QuotationPreviewProps {
   quotation: Quotation;
@@ -25,7 +23,6 @@ type GeneratedPdf = {
 
 export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreviewProps) => {
   const { toast } = useToast();
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;
@@ -251,58 +248,49 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
   };
 
   const handleEmailQuote = async () => {
-    setIsSendingEmail(true);
     toast({
-      title: 'Sending email...',
-      description: 'Please wait while the quotation is being sent.',
+      title: 'Preparing email...',
+      description: 'Downloading PDF and opening email client.',
     });
 
     try {
-      // Generate a smaller PDF for email to stay under limits
-      const { blob } = await generatePrintStylePdf({
-        scale: 2,
-        imageType: 'jpeg',
-        jpegQuality: 0.72,
-      });
+      // Generate and download the PDF
+      const { blob, fileName } = await generatePrintStylePdf();
+      const pdfUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = pdfUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(pdfUrl);
 
-      // Convert blob to base64 using FileReader (more reliable)
-      const pdfBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = (reader.result as string).split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      // Open mailto with pre-filled content
+      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber.replace(/^QT/i, '')}`);
+      const body = encodeURIComponent(
+        `Dear ${quotation.clientName},\n\n` +
+        `Please find attached quotation ${quotation.quoteNumber.replace(/^QT/i, '')}.\n\n` +
+        `Quote Summary:\n` +
+        `- Valid Until: ${formatDate(quotation.validUntil)}\n` +
+        `- Total: ${formatCurrency(total, quotation.currency)}\n\n` +
+        `Please don't hesitate to contact us if you have any questions.\n\n` +
+        `Best regards,\n` +
+        `Noga Engineering & Technology Ltd.`
+      );
 
-      // Send via edge function
-      const { data, error } = await supabase.functions.invoke('send-quotation-email', {
-        body: {
-          to: quotation.clientEmail,
-          clientName: quotation.clientName,
-          quoteNumber: quotation.quoteNumber.replace(/^QT/i, ''),
-          total: formatCurrency(total, quotation.currency),
-          validUntil: formatDate(quotation.validUntil),
-          pdfBase64,
-        },
-      });
-
-      if (error) throw error;
+      window.location.href = `mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`;
 
       toast({
-        title: 'Email Sent',
-        description: `Quotation sent to ${quotation.clientEmail}`,
+        title: 'PDF Downloaded',
+        description: `Attach ${fileName} to your email.`,
       });
-    } catch (error: any) {
-      console.error('Error sending email:', error);
+    } catch (error) {
+      console.error('Error preparing email:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to send email. Please try again.',
+        description: 'Failed to prepare email. Please try again.',
         variant: 'destructive',
       });
-    } finally {
-      setIsSendingEmail(false);
     }
   };
 
@@ -330,13 +318,9 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
             <Download className="w-4 h-4 mr-2" />
             Download PDF
           </Button>
-          <Button onClick={handleEmailQuote} disabled={isSendingEmail}>
-            {isSendingEmail ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Mail className="w-4 h-4 mr-2" />
-            )}
-            {isSendingEmail ? 'Sending...' : 'Email Quote'}
+          <Button onClick={handleEmailQuote}>
+            <Mail className="w-4 h-4 mr-2" />
+            Email Quote
           </Button>
         </div>
       </div>

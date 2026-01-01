@@ -17,8 +17,7 @@
         "arch": ["x64"]
       }
     ],
-    "icon": "public/favicon.ico",
-    "publisherName": "Thinking Inside"
+    "icon": "public/favicon.ico"
   },
   "nsis": {
     "oneClick": false,

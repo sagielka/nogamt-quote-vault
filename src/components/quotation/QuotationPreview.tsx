@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { escapeHtml } from '@/lib/html-sanitize';
-import { ArrowLeft, Printer, Download, Pencil, Mail } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -33,17 +33,7 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     window.print();
   };
 
-  type PdfRenderOptions = {
-    scale?: number;
-    imageType?: 'png' | 'jpeg';
-    jpegQuality?: number;
-  };
-
-  const generatePrintStylePdf = async (options?: PdfRenderOptions): Promise<GeneratedPdf> => {
-    const scale = options?.scale ?? 3;
-    const imageType = options?.imageType ?? 'png';
-    const jpegQuality = options?.jpegQuality ?? 0.78;
-
+  const generatePrintStylePdf = async (): Promise<GeneratedPdf> => {
     // Create a hidden container with print styles
     const printContainer = document.createElement('div');
     printContainer.style.cssText = `
@@ -175,7 +165,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
       useCORS: true,
       logging: false,
       background: '#ffffff',
-      scale,
+      // Higher scale = sharper PDF
+      scale: 3,
     } as Parameters<typeof html2canvas>[1]);
 
     document.body.removeChild(printContainer);
@@ -194,19 +185,8 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     const imgX = (pdfWidth - imgWidth * ratio) / 2;
     const imgY = 10;
 
-    const dataUrl =
-      imageType === 'jpeg'
-        ? canvas.toDataURL('image/jpeg', jpegQuality)
-        : canvas.toDataURL('image/png');
-
-    pdf.addImage(
-      dataUrl,
-      imageType === 'jpeg' ? 'JPEG' : 'PNG',
-      imgX,
-      imgY,
-      imgWidth * ratio,
-      imgHeight * ratio
-    );
+    // Use PNG for maximum quality
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
     const fileName = `${quotation.quoteNumber.replace(/^QT/i, '')}.pdf`;
     return {
@@ -247,53 +227,6 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     }
   };
 
-  const handleEmailQuote = async () => {
-    toast({
-      title: 'Preparing email...',
-      description: 'Downloading PDF and opening email client.',
-    });
-
-    try {
-      // Generate and download the PDF
-      const { blob, fileName } = await generatePrintStylePdf();
-      const pdfUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = pdfUrl;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(pdfUrl);
-
-      // Open mailto with pre-filled content
-      const subject = encodeURIComponent(`Quotation ${quotation.quoteNumber.replace(/^QT/i, '')}`);
-      const body = encodeURIComponent(
-        `Dear ${quotation.clientName},\n\n` +
-        `Please find attached quotation ${quotation.quoteNumber.replace(/^QT/i, '')}.\n\n` +
-        `Quote Summary:\n` +
-        `- Valid Until: ${formatDate(quotation.validUntil)}\n` +
-        `- Total: ${formatCurrency(total, quotation.currency)}\n\n` +
-        `Please don't hesitate to contact us if you have any questions.\n\n` +
-        `Best regards,\n` +
-        `Noga Engineering & Technology Ltd.`
-      );
-
-      window.location.href = `mailto:${quotation.clientEmail}?subject=${subject}&body=${body}`;
-
-      toast({
-        title: 'PDF Downloaded',
-        description: `Attach ${fileName} to your email.`,
-      });
-    } catch (error) {
-      console.error('Error preparing email:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to prepare email. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
-
 
   return (
     <div className="animate-fade-in">
@@ -317,10 +250,6 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           <Button variant="accent" onClick={handleDownloadPdf}>
             <Download className="w-4 h-4 mr-2" />
             Download PDF
-          </Button>
-          <Button onClick={handleEmailQuote}>
-            <Mail className="w-4 h-4 mr-2" />
-            Email Quote
           </Button>
         </div>
       </div>

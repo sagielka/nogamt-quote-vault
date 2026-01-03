@@ -17,7 +17,8 @@
         "arch": ["x64"]
       }
     ],
-    "icon": "public/favicon.ico"
+    "icon": "public/favicon.ico",
+    "signAndEditExecutable": false
   },
   "nsis": {
     "oneClick": false,
@@ -28,8 +29,8 @@
   },
   "publish": {
     "provider": "github",
-    "owner": "YOUR_GITHUB_USERNAME",
-    "repo": "YOUR_REPO_NAME",
+    "owner": "sagielka",
+    "repo": "nogamt-quote-vault",
     "releaseType": "release"
   }
 }

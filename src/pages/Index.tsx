@@ -366,6 +366,7 @@ const Index = () => {
                 www.nogamt.com
               </a>
             </div>
+            <p className="text-xs text-muted-foreground/60">v{import.meta.env.PACKAGE_VERSION || '1.0.0'}</p>
           </div>
         </div>
       </footer>

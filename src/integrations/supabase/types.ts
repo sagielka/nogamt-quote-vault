@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      archived_quotations: {
+        Row: {
+          archived_at: string
+          archived_by: string
+          attachments: Json | null
+          client_address: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          currency: string
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          items: Json
+          notes: string | null
+          original_id: string
+          quote_number: string
+          status: string | null
+          tax_rate: number
+          updated_at: string
+          user_id: string
+          valid_until: string
+        }
+        Insert: {
+          archived_at?: string
+          archived_by: string
+          attachments?: Json | null
+          client_address?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          currency?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items: Json
+          notes?: string | null
+          original_id: string
+          quote_number: string
+          status?: string | null
+          tax_rate?: number
+          updated_at?: string
+          user_id: string
+          valid_until: string
+        }
+        Update: {
+          archived_at?: string
+          archived_by?: string
+          attachments?: Json | null
+          client_address?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          currency?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          original_id?: string
+          quote_number?: string
+          status?: string | null
+          tax_rate?: number
+          updated_at?: string
+          user_id?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -104,15 +173,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -239,6 +335,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

@@ -56,14 +56,39 @@ npm run electron:build
 
 The `.exe` installer will be in the `release` folder.
 
-### 6. Publish Updates
+### 6. Publish Updates (Automated)
 
-1. Update version in `package.json` (e.g., "1.0.0" → "1.0.1")
-2. Commit and push changes
-3. Build with publish flag:
+Use the release script for error-free releases:
+
 ```bash
-npm run build && electron-builder --win --publish always
+# Make the script executable (first time only)
+chmod +x scripts/release.sh
+
+# Release a new version
+./scripts/release.sh 1.0.6
 ```
+
+The script automatically:
+1. Validates version format
+2. Updates package.json
+3. Syncs package-lock.json
+4. Commits and pushes changes
+5. Creates and pushes the version tag
+6. Triggers GitHub Actions build
+
+### 6b. Publish Updates (Manual)
+
+If you prefer manual releases, follow this checklist **IN ORDER**:
+
+- [ ] 1. Update `version` in `package.json` (e.g., "1.0.5" → "1.0.6")
+- [ ] 2. Run `npm install` to sync package-lock.json
+- [ ] 3. Commit changes: `git add . && git commit -m "Bump version to 1.0.6"`
+- [ ] 4. Push to GitHub: `git push`
+- [ ] 5. Wait for push to complete
+- [ ] 6. Create tag: `git tag v1.0.6`
+- [ ] 7. Push tag: `git push origin v1.0.6`
+
+⚠️ **IMPORTANT**: Never create the tag before pushing the package.json update!
 
 This creates a GitHub Release with the new version. Existing installations will auto-update!
 

@@ -1,7 +1,10 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import pkg from "electron-updater";
 import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
+import { exec } from "node:child_process";
 
 const { autoUpdater } = pkg;
 
@@ -56,6 +59,53 @@ autoUpdater.on("update-downloaded", () => {
 
 autoUpdater.on("error", (error) => {
   console.error("Auto-updater error:", error);
+});
+
+// IPC handler for email with PDF attachment
+ipcMain.handle('email-with-attachment', async (event, { pdfData, fileName, recipientEmail, subject, body }) => {
+  try {
+    // Save PDF to temp directory
+    const tempDir = os.tmpdir();
+    const pdfPath = path.join(tempDir, fileName);
+    
+    // Convert base64 to buffer and write file
+    const pdfBuffer = Buffer.from(pdfData, 'base64');
+    fs.writeFileSync(pdfPath, pdfBuffer);
+    
+    console.log('PDF saved to:', pdfPath);
+    
+    // Try to open Outlook with the attachment using PowerShell
+    const escapedSubject = subject.replace(/"/g, '\\"');
+    const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, '`n');
+    const escapedPath = pdfPath.replace(/\\/g, '\\\\');
+    
+    const powershellScript = `
+      $outlook = New-Object -ComObject Outlook.Application
+      $mail = $outlook.CreateItem(0)
+      $mail.To = "${recipientEmail}"
+      $mail.Subject = "${escapedSubject}"
+      $mail.Body = "${escapedBody}"
+      $mail.Attachments.Add("${escapedPath}")
+      $mail.Display()
+    `;
+    
+    return new Promise((resolve, reject) => {
+      exec(`powershell -Command "${powershellScript.replace(/"/g, '\\"').replace(/\n/g, '; ')}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error('PowerShell error:', error);
+          // Fallback: just open the folder with the PDF
+          shell.showItemInFolder(pdfPath);
+          resolve({ success: true, fallback: true, pdfPath });
+        } else {
+          console.log('Outlook opened successfully');
+          resolve({ success: true, fallback: false, pdfPath });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error in email-with-attachment:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 app.whenReady().then(() => {

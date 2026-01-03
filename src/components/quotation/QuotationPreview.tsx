@@ -3,12 +3,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { escapeHtml } from '@/lib/html-sanitize';
-import { ArrowLeft, Printer, Download, Pencil } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
+
+// Declare electron API types
+declare global {
+  interface Window {
+    electronAPI?: {
+      platform: string;
+      isElectron: boolean;
+      emailWithAttachment: (
+        pdfData: string,
+        fileName: string,
+        recipientEmail: string,
+        subject: string,
+        body: string
+      ) => Promise<{ success: boolean; fallback?: boolean; pdfPath?: string; error?: string }>;
+    };
+  }
+}
 
 interface QuotationPreviewProps {
   quotation: Quotation;
@@ -227,6 +244,82 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
     }
   };
 
+  const handleEmailQuote = async () => {
+    // Check if running in Electron
+    if (!window.electronAPI?.isElectron) {
+      toast({
+        title: 'Email Feature',
+        description: 'Email with attachment is only available in the desktop app.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Preparing Email...',
+      description: 'Generating PDF and opening Outlook.',
+    });
+
+    try {
+      const { blob, fileName } = await generatePrintStylePdf();
+      
+      // Convert blob to base64
+      const reader = new FileReader();
+      const base64Data = await new Promise<string>((resolve) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove the data URL prefix
+          resolve(result.split(',')[1]);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      const subject = `Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`;
+      const body = `Dear ${quotation.clientName},
+
+Please find attached our quotation ${quotation.quoteNumber} for your review.
+
+Total: ${formatCurrency(total, quotation.currency)}
+Valid Until: ${formatDate(quotation.validUntil)}
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+Noga Engineering & Technology Ltd.`;
+
+      const result = await window.electronAPI.emailWithAttachment(
+        base64Data,
+        fileName,
+        quotation.clientEmail,
+        subject,
+        body
+      );
+
+      if (result.success) {
+        if (result.fallback) {
+          toast({
+            title: 'PDF Saved',
+            description: 'Outlook not available. PDF saved and folder opened.',
+          });
+        } else {
+          toast({
+            title: 'Email Ready',
+            description: 'Outlook opened with the PDF attached.',
+          });
+        }
+      } else {
+        throw new Error(result.error || 'Failed to prepare email');
+      }
+    } catch (error) {
+      console.error('Error preparing email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to prepare email. Please try downloading the PDF instead.',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   return (
     <div className="animate-fade-in">
@@ -246,6 +339,10 @@ export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreview
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" />
             Print
+          </Button>
+          <Button variant="outline" onClick={handleEmailQuote}>
+            <Mail className="w-4 h-4 mr-2" />
+            Email
           </Button>
           <Button variant="accent" onClick={handleDownloadPdf}>
             <Download className="w-4 h-4 mr-2" />

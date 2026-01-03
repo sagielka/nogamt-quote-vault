@@ -1,22 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
+import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
 import { useAuth } from '@/hooks/useAuth';
 import { QuotationFormData } from '@/types/quotation';
 import { QuotationForm } from '@/components/quotation/QuotationForm';
 import { QuotationCard } from '@/components/quotation/QuotationCard';
 import { QuotationPreview } from '@/components/quotation/QuotationPreview';
+import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
-type View = 'list' | 'create' | 'edit' | 'preview';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive';
 
 const Index = () => {
-  const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation } = useQuotations();
+  const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
+  const { 
+    archivedQuotations, 
+    isAdmin, 
+    archiveQuotation, 
+    permanentlyDeleteQuotation, 
+    restoreQuotation 
+  } = useArchivedQuotations();
   const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
@@ -81,13 +90,58 @@ const Index = () => {
     setCurrentView('edit');
   };
 
-  const handleDeleteQuotation = (id: string) => {
-    deleteQuotation(id);
-    toast({
-      title: 'Quotation Deleted',
-      description: 'The quotation has been removed.',
-      variant: 'destructive',
-    });
+  const handleDeleteQuotation = async (id: string) => {
+    const quotation = getQuotation(id);
+    if (!quotation) return;
+
+    const success = await archiveQuotation(quotation);
+    if (success) {
+      await refreshQuotations();
+      toast({
+        title: 'Quotation Archived',
+        description: 'The quotation has been moved to the archive.',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to archive quotation.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRestoreQuotation = async (archivedQuotation: ArchivedQuotation) => {
+    const success = await restoreQuotation(archivedQuotation);
+    if (success) {
+      await refreshQuotations();
+      toast({
+        title: 'Quotation Restored',
+        description: `Quote ${archivedQuotation.quoteNumber} has been restored.`,
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to restore quotation.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePermanentDelete = async (id: string) => {
+    const success = await permanentlyDeleteQuotation(id);
+    if (success) {
+      toast({
+        title: 'Permanently Deleted',
+        description: 'The quotation has been permanently removed.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete quotation. Admin access required.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleDuplicateQuotation = async (id: string) => {
@@ -130,16 +184,40 @@ const Index = () => {
               <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
             </div>
             <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {currentView === 'list' && quotations.length > 0 && (
                 <Button onClick={() => setCurrentView('create')}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Quote
                 </Button>
               )}
+              {currentView === 'list' && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentView('archive')}
+                  className="relative"
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  Archive
+                  {archivedQuotations.length > 0 && (
+                    <span className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full">
+                      {archivedQuotations.length}
+                    </span>
+                  )}
+                </Button>
+              )}
+              {currentView === 'archive' && (
+                <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Quotations
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
+            </div>
               <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
             </div>
           </div>
@@ -227,6 +305,48 @@ const Index = () => {
               setCurrentView('edit');
             }}
           />
+        )}
+
+        {currentView === 'archive' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Archive className="w-6 h-6 text-muted-foreground" />
+                <h2 className="heading-display text-2xl text-foreground">
+                  Archived Quotations
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {archivedQuotations.length} archived
+              </p>
+            </div>
+            {archivedQuotations.length === 0 ? (
+              <div className="text-center py-12">
+                <Archive className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground">No archived quotations</h3>
+                <p className="text-sm text-muted-foreground/70 mt-1">
+                  Deleted quotations will appear here
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {archivedQuotations.map((quotation) => (
+                  <ArchivedQuotationCard
+                    key={quotation.id}
+                    quotation={quotation}
+                    isAdmin={isAdmin}
+                    onRestore={handleRestoreQuotation}
+                    onPermanentDelete={handlePermanentDelete}
+                  />
+                ))}
+              </div>
+            )}
+            {!isAdmin && archivedQuotations.length > 0 && (
+              <p className="text-sm text-muted-foreground text-center">
+                Only administrators can permanently delete archived quotations.
+              </p>
+            )}
+          </div>
         )}
       </main>
 

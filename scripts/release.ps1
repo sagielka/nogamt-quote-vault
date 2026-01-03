@@ -4,6 +4,12 @@ param(
     [string]$Version
 )
 
+# Navigate to project root (parent of scripts folder)
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Set-Location $projectRoot
+Write-Host "Working from: $projectRoot" -ForegroundColor Gray
+
 # Validate version format
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
     Write-Host "Error: Version must be in format X.Y.Z (e.g., 1.0.8)" -ForegroundColor Red

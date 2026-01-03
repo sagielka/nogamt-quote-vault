@@ -21,7 +21,11 @@ Write-Host "Releasing version $Version..." -ForegroundColor Cyan
 # Update package.json version
 $packageJson = Get-Content -Path "package.json" -Raw | ConvertFrom-Json
 $packageJson.version = $Version
-$packageJson | ConvertTo-Json -Depth 100 | Set-Content -Path "package.json" -Encoding UTF8
+
+# IMPORTANT: Write UTF-8 *without BOM* (BOM breaks Vite/PostCSS config loading in CI)
+$packageJsonText = $packageJson | ConvertTo-Json -Depth 100
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText((Join-Path $projectRoot "package.json"), ($packageJsonText + "`n"), $utf8NoBom)
 
 Write-Host "Updated package.json to version $Version" -ForegroundColor Green
 

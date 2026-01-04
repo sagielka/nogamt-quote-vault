@@ -1,7 +1,7 @@
 // Preload script for Electron
 // Runs in an isolated context; only expose what you explicitly need.
 
-import { contextBridge, ipcRenderer } from "electron";
+const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
   platform: process.platform,

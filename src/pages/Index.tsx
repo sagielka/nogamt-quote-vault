@@ -9,6 +9,7 @@ import { QuotationCard } from '@/components/quotation/QuotationCard';
 import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
+import { SyncStatusIndicator } from '@/components/SyncStatusIndicator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, ArrowLeft, LogOut, Archive, FolderOpen } from 'lucide-react';
@@ -182,6 +183,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
+              <SyncStatusIndicator />
             </div>
             <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">

@@ -73,6 +73,8 @@ autoUpdater.on("error", (error) => {
 
 // IPC handler for email with PDF attachment
 ipcMain.handle('email-with-attachment', async (event, { pdfData, fileName, recipientEmail, subject, body }) => {
+  console.log('email-with-attachment called with:', { fileName, recipientEmail, subject });
+  
   try {
     // Save PDF to temp directory
     const tempDir = os.tmpdir();
@@ -84,33 +86,48 @@ ipcMain.handle('email-with-attachment', async (event, { pdfData, fileName, recip
     
     console.log('PDF saved to:', pdfPath);
     
-    // Try to open Outlook with the attachment using PowerShell
-    const escapedSubject = subject.replace(/"/g, '\\"');
-    const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, '`n');
-    const escapedPath = pdfPath.replace(/\\/g, '\\\\');
+    // Escape special characters for PowerShell
+    const escapedSubject = subject.replace(/'/g, "''").replace(/`/g, '``');
+    const escapedBody = body.replace(/'/g, "''").replace(/`/g, '``').replace(/\r?\n/g, '`r`n');
+    const escapedEmail = recipientEmail.replace(/'/g, "''");
     
+    // PowerShell script using single quotes for safety
     const powershellScript = `
-      $outlook = New-Object -ComObject Outlook.Application
-      $mail = $outlook.CreateItem(0)
-      $mail.To = "${recipientEmail}"
-      $mail.Subject = "${escapedSubject}"
-      $mail.Body = "${escapedBody}"
-      $mail.Attachments.Add("${escapedPath}")
-      $mail.Display()
+      try {
+        $outlook = New-Object -ComObject Outlook.Application
+        $mail = $outlook.CreateItem(0)
+        $mail.To = '${escapedEmail}'
+        $mail.Subject = '${escapedSubject}'
+        $mail.Body = '${escapedBody}'
+        $mail.Attachments.Add('${pdfPath.replace(/\\/g, '\\\\')}')
+        $mail.Display()
+        Write-Output 'SUCCESS'
+      } catch {
+        Write-Error $_.Exception.Message
+        exit 1
+      }
     `;
     
-    return new Promise((resolve, reject) => {
-      exec(`powershell -Command "${powershellScript.replace(/"/g, '\\"').replace(/\n/g, '; ')}"`, (error, stdout, stderr) => {
-        if (error) {
-          console.error('PowerShell error:', error);
-          // Fallback: just open the folder with the PDF
-          shell.showItemInFolder(pdfPath);
-          resolve({ success: true, fallback: true, pdfPath });
-        } else {
-          console.log('Outlook opened successfully');
-          resolve({ success: true, fallback: false, pdfPath });
+    console.log('Executing PowerShell script...');
+    
+    return new Promise((resolve) => {
+      exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${powershellScript.replace(/"/g, '\\"').replace(/\r?\n/g, ' ')}"`, 
+        { timeout: 30000 },
+        (error, stdout, stderr) => {
+          console.log('PowerShell stdout:', stdout);
+          console.log('PowerShell stderr:', stderr);
+          
+          if (error) {
+            console.error('PowerShell error:', error);
+            // Fallback: just open the folder with the PDF
+            shell.showItemInFolder(pdfPath);
+            resolve({ success: true, fallback: true, pdfPath });
+          } else {
+            console.log('Outlook opened successfully');
+            resolve({ success: true, fallback: false, pdfPath });
+          }
         }
-      });
+      );
     });
   } catch (error) {
     console.error('Error in email-with-attachment:', error);

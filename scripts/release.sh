@@ -62,19 +62,24 @@ echo -e "\n${YELLOW}Step 4: Updating package-lock.json...${NC}"
 npm install --package-lock-only
 echo -e "${GREEN}✓ package-lock.json updated${NC}"
 
-# Step 5: Commit the version bump
-echo -e "\n${YELLOW}Step 5: Committing version bump...${NC}"
+# Step 5: Pull latest changes
+echo -e "\n${YELLOW}Step 5: Pulling latest changes from remote...${NC}"
+git pull --rebase
+echo -e "${GREEN}✓ Latest changes pulled${NC}"
+
+# Step 6: Commit the version bump
+echo -e "\n${YELLOW}Step 6: Committing version bump...${NC}"
 git add package.json package-lock.json
 git commit -m "Bump version to ${NEW_VERSION}"
 echo -e "${GREEN}✓ Version bump committed${NC}"
 
-# Step 6: Push the commit
-echo -e "\n${YELLOW}Step 6: Pushing commit to remote...${NC}"
+# Step 7: Push the commit
+echo -e "\n${YELLOW}Step 7: Pushing commit to remote...${NC}"
 git push
 echo -e "${GREEN}✓ Commit pushed${NC}"
 
-# Step 7: Create and push the tag
-echo -e "\n${YELLOW}Step 7: Creating and pushing tag v${NEW_VERSION}...${NC}"
+# Step 8: Create and push the tag
+echo -e "\n${YELLOW}Step 8: Creating and pushing tag v${NEW_VERSION}...${NC}"
 git tag "v${NEW_VERSION}"
 git push origin "v${NEW_VERSION}"
 echo -e "${GREEN}✓ Tag v${NEW_VERSION} created and pushed${NC}"

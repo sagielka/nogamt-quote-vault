@@ -31,7 +31,7 @@ function createWindow() {
 
   // Enable WebSocket connections for Supabase Realtime
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
-    { urls: ['wss://*.supabase.co/*', 'https://*.supabase.co/*'] },
+    { urls: ["wss://*.supabase.co/*", "https://*.supabase.co/*"] },
     (details, callback) => {
       callback({ requestHeaders: details.requestHeaders });
     }
@@ -71,35 +71,48 @@ autoUpdater.on("error", (error) => {
   console.error("Auto-updater error:", error);
 });
 
+ipcMain.handle("get-app-version", () => {
+  return app.getVersion();
+});
+
 // IPC handler for email with PDF attachment
-ipcMain.handle('email-with-attachment', async (event, { pdfData, fileName, recipientEmail, subject, body }) => {
-  console.log('email-with-attachment called with:', { fileName, recipientEmail, subject });
-  
-  try {
-    // Save PDF to temp directory
-    const tempDir = os.tmpdir();
-    const pdfPath = path.join(tempDir, fileName);
-    
-    // Convert base64 to buffer and write file
-    const pdfBuffer = Buffer.from(pdfData, 'base64');
-    fs.writeFileSync(pdfPath, pdfBuffer);
-    
-    console.log('PDF saved to:', pdfPath);
-    
-    // Escape special characters for PowerShell
-    const escapedSubject = subject.replace(/'/g, "''").replace(/`/g, '``');
-    const escapedBody = body.replace(/'/g, "''").replace(/`/g, '``').replace(/\r?\n/g, '`r`n');
-    const escapedEmail = recipientEmail.replace(/'/g, "''");
-    
-    // PowerShell script using single quotes for safety
-    const powershellScript = `
+ipcMain.handle(
+  "email-with-attachment",
+  async (event, { pdfData, fileName, recipientEmail, subject, body }) => {
+    console.log("email-with-attachment called with:", {
+      fileName,
+      recipientEmail,
+      subject,
+    });
+
+    try {
+      // Save PDF to temp directory
+      const tempDir = os.tmpdir();
+      const pdfPath = path.join(tempDir, fileName);
+
+      // Convert base64 to buffer and write file
+      const pdfBuffer = Buffer.from(pdfData, "base64");
+      fs.writeFileSync(pdfPath, pdfBuffer);
+
+      console.log("PDF saved to:", pdfPath);
+
+      // Escape special characters for PowerShell
+      const escapedSubject = subject.replace(/'/g, "''").replace(/`/g, "``");
+      const escapedBody = body
+        .replace(/'/g, "''")
+        .replace(/`/g, "``")
+        .replace(/\r?\n/g, "`r`n");
+      const escapedEmail = recipientEmail.replace(/'/g, "''");
+
+      // PowerShell script using single quotes for safety
+      const powershellScript = `
       try {
         $outlook = New-Object -ComObject Outlook.Application
         $mail = $outlook.CreateItem(0)
         $mail.To = '${escapedEmail}'
         $mail.Subject = '${escapedSubject}'
         $mail.Body = '${escapedBody}'
-        $mail.Attachments.Add('${pdfPath.replace(/\\/g, '\\\\')}')
+        $mail.Attachments.Add('${pdfPath.replace(/\\/g, "\\\\")}')
         $mail.Display()
         Write-Output 'SUCCESS'
       } catch {
@@ -107,33 +120,37 @@ ipcMain.handle('email-with-attachment', async (event, { pdfData, fileName, recip
         exit 1
       }
     `;
-    
-    console.log('Executing PowerShell script...');
-    
-    return new Promise((resolve) => {
-      exec(`powershell -NoProfile -ExecutionPolicy Bypass -Command "${powershellScript.replace(/"/g, '\\"').replace(/\r?\n/g, ' ')}"`, 
-        { timeout: 30000 },
-        (error, stdout, stderr) => {
-          console.log('PowerShell stdout:', stdout);
-          console.log('PowerShell stderr:', stderr);
-          
-          if (error) {
-            console.error('PowerShell error:', error);
-            // Fallback: just open the folder with the PDF
-            shell.showItemInFolder(pdfPath);
-            resolve({ success: true, fallback: true, pdfPath });
-          } else {
-            console.log('Outlook opened successfully');
-            resolve({ success: true, fallback: false, pdfPath });
+
+      console.log("Executing PowerShell script...");
+
+      return new Promise((resolve) => {
+        exec(
+          `powershell -NoProfile -ExecutionPolicy Bypass -Command "${powershellScript
+            .replace(/"/g, '\\"')
+            .replace(/\r?\n/g, " ")}"`,
+          { timeout: 30000 },
+          (error, stdout, stderr) => {
+            console.log("PowerShell stdout:", stdout);
+            console.log("PowerShell stderr:", stderr);
+
+            if (error) {
+              console.error("PowerShell error:", error);
+              // Fallback: just open the folder with the PDF
+              shell.showItemInFolder(pdfPath);
+              resolve({ success: true, fallback: true, pdfPath });
+            } else {
+              console.log("Outlook opened successfully");
+              resolve({ success: true, fallback: false, pdfPath });
+            }
           }
-        }
-      );
-    });
-  } catch (error) {
-    console.error('Error in email-with-attachment:', error);
-    return { success: false, error: error.message };
+        );
+      });
+    } catch (error) {
+      console.error("Error in email-with-attachment:", error);
+      return { success: false, error: error.message };
+    }
   }
-});
+);
 
 app.whenReady().then(() => {
   createWindow();
@@ -155,4 +172,5 @@ app.on("activate", () => {
     createWindow();
   }
 });
+
 

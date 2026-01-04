@@ -33,6 +33,10 @@ Write-Host "Updated package.json to version $Version" -ForegroundColor Green
 Write-Host "Updating package-lock.json..." -ForegroundColor Cyan
 npm install
 
+# Pull latest changes before pushing
+Write-Host "Pulling latest changes from remote..." -ForegroundColor Cyan
+git pull --rebase
+
 # Git operations
 Write-Host "Committing changes..." -ForegroundColor Cyan
 git add .

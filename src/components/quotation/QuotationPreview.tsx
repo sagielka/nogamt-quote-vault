@@ -16,6 +16,7 @@ declare global {
     electronAPI?: {
       platform: string;
       isElectron: boolean;
+      getAppVersion?: () => Promise<string>;
       emailWithAttachment: (
         pdfData: string,
         fileName: string,

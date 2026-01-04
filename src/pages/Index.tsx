@@ -366,7 +366,16 @@ const Index = () => {
                 www.nogamt.com
               </a>
             </div>
-            <p className="text-xs text-muted-foreground/60">v{import.meta.env.PACKAGE_VERSION || '1.0.0'}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground/60">v{import.meta.env.PACKAGE_VERSION || '1.0.0'}</p>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                window.electronAPI?.isElectron 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'bg-muted text-muted-foreground'
+              }`}>
+                {window.electronAPI?.isElectron ? '🖥️ Desktop' : '🌐 Web'}
+              </span>
+            </div>
           </div>
         </div>
       </footer>

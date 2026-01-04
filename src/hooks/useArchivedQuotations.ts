@@ -104,6 +104,46 @@ export const useArchivedQuotations = () => {
     }
   }, [user, checkAdminRole, fetchArchivedQuotations]);
 
+  // Subscribe to realtime changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('archived-quotations-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'archived_quotations',
+        },
+        (payload) => {
+          console.log('Archived quotations realtime update:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newArchived = dbRowToArchivedQuotation(payload.new);
+            setArchivedQuotations((prev) => {
+              // Avoid duplicates
+              if (prev.some((q) => q.id === newArchived.id)) return prev;
+              return [newArchived, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedArchived = dbRowToArchivedQuotation(payload.new);
+            setArchivedQuotations((prev) =>
+              prev.map((q) => (q.id === updatedArchived.id ? updatedArchived : q))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as any).id;
+            setArchivedQuotations((prev) => prev.filter((q) => q.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   // Archive a quotation (move from quotations to archived_quotations)
   const archiveQuotation = useCallback(async (quotation: Quotation): Promise<boolean> => {
     if (!user) return false;

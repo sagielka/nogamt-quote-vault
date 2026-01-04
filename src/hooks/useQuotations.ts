@@ -136,6 +136,46 @@ export const useQuotations = () => {
     }
   }, [user, fetchQuotations, migrateLocalStorageData]);
 
+  // Subscribe to realtime changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('quotations-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quotations',
+        },
+        (payload) => {
+          console.log('Quotations realtime update:', payload);
+          if (payload.eventType === 'INSERT') {
+            const newQuotation = dbRowToQuotation(payload.new);
+            setQuotations((prev) => {
+              // Avoid duplicates
+              if (prev.some((q) => q.id === newQuotation.id)) return prev;
+              return [newQuotation, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedQuotation = dbRowToQuotation(payload.new);
+            setQuotations((prev) =>
+              prev.map((q) => (q.id === updatedQuotation.id ? updatedQuotation : q))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as any).id;
+            setQuotations((prev) => prev.filter((q) => q.id !== deletedId));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const addQuotation = useCallback(async (data: QuotationFormData): Promise<Quotation | null> => {
     if (!user) return null;
 

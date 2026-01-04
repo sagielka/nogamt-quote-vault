@@ -22,10 +22,20 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, "preload.js"),
+      webSecurity: true,
+      allowRunningInsecureContent: false,
     },
     icon: path.join(__dirname, "../public/favicon.ico"),
     title: "Thinking Inside Quotation System",
   });
+
+  // Enable WebSocket connections for Supabase Realtime
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
+    { urls: ['wss://*.supabase.co/*', 'https://*.supabase.co/*'] },
+    (details, callback) => {
+      callback({ requestHeaders: details.requestHeaders });
+    }
+  );
 
   // Enable print preview by handling the print in the renderer
   mainWindow.webContents.on("will-print", (event, webContents, details) => {

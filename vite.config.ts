@@ -6,6 +6,7 @@ import { readFileSync } from "fs";
 
 // Read version directly from package.json for reliable version injection
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const buildTime = new Date().toISOString();
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -22,5 +23,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     'import.meta.env.PACKAGE_VERSION': JSON.stringify(packageJson.version),
+    'import.meta.env.BUILD_TIME': JSON.stringify(buildTime),
   },
 }));

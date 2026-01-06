@@ -213,19 +213,22 @@ export const useQuotations = () => {
 
     const updateData: any = {};
     
-    // Check if this is a COPY quote (ends with -COPY)
-    const isCopyQuote = existingQuotation?.quoteNumber?.endsWith('-COPY');
-    
-    // If client name changed OR this is a COPY quote being updated, regenerate quote number (without -COPY)
-    if (data.clientName !== undefined && existingQuotation && (data.clientName !== existingQuotation.clientName || isCopyQuote)) {
-      // Get existing quote numbers (excluding the current one being updated)
-      const existingQuoteNumbers = quotations.filter(q => q.id !== id).map(q => q.quoteNumber);
-      updateData.quote_number = generateQuoteNumber(data.clientName, existingQuoteNumbers, false);
-      updateData.client_name = data.clientName;
-    } else if (data.clientName !== undefined) {
-      updateData.client_name = data.clientName;
+    // If a custom quote number is provided, use it directly
+    if (data.quoteNumber !== undefined && data.quoteNumber) {
+      updateData.quote_number = data.quoteNumber;
+    } else {
+      // Check if this is a COPY quote (ends with -COPY)
+      const isCopyQuote = existingQuotation?.quoteNumber?.endsWith('-COPY');
+      
+      // If client name changed OR this is a COPY quote being updated, regenerate quote number (without -COPY)
+      if (data.clientName !== undefined && existingQuotation && (data.clientName !== existingQuotation.clientName || isCopyQuote)) {
+        // Get existing quote numbers (excluding the current one being updated)
+        const existingQuoteNumbers = quotations.filter(q => q.id !== id).map(q => q.quoteNumber);
+        updateData.quote_number = generateQuoteNumber(data.clientName, existingQuoteNumbers, false);
+      }
     }
     
+    if (data.clientName !== undefined) updateData.client_name = data.clientName;
     if (data.clientEmail !== undefined) updateData.client_email = data.clientEmail;
     if (data.clientAddress !== undefined) updateData.client_address = data.clientAddress || null;
     if (data.items !== undefined) updateData.items = data.items;

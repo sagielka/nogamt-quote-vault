@@ -44,4 +44,6 @@ export interface Quotation {
   attachments: LineItemAttachment[];
 }
 
-export type QuotationFormData = Omit<Quotation, 'id' | 'createdAt' | 'quoteNumber'>;
+export type QuotationFormData = Omit<Quotation, 'id' | 'createdAt' | 'quoteNumber'> & {
+  quoteNumber?: string; // Optional: allows manual override when editing
+};

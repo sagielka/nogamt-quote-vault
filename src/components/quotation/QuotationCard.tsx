@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { formatCurrency, formatDate, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
-import { Eye, Trash2, Calendar, User, Pencil, Copy } from 'lucide-react';
+import { downloadQuotationPdf } from '@/lib/pdf-generator';
+import { useToast } from '@/hooks/use-toast';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2 } from 'lucide-react';
 
 interface QuotationCardProps {
   quotation: Quotation;
@@ -25,7 +28,36 @@ interface QuotationCardProps {
 }
 
 export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate }: QuotationCardProps) => {
+  const { toast } = useToast();
+  const [isDownloading, setIsDownloading] = useState(false);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
+
+  const handleDownloadPdf = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDownloading(true);
+    
+    toast({
+      title: 'Generating PDF...',
+      description: 'Please wait while the PDF is being created.',
+    });
+
+    const result = await downloadQuotationPdf(quotation);
+    
+    setIsDownloading(false);
+    
+    if (result.success) {
+      toast({
+        title: 'PDF Downloaded',
+        description: `${result.fileName} has been saved.`,
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to generate PDF. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in">
@@ -70,6 +102,18 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
             </Button>
             <Button variant="outline" size="sm" onClick={() => onDuplicate(quotation.id)}>
               <Copy className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDownloadPdf}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>

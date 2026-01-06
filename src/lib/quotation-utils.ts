@@ -1,15 +1,50 @@
 import { LineItem, Quotation, Currency } from '@/types/quotation';
 
-export const generateQuoteNumber = (customerName: string = '', isCopy: boolean = false): string => {
+// Generate the base prefix for quote numbers (MTddmmyy)
+export const getQuoteDatePrefix = (): string => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = String(now.getFullYear()).slice(-2);
+  return `MT${day}${month}${year}`;
+};
+
+// Clean customer name for use in quote number
+export const cleanCustomerName = (customerName: string = ''): string => {
   // Remove email in parentheses from customer name
   const cleanName = customerName.replace(/\s*\([^)]*\)\s*/g, '').trim();
-  const formattedName = cleanName.toUpperCase();
+  return cleanName.toUpperCase();
+};
+
+// Generate quote number with index: MTddmmyy-01-CUSTOMERNAME
+export const generateQuoteNumber = (
+  customerName: string = '', 
+  existingQuoteNumbers: string[] = [],
+  isCopy: boolean = false
+): string => {
+  const datePrefix = getQuoteDatePrefix();
+  const formattedName = cleanCustomerName(customerName);
   const suffix = isCopy ? '-COPY' : '';
-  return formattedName ? `MT${day}${month}${year}-${formattedName}${suffix}` : `MT${day}${month}${year}${suffix}`;
+  
+  // Find the highest index for this customer on this date
+  const pattern = new RegExp(`^${datePrefix}-(\\d{2})-${formattedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(-COPY)?$`, 'i');
+  
+  let maxIndex = 0;
+  for (const quoteNum of existingQuoteNumbers) {
+    const match = quoteNum.match(pattern);
+    if (match) {
+      const index = parseInt(match[1], 10);
+      if (index > maxIndex) {
+        maxIndex = index;
+      }
+    }
+  }
+  
+  const nextIndex = String(maxIndex + 1).padStart(2, '0');
+  
+  return formattedName 
+    ? `${datePrefix}-${nextIndex}-${formattedName}${suffix}` 
+    : `${datePrefix}-${nextIndex}${suffix}`;
 };
 
 export const calculateLineTotal = (item: LineItem): number => {

@@ -33,6 +33,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [clientName, setClientName] = useState(initialData?.clientName || '');
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || '');
   const [clientAddress, setClientAddress] = useState(initialData?.clientAddress || '');
+  const [quoteNumber, setQuoteNumber] = useState(initialData?.quoteNumber || '');
   const [items, setItems] = useState<LineItem[]>(
     initialData?.items || [createEmptyLineItem()]
   );
@@ -305,6 +306,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       status: 'draft',
       currency: currency,
       attachments: [],
+      quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
     });
   };
 
@@ -375,6 +377,20 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Quote Number (editable when editing) */}
+          {isEditing && quoteNumber && (
+            <div className="space-y-2">
+              <Label htmlFor="quoteNumber" className="text-muted-foreground uppercase text-xs tracking-wider">Quote Number</Label>
+              <Input
+                id="quoteNumber"
+                placeholder="Quote number"
+                value={quoteNumber}
+                onChange={(e) => setQuoteNumber(e.target.value)}
+                className="input-focus bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50 font-mono"
+              />
             </div>
           )}
 

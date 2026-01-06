@@ -179,7 +179,9 @@ export const useQuotations = () => {
   const addQuotation = useCallback(async (data: QuotationFormData): Promise<Quotation | null> => {
     if (!user) return null;
 
-    const quoteNumber = generateQuoteNumber(data.clientName);
+    // Get existing quote numbers to determine next index
+    const existingQuoteNumbers = quotations.map(q => q.quoteNumber);
+    const quoteNumber = generateQuoteNumber(data.clientName, existingQuoteNumbers);
     const dbRow = quotationToDbRow(data, user.id, quoteNumber);
 
     try {
@@ -201,7 +203,7 @@ export const useQuotations = () => {
       console.error('Error adding quotation:', err);
       return null;
     }
-  }, [user]);
+  }, [user, quotations]);
 
   const updateQuotation = useCallback(async (id: string, data: Partial<QuotationFormData>) => {
     if (!user) return;
@@ -216,7 +218,9 @@ export const useQuotations = () => {
     
     // If client name changed OR this is a COPY quote being updated, regenerate quote number (without -COPY)
     if (data.clientName !== undefined && existingQuotation && (data.clientName !== existingQuotation.clientName || isCopyQuote)) {
-      updateData.quote_number = generateQuoteNumber(data.clientName, false);
+      // Get existing quote numbers (excluding the current one being updated)
+      const existingQuoteNumbers = quotations.filter(q => q.id !== id).map(q => q.quoteNumber);
+      updateData.quote_number = generateQuoteNumber(data.clientName, existingQuoteNumbers, false);
       updateData.client_name = data.clientName;
     } else if (data.clientName !== undefined) {
       updateData.client_name = data.clientName;
@@ -288,7 +292,9 @@ export const useQuotations = () => {
     const original = quotations.find((q) => q.id === id);
     if (!original) return null;
 
-    const quoteNumber = generateQuoteNumber(original.clientName, true);
+    // Get existing quote numbers to determine next index
+    const existingQuoteNumbers = quotations.map(q => q.quoteNumber);
+    const quoteNumber = generateQuoteNumber(original.clientName, existingQuoteNumbers, true);
     const dbRow = {
       user_id: user.id,
       quote_number: quoteNumber,

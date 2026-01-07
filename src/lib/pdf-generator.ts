@@ -149,7 +149,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     useCORS: true,
     logging: false,
     background: '#ffffff',
-    scale: 3,
+    scale: 2,
   } as Parameters<typeof html2canvas>[1]);
 
   document.body.removeChild(printContainer);
@@ -158,6 +158,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
+    compress: true,
   });
 
   const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -168,7 +169,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const imgX = (pdfWidth - imgWidth * ratio) / 2;
   const imgY = 10;
 
-  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+  pdf.addImage(canvas.toDataURL('image/jpeg', 0.72), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
 
   const fileName = `${quotation.quoteNumber.replace(/^QT/i, '')}.pdf`;
   return {

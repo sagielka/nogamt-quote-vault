@@ -15,6 +15,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
@@ -200,6 +215,30 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const handleRemoveItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter((item) => item.id !== id));
+    }
+  };
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
     }
   };
 
@@ -506,7 +545,8 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
           {/* Header */}
-          <div className="hidden md:grid md:grid-cols-12 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-2">
+          <div className="hidden md:grid md:grid-cols-13 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-2">
+            <div className="col-span-1"></div>
             <div className="col-span-2">SKU</div>
             <div className="col-span-3">Description</div>
             <div className="col-span-1 text-center">LT (weeks)</div>
@@ -518,20 +558,31 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           </div>
 
           {/* Items */}
-          <div className="space-y-3">
-            {items.map((item, index) => (
-              <LineItemWithSku
-                key={item.id}
-                item={item}
-                index={index}
-                currency={currency}
-                priceList={priceList}
-                onUpdate={handleUpdateItem}
-                onRemove={handleRemoveItem}
-                canRemove={items.length > 1}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={items.map((item) => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <LineItemWithSku
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    currency={currency}
+                    priceList={priceList}
+                    onUpdate={handleUpdateItem}
+                    onRemove={handleRemoveItem}
+                    canRemove={items.length > 1}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           <Button 
             type="button" 

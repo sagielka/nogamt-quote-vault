@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, GripVertical } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface LineItemWithSkuProps {
   item: LineItem;
@@ -32,6 +34,15 @@ export const LineItemWithSku = ({
   const skuInputRef = useRef<HTMLInputElement>(null);
   const descInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
 
   const handleSkuChange = (value: string) => {
     onUpdate(item.id, { sku: value });
@@ -121,8 +132,30 @@ export const LineItemWithSku = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="grid grid-cols-1 md:grid-cols-13 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
+    >
+      {/* Drag Handle */}
+      <div className="hidden md:flex md:col-span-1 justify-center">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors touch-none"
+        >
+          <GripVertical className="h-5 w-5" />
+        </button>
+      </div>
+      
       {/* SKU with autocomplete */}
       <div className="md:col-span-2 relative">
         <Input

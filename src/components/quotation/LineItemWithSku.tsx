@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
@@ -122,7 +122,7 @@ export const LineItemWithSku = ({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-11 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors">
       {/* SKU with autocomplete */}
       <div className="md:col-span-2 relative">
         <Input
@@ -261,6 +261,20 @@ export const LineItemWithSku = ({
       {/* Total */}
       <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text">
         {formatCurrency(calculateLineTotal(item), currency)}
+      </div>
+      
+      {/* Delete */}
+      <div className="md:col-span-1 flex justify-center">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(item.id)}
+          disabled={!canRemove}
+          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

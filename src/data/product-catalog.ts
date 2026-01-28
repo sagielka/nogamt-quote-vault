@@ -1,5 +1,9 @@
 // Product catalog data with multi-currency pricing from NOGA MT 2026 MASTER PRICE LIST
 
+// Import US and UC insert data
+import uspotInserts from './uspot-inserts.json';
+import uchamfInserts from './uchamf-inserts.json';
+
 export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO';
 
 export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: string }[] = [
@@ -62,8 +66,20 @@ const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO
   '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
 };
 
-// Map letters to their corresponding number for US SKU pricing
-const US_LETTER_TO_NUMBER: Record<string, string> = {
+// UC SKU pricing table based on number (1-7) corresponding to letters (A-G)
+const UC_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number }> = {
+  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 177.84 },  // A
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 215.64 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 253.51 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 298.05 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 350.49 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 412.20 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
+};
+
+// Map letters to their corresponding number for US/UC SKU pricing
+const LETTER_TO_NUMBER: Record<string, string> = {
+  'A': '1', 'a': '1',
   'B': '2', 'b': '2',
   'C': '3', 'c': '3',
   'D': '4', 'd': '4',
@@ -71,6 +87,9 @@ const US_LETTER_TO_NUMBER: Record<string, string> = {
   'F': '6', 'f': '6',
   'G': '7', 'g': '7',
 };
+
+// Map letters to their corresponding number for US SKU pricing (legacy alias)
+const US_LETTER_TO_NUMBER = LETTER_TO_NUMBER;
 
 // Get price for US SKUs based on SKU number or description letter
 export const getUSSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
@@ -106,6 +125,69 @@ export const getUSSkuPrice = (sku: string, description: string, priceList: Price
   
   return null;
 };
+
+// Get price for UC SKUs based on SKU number or description letter
+export const getUCSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
+  if (!sku.toUpperCase().startsWith('UC')) return null;
+  
+  // Try to find the first digit after "UC" in the SKU (position 2)
+  const skuAfterUC = sku.substring(2);
+  const firstDigit = skuAfterUC.match(/[1-7]/)?.[0];
+  
+  if (firstDigit && UC_SKU_PRICES[firstDigit]) {
+    return UC_SKU_PRICES[firstDigit][priceList];
+  }
+  
+  // Try to find the letter in the description (format: UC-...-...-X-...-...)
+  const descParts = description.split('-');
+  if (descParts.length >= 4) {
+    const letterPart = descParts[3]; // Get the 4th part (index 3)
+    if (letterPart && letterPart.length === 1) {
+      const mappedNumber = LETTER_TO_NUMBER[letterPart];
+      if (mappedNumber && UC_SKU_PRICES[mappedNumber]) {
+        return UC_SKU_PRICES[mappedNumber][priceList];
+      }
+    }
+  }
+  
+  // Also try to find any matching letter anywhere in description
+  for (const [letter, number] of Object.entries(LETTER_TO_NUMBER)) {
+    if (description.includes(`-${letter}-`)) {
+      return UC_SKU_PRICES[number][priceList];
+    }
+  }
+  
+  return null;
+};
+
+// Convert US inserts JSON to ProductItem array
+const uspotProducts: ProductItem[] = uspotInserts.map((item: { sku: string; desc: string }) => ({
+  sku: item.sku,
+  description: item.desc,
+  prices: {
+    EURO: US_SKU_PRICES[item.sku.charAt(2)]?.EURO ?? null,
+    DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
+    SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
+    NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
+  },
+}));
+
+// Convert UC inserts JSON to ProductItem array
+const uchamfProducts: ProductItem[] = uchamfInserts.map((item: Record<string, string>) => {
+  const sku = Object.keys(item)[0];
+  const description = item[sku];
+  const priceKey = sku.charAt(2); // Get first digit after "UC"
+  return {
+    sku,
+    description,
+    prices: {
+      EURO: UC_SKU_PRICES[priceKey]?.EURO ?? null,
+      DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
+      SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
+      NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
+    },
+  };
+});
 
 export const productCatalog: ProductItem[] = [
   { sku: "UF1106", description: "UF-FB-G-D006-L30", prices: { EURO: 35.76, DOLLAR: 41.12, NOGA_BV_EURO: 17.43, SHEKEL: 135.89 } },
@@ -445,6 +527,9 @@ export const productCatalog: ProductItem[] = [
   { sku: "UB2069", description: "UB-SCB-5-ML-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 95.57 } },
   { sku: "UF9000", description: "UFIBER KIT", prices: { EURO: 306.00, DOLLAR: 358.00, NOGA_BV_EURO: 562.50, SHEKEL: 1360.40 } },
   { sku: "UX9000", description: "AGENT KIT", prices: { EURO: 750.00, DOLLAR: 877.50, NOGA_BV_EURO: 229.50, SHEKEL: 3334.50 } },
+  // US and UC inserts from JSON data
+  ...uspotProducts,
+  ...uchamfProducts,
 ];
 
 // Search function for product catalog
@@ -464,6 +549,12 @@ export const getProductPrice = (sku: string, priceList: PriceList, description?:
   if (sku.toUpperCase().startsWith('US')) {
     const usPrice = getUSSkuPrice(sku, description || '', priceList);
     if (usPrice !== null) return usPrice;
+  }
+  
+  // Check if it's a UC SKU with dynamic pricing
+  if (sku.toUpperCase().startsWith('UC')) {
+    const ucPrice = getUCSkuPrice(sku, description || '', priceList);
+    if (ucPrice !== null) return ucPrice;
   }
   
   // Otherwise look up in catalog

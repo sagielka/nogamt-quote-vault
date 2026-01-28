@@ -2,3 +2,6 @@ project_id = "udxfhhdoekjoofadmngu"
 
 [functions.send-quotation-email]
 verify_jwt = true
+
+[functions.fetch-github-catalog]
+verify_jwt = false

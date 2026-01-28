@@ -1,8 +1,40 @@
 // Product catalog data with multi-currency pricing from NOGA MT 2026 MASTER PRICE LIST
 
-// Import US and UC insert data
-import uspotInserts from './uspot-inserts.json';
-import uchamfInserts from './uchamf-inserts.json';
+// Import US and UC insert data as static fallback
+import uspotInsertsFallback from './uspot-inserts.json';
+import uchamfInsertsFallback from './uchamf-inserts.json';
+
+// Types for dynamic catalog data
+export interface UspotInsertItem {
+  sku: string;
+  desc: string;
+}
+
+export interface UchamfInsertItem {
+  [key: string]: string;
+}
+
+// Dynamic data store - will be populated at runtime from GitHub
+let dynamicUspotData: UspotInsertItem[] | null = null;
+let dynamicUchamfData: UchamfInsertItem[] | null = null;
+
+// Functions to update dynamic data from GitHub
+export const setDynamicCatalogData = (
+  uspotData: UspotInsertItem[],
+  uchamfData: UchamfInsertItem[]
+) => {
+  dynamicUspotData = uspotData;
+  dynamicUchamfData = uchamfData;
+};
+
+// Get current insert data (dynamic if available, fallback to static)
+export const getUspotInserts = (): UspotInsertItem[] => {
+  return dynamicUspotData || uspotInsertsFallback;
+};
+
+export const getUchamfInserts = (): UchamfInsertItem[] => {
+  return dynamicUchamfData || uchamfInsertsFallback;
+};
 
 export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO';
 
@@ -160,36 +192,41 @@ export const getUCSkuPrice = (sku: string, description: string, priceList: Price
   return null;
 };
 
-// Convert US inserts JSON to ProductItem array
-const uspotProducts: ProductItem[] = uspotInserts.map((item: { sku: string; desc: string }) => ({
-  sku: item.sku,
-  description: item.desc,
-  prices: {
-    EURO: US_SKU_PRICES[item.sku.charAt(2)]?.EURO ?? null,
-    DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
-    SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
-    NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
-  },
-}));
-
-// Convert UC inserts JSON to ProductItem array
-const uchamfProducts: ProductItem[] = uchamfInserts.map((item: Record<string, string>) => {
-  const sku = Object.keys(item)[0];
-  const description = item[sku];
-  const priceKey = sku.charAt(2); // Get first digit after "UC"
-  return {
-    sku,
-    description,
+// Convert US inserts JSON to ProductItem array (dynamically)
+const getUspotProducts = (): ProductItem[] => {
+  return getUspotInserts().map((item) => ({
+    sku: item.sku,
+    description: item.desc,
     prices: {
-      EURO: UC_SKU_PRICES[priceKey]?.EURO ?? null,
-      DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
-      SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
-      NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
+      EURO: US_SKU_PRICES[item.sku.charAt(2)]?.EURO ?? null,
+      DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
+      SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
+      NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
     },
-  };
-});
+  }));
+};
 
-export const productCatalog: ProductItem[] = [
+// Convert UC inserts JSON to ProductItem array (dynamically)
+const getUchamfProducts = (): ProductItem[] => {
+  return getUchamfInserts().map((item) => {
+    const sku = Object.keys(item)[0];
+    const description = item[sku];
+    const priceKey = sku.charAt(2); // Get first digit after "UC"
+    return {
+      sku,
+      description,
+      prices: {
+        EURO: UC_SKU_PRICES[priceKey]?.EURO ?? null,
+        DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
+        SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
+        NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
+      },
+    };
+  });
+};
+
+// Static catalog products (non-dynamic items)
+const staticCatalogProducts: ProductItem[] = [
   { sku: "UF1106", description: "UF-FB-G-D006-L30", prices: { EURO: 35.76, DOLLAR: 41.12, NOGA_BV_EURO: 17.43, SHEKEL: 135.89 } },
   { sku: "UF1206", description: "UF-FB-P-D006-L30", prices: { EURO: 35.76, DOLLAR: 41.12, NOGA_BV_EURO: 17.43, SHEKEL: 135.89 } },
   { sku: "UF1306", description: "UF-FB-V-D006-L30", prices: { EURO: 35.76, DOLLAR: 41.12, NOGA_BV_EURO: 17.43, SHEKEL: 135.89 } },
@@ -527,16 +564,31 @@ export const productCatalog: ProductItem[] = [
   { sku: "UB2069", description: "UB-SCB-5-ML-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 95.57 } },
   { sku: "UF9000", description: "UFIBER KIT", prices: { EURO: 306.00, DOLLAR: 358.00, NOGA_BV_EURO: 562.50, SHEKEL: 1360.40 } },
   { sku: "UX9000", description: "AGENT KIT", prices: { EURO: 750.00, DOLLAR: 877.50, NOGA_BV_EURO: 229.50, SHEKEL: 3334.50 } },
-  // US and UC inserts from JSON data
-  ...uspotProducts,
-  ...uchamfProducts,
+];
+
+// Dynamic product catalog getter - combines static products with dynamic US/UC inserts
+export const getProductCatalog = (): ProductItem[] => {
+  return [
+    ...staticCatalogProducts,
+    ...getUspotProducts(),
+    ...getUchamfProducts(),
+  ];
+};
+
+// Legacy export for backward compatibility - NOTE: This is evaluated once on import!
+// For dynamic data, use getProductCatalog() instead
+export const productCatalog: ProductItem[] = [
+  ...staticCatalogProducts,
+  ...getUspotProducts(),
+  ...getUchamfProducts(),
 ];
 
 // Search function for product catalog
 export const searchProducts = (query: string): ProductItem[] => {
   if (!query || query.length < 2) return [];
   const lowerQuery = query.toLowerCase();
-  return productCatalog.filter(
+  const catalog = getProductCatalog(); // Use dynamic getter
+  return catalog.filter(
     (product) =>
       product.sku.toLowerCase().includes(lowerQuery) ||
       product.description.toLowerCase().includes(lowerQuery)
@@ -557,7 +609,8 @@ export const getProductPrice = (sku: string, priceList: PriceList, description?:
     if (ucPrice !== null) return ucPrice;
   }
   
-  // Otherwise look up in catalog
-  const product = productCatalog.find(p => p.sku === sku);
+  // Otherwise look up in catalog (use dynamic getter)
+  const catalog = getProductCatalog();
+  const product = catalog.find(p => p.sku === sku);
   return product?.prices[priceList] ?? null;
 };

@@ -228,18 +228,23 @@ Noga Engineering & Technology Ltd.`;
               <tbody>
                 {quotation.items.map((item, index) => (
                   <tr key={item.id} className="border-b border-border print:border-gray-200">
-                    <td className="py-4 text-muted-foreground print:text-gray-600">{index + 1}</td>
-                    <td className="py-4 text-foreground font-mono text-sm print:text-gray-900">{item.sku || '—'}</td>
-                    <td className="py-4 text-foreground print:text-gray-900">
+                    <td className="py-4 text-muted-foreground print:text-gray-600 align-top">{index + 1}</td>
+                    <td className="py-4 text-foreground font-mono text-sm print:text-gray-900 align-top">{item.sku || '—'}</td>
+                    <td className="py-4 text-foreground print:text-gray-900 align-top">
                       <div>{item.description || '—'}</div>
+                      {item.notes && (
+                        <div className="text-xs text-muted-foreground mt-1 italic print:text-gray-500">
+                          Note: {item.notes}
+                        </div>
+                      )}
                     </td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.leadTime || '—'}</td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">{item.moq || 1}</td>
-                    <td className="py-4 text-right text-muted-foreground print:text-gray-600">{formatCurrency(item.unitPrice, quotation.currency)}</td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600">
+                    <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.leadTime || '—'}</td>
+                    <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.moq || 1}</td>
+                    <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">{formatCurrency(item.unitPrice, quotation.currency)}</td>
+                    <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">
                       {item.discountPercent ? `${item.discountPercent}%` : '—'}
                     </td>
-                    <td className="py-4 text-right font-medium text-foreground print:text-gray-900">
+                    <td className="py-4 text-right font-medium text-foreground print:text-gray-900 align-top">
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>

@@ -79,14 +79,17 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       <tbody>
         ${quotation.items.map((item, index) => `
           <tr style="border-bottom: 1px solid #e5e5e5;">
-            <td style="padding: 12px 4px; color: #666;">${index + 1}</td>
-            <td style="padding: 12px 4px; font-family: monospace; font-size: 9px;">${escapeHtml(item.sku) || '—'}</td>
-            <td style="padding: 12px 4px;">${escapeHtml(item.description) || '—'}</td>
-            <td style="padding: 12px 4px; text-align: center; color: #666;">${item.leadTime || '—'}</td>
-            <td style="padding: 12px 4px; text-align: center; color: #666;">${item.moq || 1}</td>
-            <td style="padding: 12px 4px; text-align: right; color: #666;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
-            <td style="padding: 12px 4px; text-align: center; color: #666;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
-            <td style="padding: 12px 4px; text-align: right; font-weight: 500;">${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+            <td style="padding: 12px 4px; color: #666; vertical-align: top;">${index + 1}</td>
+            <td style="padding: 12px 4px; font-family: monospace; font-size: 9px; vertical-align: top;">${escapeHtml(item.sku) || '—'}</td>
+            <td style="padding: 12px 4px; vertical-align: top;">
+              <div>${escapeHtml(item.description) || '—'}</div>
+              ${item.notes ? `<div style="font-size: 9px; color: #666; font-style: italic; margin-top: 4px;">Note: ${escapeHtml(item.notes)}</div>` : ''}
+            </td>
+            <td style="padding: 12px 4px; text-align: center; color: #666; vertical-align: top;">${item.leadTime || '—'}</td>
+            <td style="padding: 12px 4px; text-align: center; color: #666; vertical-align: top;">${item.moq || 1}</td>
+            <td style="padding: 12px 4px; text-align: right; color: #666; vertical-align: top;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
+            <td style="padding: 12px 4px; text-align: center; color: #666; vertical-align: top;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
+            <td style="padding: 12px 4px; text-align: right; font-weight: 500; vertical-align: top;">${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
           </tr>
         `).join('')}
       </tbody>

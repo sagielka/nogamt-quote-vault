@@ -146,7 +146,7 @@ export const LineItemWithSku = ({
       style={style}
       className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
     >
-      <div className="grid grid-cols-1 md:grid-cols-13 gap-3 items-center p-3">
+      <div className="grid grid-cols-1 md:grid-cols-14 gap-3 items-center p-3">
         {/* Drag Handle */}
         <div className="hidden md:flex md:col-span-1 justify-center">
           <button
@@ -300,7 +300,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Actions */}
-        <div className="md:col-span-1 flex justify-center gap-1">
+        <div className="md:col-span-2 flex justify-end gap-1">
           <Button
             type="button"
             variant="ghost"

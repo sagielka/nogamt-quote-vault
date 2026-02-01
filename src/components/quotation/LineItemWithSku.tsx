@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical } from 'lucide-react';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
@@ -31,6 +32,7 @@ export const LineItemWithSku = ({
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [showNotes, setShowNotes] = useState(!!item.notes);
   const skuInputRef = useRef<HTMLInputElement>(null);
   const descInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -142,173 +144,205 @@ export const LineItemWithSku = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="grid grid-cols-1 md:grid-cols-13 gap-3 items-center animate-fade-in p-3 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
+      className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
     >
-      {/* Drag Handle */}
-      <div className="hidden md:flex md:col-span-1 justify-center">
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors touch-none"
-        >
-          <GripVertical className="h-5 w-5" />
-        </button>
-      </div>
-      
-      {/* SKU with autocomplete */}
-      <div className="md:col-span-2 relative">
-        <Input
-          ref={skuInputRef}
-          placeholder="Type SKU..."
-          value={item.sku || ''}
-          onChange={(e) => handleSkuChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (suggestions.length > 0) setActiveField('sku');
-          }}
-          className="input-focus bg-background/50 border-primary/20 font-mono text-sm"
-        />
-        {activeField === 'sku' && suggestions.length > 0 && (
-          <div
-            ref={suggestionsRef}
-            className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+      <div className="grid grid-cols-1 md:grid-cols-13 gap-3 items-center p-3">
+        {/* Drag Handle */}
+        <div className="hidden md:flex md:col-span-1 justify-center">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors touch-none"
           >
-            {suggestions.map((product, idx) => {
-              const price = product.prices[priceList];
-              return (
-                <div
-                  key={product.sku}
-                  className={`px-3 py-2 cursor-pointer text-sm ${
-                    idx === highlightedIndex
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-muted'
-                  }`}
-                  onClick={() => handleSelectSuggestion(product)}
-                >
-                  <span className="font-mono font-medium">{product.sku}</span>
-                  <span className="text-muted-foreground"> - {product.description}</span>
-                  {price !== null && (
-                    <span className="text-primary ml-2 font-medium">({price.toFixed(2)})</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      
-      {/* Description with autocomplete */}
-      <div className="md:col-span-3 relative">
-        <Input
-          ref={descInputRef}
-          placeholder="Description"
-          value={item.description}
-          onChange={(e) => handleDescriptionChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => {
-            if (suggestions.length > 0) setActiveField('description');
-          }}
-          className="input-focus bg-background/50 border-primary/20"
-        />
-        {activeField === 'description' && suggestions.length > 0 && (
-          <div
-            ref={suggestionsRef}
-            className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+            <GripVertical className="h-5 w-5" />
+          </button>
+        </div>
+        
+        {/* SKU with autocomplete */}
+        <div className="md:col-span-2 relative">
+          <Input
+            ref={skuInputRef}
+            placeholder="Type SKU..."
+            value={item.sku || ''}
+            onChange={(e) => handleSkuChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (suggestions.length > 0) setActiveField('sku');
+            }}
+            className="input-focus bg-background/50 border-primary/20 font-mono text-sm"
+          />
+          {activeField === 'sku' && suggestions.length > 0 && (
+            <div
+              ref={suggestionsRef}
+              className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+            >
+              {suggestions.map((product, idx) => {
+                const price = product.prices[priceList];
+                return (
+                  <div
+                    key={product.sku}
+                    className={`px-3 py-2 cursor-pointer text-sm ${
+                      idx === highlightedIndex
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => handleSelectSuggestion(product)}
+                  >
+                    <span className="font-mono font-medium">{product.sku}</span>
+                    <span className="text-muted-foreground"> - {product.description}</span>
+                    {price !== null && (
+                      <span className="text-primary ml-2 font-medium">({price.toFixed(2)})</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        
+        {/* Description with autocomplete */}
+        <div className="md:col-span-3 relative">
+          <Input
+            ref={descInputRef}
+            placeholder="Description"
+            value={item.description}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => {
+              if (suggestions.length > 0) setActiveField('description');
+            }}
+            className="input-focus bg-background/50 border-primary/20"
+          />
+          {activeField === 'description' && suggestions.length > 0 && (
+            <div
+              ref={suggestionsRef}
+              className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+            >
+              {suggestions.map((product, idx) => {
+                const price = product.prices[priceList];
+                return (
+                  <div
+                    key={product.sku}
+                    className={`px-3 py-2 cursor-pointer text-sm ${
+                      idx === highlightedIndex
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-muted'
+                    }`}
+                    onClick={() => handleSelectSuggestion(product)}
+                  >
+                    <span className="font-mono font-medium">{product.sku}</span>
+                    <span className="text-muted-foreground"> - {product.description}</span>
+                    {price !== null && (
+                      <span className="text-primary ml-2 font-medium">({price.toFixed(2)})</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        
+        {/* LT (weeks) */}
+        <div className="md:col-span-1">
+          <Input
+            type="number"
+            min="0"
+            placeholder="Weeks"
+            value={item.leadTime || ''}
+            onChange={(e) => onUpdate(item.id, { leadTime: e.target.value })}
+            className="input-focus text-center bg-background/50 border-primary/20"
+          />
+        </div>
+        
+        {/* MOQ */}
+        <div className="md:col-span-1">
+          <Input
+            type="number"
+            min="1"
+            placeholder="MOQ"
+            value={item.moq || ''}
+            onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
+            className="input-focus text-center bg-background/50 border-primary/20"
+          />
+        </div>
+        
+        {/* Unit Price */}
+        <div className="md:col-span-2">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Price"
+            value={item.unitPrice || ''}
+            onChange={(e) => onUpdate(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
+            className="input-focus text-right bg-background/50 border-primary/20"
+          />
+        </div>
+        
+        {/* Discount */}
+        <div className="md:col-span-1">
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            placeholder="0"
+            value={item.discountPercent || ''}
+            onChange={(e) => onUpdate(item.id, { discountPercent: parseFloat(e.target.value) || 0 })}
+            className="input-focus text-center bg-background/50 border-primary/20"
+          />
+        </div>
+        
+        {/* Total */}
+        <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text">
+          {formatCurrency(calculateLineTotal(item), currency)}
+        </div>
+        
+        {/* Actions */}
+        <div className="md:col-span-1 flex justify-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowNotes(!showNotes)}
+            className={`h-8 w-8 transition-colors ${
+              showNotes || item.notes 
+                ? 'text-primary hover:text-primary/80 hover:bg-primary/10' 
+                : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
+            }`}
+            title={showNotes ? 'Hide notes' : 'Add notes'}
           >
-            {suggestions.map((product, idx) => {
-              const price = product.prices[priceList];
-              return (
-                <div
-                  key={product.sku}
-                  className={`px-3 py-2 cursor-pointer text-sm ${
-                    idx === highlightedIndex
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-muted'
-                  }`}
-                  onClick={() => handleSelectSuggestion(product)}
-                >
-                  <span className="font-mono font-medium">{product.sku}</span>
-                  <span className="text-muted-foreground"> - {product.description}</span>
-                  {price !== null && (
-                    <span className="text-primary ml-2 font-medium">({price.toFixed(2)})</span>
-                  )}
-                </div>
-              );
-            })}
+            {showNotes ? <ChevronUp className="h-4 w-4" /> : <StickyNote className="h-4 w-4" />}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemove(item.id)}
+            disabled={!canRemove}
+            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Notes Section */}
+      {showNotes && (
+        <div className="px-3 pb-3 pt-0">
+          <div className="flex items-start gap-2 pl-0 md:pl-12">
+            <StickyNote className="h-4 w-4 text-muted-foreground mt-2 flex-shrink-0" />
+            <Textarea
+              placeholder="Add notes for this item..."
+              value={item.notes || ''}
+              onChange={(e) => onUpdate(item.id, { notes: e.target.value })}
+              rows={2}
+              className="input-focus resize-none bg-background/50 border-primary/20 text-sm flex-1"
+            />
           </div>
-        )}
-      </div>
-      
-      {/* LT (weeks) */}
-      <div className="md:col-span-1">
-        <Input
-          type="number"
-          min="0"
-          placeholder="Weeks"
-          value={item.leadTime || ''}
-          onChange={(e) => onUpdate(item.id, { leadTime: e.target.value })}
-          className="input-focus text-center bg-background/50 border-primary/20"
-        />
-      </div>
-      
-      {/* MOQ */}
-      <div className="md:col-span-1">
-        <Input
-          type="number"
-          min="1"
-          placeholder="MOQ"
-          value={item.moq || ''}
-          onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
-          className="input-focus text-center bg-background/50 border-primary/20"
-        />
-      </div>
-      
-      {/* Unit Price */}
-      <div className="md:col-span-2">
-        <Input
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="Price"
-          value={item.unitPrice || ''}
-          onChange={(e) => onUpdate(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
-          className="input-focus text-right bg-background/50 border-primary/20"
-        />
-      </div>
-      
-      {/* Discount */}
-      <div className="md:col-span-1">
-        <Input
-          type="number"
-          min="0"
-          max="100"
-          step="0.1"
-          placeholder="0"
-          value={item.discountPercent || ''}
-          onChange={(e) => onUpdate(item.id, { discountPercent: parseFloat(e.target.value) || 0 })}
-          className="input-focus text-center bg-background/50 border-primary/20"
-        />
-      </div>
-      
-      {/* Total */}
-      <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text">
-        {formatCurrency(calculateLineTotal(item), currency)}
-      </div>
-      
-      {/* Delete */}
-      <div className="md:col-span-1 flex justify-center">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => onRemove(item.id)}
-          disabled={!canRemove}
-          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

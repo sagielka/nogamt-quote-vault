@@ -24,6 +24,7 @@ export interface LineItem {
   moq: number;
   unitPrice: number;
   discountPercent: number;
+  notes?: string;
 }
 
 export interface Quotation {

@@ -9,6 +9,7 @@ export const lineItemSchema = z.object({
   moq: z.number().positive('MOQ must be positive').int('MOQ must be a whole number').max(999999, 'MOQ too large'),
   unitPrice: z.number().nonnegative('Unit price cannot be negative').max(999999999, 'Unit price too large'),
   discountPercent: z.number().min(0, 'Discount cannot be negative').max(100, 'Discount cannot exceed 100%').optional().default(0),
+  notes: z.string().max(500, 'Item notes must be 500 characters or less').optional(),
 });
 
 // Quotation form validation schema

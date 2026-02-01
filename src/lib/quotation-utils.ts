@@ -123,4 +123,5 @@ export const createEmptyLineItem = (): LineItem => ({
   moq: 1,
   unitPrice: 0,
   discountPercent: 0,
+  notes: '',
 });

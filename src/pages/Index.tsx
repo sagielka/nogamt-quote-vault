@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
@@ -12,7 +12,8 @@ import { EmptyState } from '@/components/quotation/EmptyState';
 import { SyncStatusIndicator } from '@/components/SyncStatusIndicator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
@@ -31,6 +32,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const [desktopAppVersion, setDesktopAppVersion] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -184,6 +186,18 @@ const Index = () => {
     }
   };
 
+  const filteredQuotations = useMemo(() => {
+    if (!searchQuery.trim()) return quotations;
+    const q = searchQuery.toLowerCase();
+    return quotations.filter(
+      (qt) =>
+        qt.quoteNumber.toLowerCase().includes(q) ||
+        qt.clientName.toLowerCase().includes(q) ||
+        qt.clientEmail.toLowerCase().includes(q) ||
+        qt.items.some((item) => item.sku.toLowerCase().includes(q) || item.description.toLowerCase().includes(q))
+    );
+  }, [quotations, searchQuery]);
+
   const selectedQuotation = selectedQuotationId ? getQuotation(selectedQuotationId) : null;
 
   if (loading) {
@@ -262,11 +276,20 @@ const Index = () => {
                     Your Quotations
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    {quotations.length} quotation{quotations.length !== 1 ? 's' : ''}
+                    {filteredQuotations.length} of {quotations.length} quotation{quotations.length !== 1 ? 's' : ''}
                   </p>
                 </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by quote #, client, SKU, or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
                 <div className="flex flex-col gap-4">
-                  {quotations.map((quotation) => (
+                  {filteredQuotations.map((quotation) => (
                     <QuotationCard
                       key={quotation.id}
                       quotation={quotation}
@@ -276,6 +299,11 @@ const Index = () => {
                       onDuplicate={handleDuplicateQuotation}
                     />
                   ))}
+                  {filteredQuotations.length === 0 && searchQuery && (
+                    <p className="text-center text-sm text-muted-foreground py-8">
+                      No quotations match "{searchQuery}"
+                    </p>
+                  )}
                 </div>
               </div>
             )}

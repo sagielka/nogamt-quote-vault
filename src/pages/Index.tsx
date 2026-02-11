@@ -265,7 +265,7 @@ const Index = () => {
                     {quotations.length} quotation{quotations.length !== 1 ? 's' : ''}
                   </p>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="flex flex-col gap-4">
                   {quotations.map((quotation) => (
                     <QuotationCard
                       key={quotation.id}

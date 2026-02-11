@@ -61,88 +61,92 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
 
   return (
     <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="font-display font-semibold text-foreground">
-              {quotation.quoteNumber}
-            </h3>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-              <User className="w-3.5 h-3.5" />
-              {quotation.clientName}
+      <CardContent className="px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: quote info */}
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-display font-semibold text-foreground text-sm truncate">
+                  {quotation.quoteNumber}
+                </h3>
+                {quotation.status !== 'draft' && (
+                  <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
+                    {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                <span className="flex items-center gap-1 truncate">
+                  <User className="w-3 h-3 shrink-0" />
+                  {quotation.clientName}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3 shrink-0" />
+                  {formatDate(quotation.createdAt)}
+                </span>
+                <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
+              </div>
             </div>
           </div>
-          {quotation.status !== 'draft' && (
-            <Badge className={getStatusColor(quotation.status)} variant="secondary">
-              {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-            </Badge>
-          )}
-        </div>
 
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>Created {formatDate(quotation.createdAt)}</span>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            {quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-4 border-t">
-          <span className="text-xl font-semibold text-primary">
-            {formatCurrency(total, quotation.currency)}
-          </span>
-          <div className="flex gap-1">
-            <Button variant="outline" size="sm" onClick={() => onView(quotation.id)}>
-              <Eye className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onEdit(quotation.id)}>
-              <Pencil className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onDuplicate(quotation.id)}>
-              <Copy className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleDownloadPdf}
-              disabled={isDownloading}
-            >
-              {isDownloading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Quotation?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete "{quotation.quoteNumber}"? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => onDelete(quotation.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          {/* Right: total + actions */}
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-base font-semibold text-primary whitespace-nowrap">
+              {formatCurrency(total, quotation.currency)}
+            </span>
+            <div className="flex gap-0.5">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onView(quotation.id)}>
+                <Eye className="w-3.5 h-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(quotation.id)}>
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDuplicate(quotation.id)}>
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
                   >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Quotation?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{quotation.quoteNumber}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDelete(quotation.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
       </CardContent>

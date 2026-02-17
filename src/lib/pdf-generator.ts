@@ -212,8 +212,8 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.setTextColor(...gray);
     pdf.text(String(i + 1), colX.num, rowY);
 
-    pdf.setFont('courier', 'normal');
-    pdf.setFontSize(7);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
     pdf.text(item.sku || '—', colX.sku, rowY);
 
     pdf.setFont('helvetica', 'normal');

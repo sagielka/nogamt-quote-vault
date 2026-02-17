@@ -67,10 +67,14 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       loadImageAsBase64(thinkingInsideImg),
     ]);
 
-    // Draw logos - left and right
-    const logoHeight = 12;
-    pdf.addImage(logoData, 'PNG', margin, y, 30, logoHeight);
-    pdf.addImage(thinkingData, 'PNG', pageWidth - margin - 30, y, 30, logoHeight);
+    // Draw logos - left and right, preserving aspect ratio
+    const logoW = 35;
+    const logoH = 15;
+    pdf.addImage(logoData, 'PNG', margin, y, logoW, logoH);
+    
+    const thinkingW = 28;
+    const thinkingH = 15;
+    pdf.addImage(thinkingData, 'PNG', pageWidth - margin - thinkingW, y, thinkingW, thinkingH);
   } catch (e) {
     console.warn('Could not load logo images:', e);
   }
@@ -81,7 +85,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   pdf.setFontSize(18);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...cyan);
-  const titleText = 'QUOTATION ';
+  const titleText = 'QUOTATION  ';
   const titleWidth = pdf.getTextWidth(titleText);
   const quoteNum = quotation.quoteNumber.replace(/^QT/i, '');
   const numWidth = pdf.getTextWidth(quoteNum);

@@ -71,18 +71,25 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       loadImageAsBase64(thinkingInsideImg),
     ]);
 
-    // Draw logos preserving natural aspect ratios
-    const targetH = 14; // mm height for both logos
+    // Draw logos preserving natural aspect ratios with white background
+    const targetH = 14;
+    const logoPad = 1; // padding around logo
+
     const logoW = (logo.width / logo.height) * targetH;
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(margin - logoPad, y - logoPad, logoW + logoPad * 2, targetH + logoPad * 2, 'F');
     pdf.addImage(logo.data, 'PNG', margin, y, logoW, targetH);
     
     const thinkingW = (thinking.width / thinking.height) * targetH;
-    pdf.addImage(thinking.data, 'PNG', pageWidth - margin - thinkingW, y, thinkingW, targetH);
+    const thinkingX = pageWidth - margin - thinkingW;
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(thinkingX - logoPad, y - logoPad, thinkingW + logoPad * 2, targetH + logoPad * 2, 'F');
+    pdf.addImage(thinking.data, 'PNG', thinkingX, y, thinkingW, targetH);
   } catch (e) {
     console.warn('Could not load logo images:', e);
   }
 
-  y += 18;
+  y += 22;
 
   // Title
   pdf.setFontSize(18);

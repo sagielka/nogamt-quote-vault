@@ -10,7 +10,7 @@ export type GeneratedPdf = {
 };
 
 // Helper to load image as base64
-const loadImageAsBase64 = (src: string): Promise<string> => {
+const loadImageAsBase64 = (src: string): Promise<{ data: string; width: number; height: number }> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -20,7 +20,11 @@ const loadImageAsBase64 = (src: string): Promise<string> => {
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
+      resolve({
+        data: canvas.toDataURL('image/png'),
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      });
     };
     img.onerror = reject;
     img.src = src;
@@ -62,19 +66,18 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
   // Load logos
   try {
-    const [logoData, thinkingData] = await Promise.all([
+    const [logo, thinking] = await Promise.all([
       loadImageAsBase64(logoImg),
       loadImageAsBase64(thinkingInsideImg),
     ]);
 
-    // Draw logos - left and right, preserving aspect ratio
-    const logoW = 35;
-    const logoH = 15;
-    pdf.addImage(logoData, 'PNG', margin, y, logoW, logoH);
+    // Draw logos preserving natural aspect ratios
+    const targetH = 14; // mm height for both logos
+    const logoW = (logo.width / logo.height) * targetH;
+    pdf.addImage(logo.data, 'PNG', margin, y, logoW, targetH);
     
-    const thinkingW = 28;
-    const thinkingH = 15;
-    pdf.addImage(thinkingData, 'PNG', pageWidth - margin - thinkingW, y, thinkingW, thinkingH);
+    const thinkingW = (thinking.width / thinking.height) * targetH;
+    pdf.addImage(thinking.data, 'PNG', pageWidth - margin - thinkingW, y, thinkingW, targetH);
   } catch (e) {
     console.warn('Could not load logo images:', e);
   }

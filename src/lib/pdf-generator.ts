@@ -1,14 +1,36 @@
 import { Quotation } from '@/types/quotation';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
-import { escapeHtml } from '@/lib/html-sanitize';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import logo from '@/assets/logo.png';
-import thinkingInside from '@/assets/thinking-inside-new.png';
+import logoImg from '@/assets/logo.png';
+import thinkingInsideImg from '@/assets/thinking-inside-new.png';
 
 export type GeneratedPdf = {
   blob: Blob;
   fileName: string;
+};
+
+// Helper to load image as base64
+const loadImageAsBase64 = (src: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+};
+
+// Helper to wrap text and return lines
+const wrapText = (pdf: jsPDF, text: string, maxWidth: number): string[] => {
+  if (!text) return [''];
+  return pdf.splitTextToSize(text, maxWidth) as string[];
 };
 
 export const generateQuotationPdf = async (quotation: Quotation): Promise<GeneratedPdf> => {
@@ -18,145 +40,6 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const tax = calculateTax(afterDiscount, quotation.taxRate);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
-  // Create a hidden container with print styles
-  const printContainer = document.createElement('div');
-  printContainer.style.cssText = `
-    position: absolute;
-    left: -9999px;
-    top: 0;
-    width: 794px;
-    background: white;
-    padding: 40px;
-    font-family: 'Roboto Condensed', sans-serif;
-    font-size: 11px;
-    color: #1a1a1a;
-  `;
-
-  // Escape all user-provided content to prevent XSS
-  const safeClientName = escapeHtml(quotation.clientName);
-  const safeClientEmail = escapeHtml(quotation.clientEmail);
-  const safeClientAddress = escapeHtml(quotation.clientAddress);
-  const safeNotes = escapeHtml(quotation.notes);
-  const safeQuoteNumber = escapeHtml(quotation.quoteNumber.replace(/^QT/i, ''));
-
-  printContainer.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
-      <img src="${logo}" alt="NogaMT Logo" style="height: 48px; width: auto;" crossorigin="anonymous" />
-      <img src="${thinkingInside}" alt="Thinking Inside" style="height: 48px; width: auto;" crossorigin="anonymous" />
-    </div>
-
-    <h1 style="text-align: center; color: #0891b2; font-size: 24px; margin-bottom: 16px; font-weight: bold;">
-      QUOTATION <span style="color: #1a1a1a;">${safeQuoteNumber}</span>
-    </h1>
-
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #e5e5e5;">
-      <div style="text-align: left;">
-        <p style="color: #666; font-size: 11px; margin: 0;">Created: ${formatDate(quotation.createdAt)}</p>
-        <p style="color: #666; font-size: 11px; margin: 0;">Valid Until: ${formatDate(quotation.validUntil)}</p>
-      </div>
-    </div>
-
-    <div style="margin-bottom: 24px;">
-      <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">BILL TO</h2>
-      <p style="font-weight: 600; margin: 0;">${safeClientName}</p>
-      <p style="color: #666; margin: 0;">${safeClientEmail}</p>
-      ${safeClientAddress ? `<p style="color: #666; margin: 0; white-space: pre-line;">${safeClientAddress}</p>` : ''}
-    </div>
-
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 10px;">
-      <thead>
-        <tr style="border-bottom: 2px solid #d1d5db;">
-          <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 30px;">#</th>
-          <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">SKU</th>
-          <th style="text-align: left; padding: 8px 4px; color: #666; font-weight: 500;">Description</th>
-          <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">LT (wks)</th>
-          <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">MOQ</th>
-          <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Unit Price (${quotation.currency})</th>
-          <th style="text-align: center; padding: 8px 4px; color: #666; font-weight: 500; width: 50px;">Disc %</th>
-          <th style="text-align: right; padding: 8px 4px; color: #666; font-weight: 500; width: 80px;">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${quotation.items.map((item, index) => `
-          <tr style="border-bottom: 1px solid #e5e5e5;">
-            <td style="padding: 12px 4px; color: #666; vertical-align: top;">${index + 1}</td>
-            <td style="padding: 12px 4px; font-family: monospace; font-size: 9px; vertical-align: top;">${escapeHtml(item.sku) || '—'}</td>
-            <td style="padding: 12px 4px; vertical-align: top;">
-              <div>${escapeHtml(item.description) || '—'}</div>
-              ${item.notes ? `<div style="font-size: 9px; color: #666; font-style: italic; margin-top: 4px;">Note: ${escapeHtml(item.notes)}</div>` : ''}
-            </td>
-            <td style="padding: 12px 4px; text-align: center; color: #666; vertical-align: top;">${item.leadTime || '—'}</td>
-            <td style="padding: 12px 4px; text-align: center; color: #666; vertical-align: top;">${item.moq || 1}</td>
-            <td style="padding: 12px 4px; text-align: right; color: #666; vertical-align: top;">${formatCurrency(item.unitPrice, quotation.currency)}</td>
-            <td style="padding: 12px 4px; text-align: center; color: #666; vertical-align: top;">${item.discountPercent ? `${item.discountPercent}%` : '—'}</td>
-            <td style="padding: 12px 4px; text-align: right; font-weight: 500; vertical-align: top;">${formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 24px;">
-      <div style="width: 220px;">
-        <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
-          <span style="color: #666;">Subtotal</span>
-          <span>${formatCurrency(subtotal, quotation.currency)}</span>
-        </div>
-        ${discount > 0 ? `
-          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
-            <span style="color: #666;">Discount ${quotation.discountType === 'percentage' ? `(${quotation.discountValue}%)` : ''}</span>
-            <span style="color: #dc2626;">-${formatCurrency(discount, quotation.currency)}</span>
-          </div>
-        ` : ''}
-        ${quotation.taxRate > 0 ? `
-          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px;">
-            <span style="color: #666;">Tax (${quotation.taxRate}%)</span>
-            <span>${formatCurrency(tax, quotation.currency)}</span>
-          </div>
-        ` : ''}
-        <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; padding-top: 8px; border-top: 2px solid #d1d5db;">
-          <span>Total</span>
-          <span style="color: #0891b2;">${formatCurrency(total, quotation.currency)}</span>
-        </div>
-      </div>
-    </div>
-
-    ${safeNotes ? `
-      <div style="padding-top: 16px; border-top: 1px solid #e5e5e5;">
-        <h2 style="font-size: 10px; color: #666; margin-bottom: 8px; font-weight: 500;">NOTES</h2>
-        <p style="color: #666; white-space: pre-line; font-size: 10px;">${safeNotes}</p>
-      </div>
-    ` : ''}
-
-    <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e5e5; text-align: center;">
-      <p style="font-weight: 600; font-size: 10px; margin: 0;">Noga Engineering & Technology Ltd.</p>
-      <p style="font-size: 9px; color: #666; margin: 4px 0;">Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
-      <p style="font-size: 9px; color: #0891b2; margin: 0;">www.nogamt.com</p>
-    </div>
-  `;
-
-  document.body.appendChild(printContainer);
-
-  // Wait for images to load
-  const images = printContainer.querySelectorAll('img');
-  await Promise.all(
-    Array.from(images).map((img) => {
-      if (img.complete) return Promise.resolve();
-      return new Promise((resolve) => {
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
-    })
-  );
-
-  const canvas = await html2canvas(printContainer, {
-    useCORS: true,
-    logging: false,
-    background: '#ffffff',
-    scale: 2,
-  } as Parameters<typeof html2canvas>[1]);
-
-  document.body.removeChild(printContainer);
-
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -164,15 +47,291 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     compress: true,
   });
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-  const imgWidth = canvas.width;
-  const imgHeight = canvas.height;
-  const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 20) / imgHeight);
-  const imgX = (pdfWidth - imgWidth * ratio) / 2;
-  const imgY = 10;
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const contentWidth = pageWidth - margin * 2;
+  let y = margin;
 
-  pdf.addImage(canvas.toDataURL('image/jpeg', 0.72), 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+  // Colors
+  const cyan = [8, 145, 178] as const; // #0891b2
+  const black = [26, 26, 26] as const;
+  const gray = [102, 102, 102] as const;
+  const lightGray = [209, 213, 219] as const;
+  const red = [220, 38, 38] as const;
+
+  // Load logos
+  try {
+    const [logoData, thinkingData] = await Promise.all([
+      loadImageAsBase64(logoImg),
+      loadImageAsBase64(thinkingInsideImg),
+    ]);
+
+    // Draw logos - left and right
+    const logoHeight = 12;
+    pdf.addImage(logoData, 'PNG', margin, y, 30, logoHeight);
+    pdf.addImage(thinkingData, 'PNG', pageWidth - margin - 30, y, 30, logoHeight);
+  } catch (e) {
+    console.warn('Could not load logo images:', e);
+  }
+
+  y += 18;
+
+  // Title
+  pdf.setFontSize(18);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...cyan);
+  const titleText = 'QUOTATION ';
+  const titleWidth = pdf.getTextWidth(titleText);
+  const quoteNum = quotation.quoteNumber.replace(/^QT/i, '');
+  const numWidth = pdf.getTextWidth(quoteNum);
+  const totalTitleWidth = titleWidth + numWidth;
+  const titleX = (pageWidth - totalTitleWidth) / 2;
+
+  pdf.text(titleText, titleX, y);
+  pdf.setTextColor(...black);
+  pdf.text(quoteNum, titleX + titleWidth, y);
+
+  y += 10;
+
+  // Dates - right aligned
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...gray);
+  const createdText = `Created: ${formatDate(quotation.createdAt)}`;
+  const validText = `Valid Until: ${formatDate(quotation.validUntil)}`;
+  pdf.text(createdText, pageWidth - margin, y, { align: 'right' });
+  y += 4;
+  pdf.text(validText, pageWidth - margin, y, { align: 'right' });
+  y += 6;
+
+  // Separator line
+  pdf.setDrawColor(...lightGray);
+  pdf.setLineWidth(0.3);
+  pdf.line(margin, y, pageWidth - margin, y);
+  y += 8;
+
+  // Bill To
+  pdf.setFontSize(8);
+  pdf.setTextColor(...gray);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('BILL TO', margin, y);
+  y += 5;
+
+  pdf.setFontSize(10);
+  pdf.setTextColor(...black);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(quotation.clientName, margin, y);
+  y += 4.5;
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...gray);
+  pdf.setFontSize(9);
+  pdf.text(quotation.clientEmail, margin, y);
+  y += 4.5;
+
+  if (quotation.clientAddress) {
+    const addressLines = quotation.clientAddress.split('\n');
+    for (const line of addressLines) {
+      pdf.text(line, margin, y);
+      y += 4;
+    }
+  }
+
+  y += 6;
+
+  // Table header
+  const colX = {
+    num: margin,
+    sku: margin + 8,
+    desc: margin + 30,
+    lt: margin + 90,
+    moq: margin + 105,
+    price: margin + 120,
+    disc: margin + 145,
+    total: pageWidth - margin,
+  };
+  const descWidth = 58;
+
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...gray);
+  pdf.text('#', colX.num, y);
+  pdf.text('SKU', colX.sku, y);
+  pdf.text('Description', colX.desc, y);
+  pdf.text('LT (wks)', colX.lt, y, { align: 'center' });
+  pdf.text('MOQ', colX.moq, y, { align: 'center' });
+  pdf.text(`Unit Price (${quotation.currency})`, colX.price, y, { align: 'right' });
+  pdf.text('Disc %', colX.disc, y, { align: 'center' });
+  pdf.text('Total', colX.total, y, { align: 'right' });
+
+  y += 2;
+  pdf.setDrawColor(...lightGray);
+  pdf.setLineWidth(0.5);
+  pdf.line(margin, y, pageWidth - margin, y);
+  y += 5;
+
+  // Table rows
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+
+  for (let i = 0; i < quotation.items.length; i++) {
+    const item = quotation.items[i];
+    const lineTotal = calculateLineTotal(item);
+
+    // Calculate row height based on description wrapping
+    const descLines = wrapText(pdf, item.description || '—', descWidth);
+    const noteLines = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
+    const rowHeight = Math.max(
+      (descLines.length + noteLines.length) * 3.5 + (noteLines.length > 0 ? 1 : 0),
+      5
+    );
+
+    // Check for page break
+    if (y + rowHeight > pageHeight - 40) {
+      pdf.addPage();
+      y = margin;
+    }
+
+    const rowY = y;
+
+    pdf.setTextColor(...gray);
+    pdf.text(String(i + 1), colX.num, rowY);
+
+    pdf.setFont('courier', 'normal');
+    pdf.setFontSize(7);
+    pdf.text(item.sku || '—', colX.sku, rowY);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(...black);
+    pdf.text(descLines, colX.desc, rowY);
+
+    if (noteLines.length > 0) {
+      const noteY = rowY + descLines.length * 3.5 + 1;
+      pdf.setFontSize(7);
+      pdf.setTextColor(...gray);
+      pdf.text(noteLines, colX.desc, noteY);
+      pdf.setFontSize(8);
+    }
+
+    pdf.setTextColor(...gray);
+    pdf.text(item.leadTime || '—', colX.lt, rowY, { align: 'center' });
+    pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
+    pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price, rowY, { align: 'right' });
+    pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
+
+    pdf.setTextColor(...black);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
+    pdf.setFont('helvetica', 'normal');
+
+    y += rowHeight + 2;
+
+    // Row separator
+    pdf.setDrawColor(229, 229, 229);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin, y - 1, pageWidth - margin, y - 1);
+  }
+
+  y += 6;
+
+  // Check for page break before totals
+  if (y + 30 > pageHeight - 30) {
+    pdf.addPage();
+    y = margin;
+  }
+
+  // Totals section - right aligned
+  const totalsX = pageWidth - margin - 60;
+  const totalsValueX = pageWidth - margin;
+
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...gray);
+  pdf.text('Subtotal', totalsX, y);
+  pdf.setTextColor(...black);
+  pdf.text(formatCurrency(subtotal, quotation.currency), totalsValueX, y, { align: 'right' });
+  y += 5;
+
+  if (discount > 0) {
+    pdf.setTextColor(...gray);
+    const discLabel = quotation.discountType === 'percentage' ? `Discount (${quotation.discountValue}%)` : 'Discount';
+    pdf.text(discLabel, totalsX, y);
+    pdf.setTextColor(...red);
+    pdf.text(`-${formatCurrency(discount, quotation.currency)}`, totalsValueX, y, { align: 'right' });
+    y += 5;
+  }
+
+  if (quotation.taxRate > 0) {
+    pdf.setTextColor(...gray);
+    pdf.text(`Tax (${quotation.taxRate}%)`, totalsX, y);
+    pdf.setTextColor(...black);
+    pdf.text(formatCurrency(tax, quotation.currency), totalsValueX, y, { align: 'right' });
+    y += 5;
+  }
+
+  // Total line
+  pdf.setDrawColor(...lightGray);
+  pdf.setLineWidth(0.5);
+  pdf.line(totalsX, y, pageWidth - margin, y);
+  y += 5;
+
+  pdf.setFontSize(11);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...black);
+  pdf.text('Total', totalsX, y);
+  pdf.setTextColor(...cyan);
+  pdf.text(formatCurrency(total, quotation.currency), totalsValueX, y, { align: 'right' });
+  y += 10;
+
+  // Notes
+  if (quotation.notes) {
+    if (y + 20 > pageHeight - 30) {
+      pdf.addPage();
+      y = margin;
+    }
+
+    pdf.setDrawColor(229, 229, 229);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 5;
+
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...gray);
+    pdf.text('NOTES', margin, y);
+    y += 4;
+
+    pdf.setFontSize(8);
+    const noteLines = wrapText(pdf, quotation.notes, contentWidth);
+    pdf.text(noteLines, margin, y);
+    y += noteLines.length * 3.5 + 5;
+  }
+
+  // Footer
+  const footerY = Math.max(y + 10, pageHeight - 25);
+  if (footerY > pageHeight - 10) {
+    pdf.addPage();
+  }
+  const fY = Math.min(footerY, pageHeight - 15);
+
+  pdf.setDrawColor(229, 229, 229);
+  pdf.setLineWidth(0.2);
+  pdf.line(margin, fY - 3, pageWidth - margin, fY - 3);
+
+  pdf.setFontSize(8);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...black);
+  pdf.text('Noga Engineering & Technology Ltd.', pageWidth / 2, fY, { align: 'center' });
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(7);
+  pdf.setTextColor(...gray);
+  pdf.text('Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel', pageWidth / 2, fY + 4, { align: 'center' });
+
+  pdf.setTextColor(...cyan);
+  pdf.text('www.nogamt.com', pageWidth / 2, fY + 8, { align: 'center' });
 
   const fileName = `${quotation.quoteNumber.replace(/^QT/i, '')}.pdf`;
   return {

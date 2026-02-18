@@ -197,8 +197,8 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     const descLines = wrapText(pdf, item.description || '—', descWidth);
     const noteLines = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
     const rowHeight = Math.max(
-      (descLines.length + noteLines.length) * 3.5 + (noteLines.length > 0 ? 1 : 0),
-      5
+      (descLines.length + noteLines.length) * 3.5 + (noteLines.length > 0 ? 2.5 : 0),
+      6
     );
 
     // Check for page break
@@ -240,12 +240,12 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
     pdf.setFont('helvetica', 'normal');
 
-    y += rowHeight + 2;
+    y += rowHeight + 4;
 
     // Row separator
     pdf.setDrawColor(229, 229, 229);
     pdf.setLineWidth(0.2);
-    pdf.line(margin, y - 1, pageWidth - margin, y - 1);
+    pdf.line(margin, y - 2, pageWidth - margin, y - 2);
   }
 
   y += 6;

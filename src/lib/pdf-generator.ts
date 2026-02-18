@@ -240,12 +240,13 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
     pdf.setFont('helvetica', 'normal');
 
-    y += rowHeight + 4;
+    y += rowHeight + 3;
 
     // Row separator
     pdf.setDrawColor(229, 229, 229);
     pdf.setLineWidth(0.2);
-    pdf.line(margin, y - 2, pageWidth - margin, y - 2);
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 5; // space after line before next row
   }
 
   y += 6;

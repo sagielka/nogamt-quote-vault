@@ -159,13 +159,13 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     num: margin,
     sku: margin + 8,
     desc: margin + 30,
-    lt: margin + 90,
-    moq: margin + 105,
-    price: margin + 120,
-    disc: margin + 145,
+    lt: margin + 85,
+    moq: margin + 100,
+    price: margin + 118,
+    disc: margin + 148,
     total: pageWidth - margin,
   };
-  const descWidth = 58;
+  const descWidth = 53;
 
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'bold');
@@ -175,7 +175,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   pdf.text('Description', colX.desc, y);
   pdf.text('LT (wks)', colX.lt, y, { align: 'center' });
   pdf.text('MOQ', colX.moq, y, { align: 'center' });
-  pdf.text(`Unit Price (${quotation.currency})`, colX.price, y, { align: 'right' });
+  pdf.text(`Unit Price (${quotation.currency})`, colX.price + 14, y, { align: 'right' });
   pdf.text('Disc %', colX.disc, y, { align: 'center' });
   pdf.text('Total', colX.total, y, { align: 'right' });
 
@@ -232,7 +232,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.setTextColor(...gray);
     pdf.text(item.leadTime || '—', colX.lt, rowY, { align: 'center' });
     pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
-    pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price, rowY, { align: 'right' });
+    pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price + 14, rowY, { align: 'right' });
     pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
 
     pdf.setTextColor(...black);

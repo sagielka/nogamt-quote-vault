@@ -197,8 +197,8 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     const descLines = wrapText(pdf, item.description || '—', descWidth);
     const noteLines = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
     const rowHeight = Math.max(
-      (descLines.length + noteLines.length) * 3.5 + (noteLines.length > 0 ? 2.5 : 0),
-      6
+      (descLines.length + noteLines.length) * 4 + (noteLines.length > 0 ? 4 : 0),
+      8
     );
 
     // Check for page break
@@ -222,7 +222,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(descLines, colX.desc, rowY);
 
     if (noteLines.length > 0) {
-      const noteY = rowY + descLines.length * 3.5 + 1;
+      const noteY = rowY + descLines.length * 4 + 2;
       pdf.setFontSize(7);
       pdf.setTextColor(...gray);
       pdf.text(noteLines, colX.desc, noteY);

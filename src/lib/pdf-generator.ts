@@ -355,6 +355,20 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   };
 };
 
+export const getQuotationPdfBase64 = async (quotation: Quotation): Promise<{ base64: string; fileName: string }> => {
+  const { blob, fileName } = await generateQuotationPdf(quotation);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(',')[1];
+      resolve({ base64, fileName });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
 export const downloadQuotationPdf = async (quotation: Quotation): Promise<{ success: boolean; fileName?: string; error?: string }> => {
   try {
     const { blob, fileName } = await generateQuotationPdf(quotation);

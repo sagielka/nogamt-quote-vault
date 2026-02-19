@@ -15,9 +15,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { formatCurrency, formatDate, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
-import { downloadQuotationPdf } from '@/lib/pdf-generator';
+import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
+import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2 } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail } from 'lucide-react';
 
 interface QuotationCardProps {
   quotation: Quotation;
@@ -30,6 +32,7 @@ interface QuotationCardProps {
 export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   const handleDownloadPdf = async (e: React.MouseEvent) => {
@@ -56,6 +59,49 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
         description: 'Failed to generate PDF. Please try again.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleSendReminder = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsSendingReminder(true);
+
+    toast({
+      title: 'Sending reminder...',
+      description: `Generating PDF and emailing ${quotation.clientEmail}`,
+    });
+
+    try {
+      const { base64 } = await getQuotationPdfBase64(quotation);
+      const totalFormatted = formatCurrency(total, quotation.currency);
+      const validUntil = formatDateUtil(quotation.validUntil);
+
+      const { data, error } = await supabase.functions.invoke('send-quotation-email', {
+        body: {
+          to: quotation.clientEmail,
+          clientName: quotation.clientName,
+          quoteNumber: quotation.quoteNumber,
+          total: totalFormatted,
+          validUntil,
+          pdfBase64: base64,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Reminder Sent',
+        description: `Follow-up email sent to ${quotation.clientEmail}.`,
+      });
+    } catch (err) {
+      console.error('Failed to send reminder:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to send reminder email. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingReminder(false);
     }
   };
 
@@ -116,6 +162,20 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Download className="w-3.5 h-3.5" />
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                onClick={handleSendReminder}
+                disabled={isSendingReminder}
+                title="Send reminder email"
+              >
+                {isSendingReminder ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Mail className="w-3.5 h-3.5" />
                 )}
               </Button>
               <AlertDialog>

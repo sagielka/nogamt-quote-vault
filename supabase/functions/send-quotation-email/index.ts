@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -16,15 +15,14 @@ interface SendQuotationRequest {
   total: string;
   validUntil: string;
   pdfBase64: string;
+  isReminder?: boolean;
 }
 
-// Simple email validation
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email) && email.length <= 255;
 };
 
-// Input validation
 const validateRequest = (data: any): { valid: boolean; error?: string } => {
   if (!data.to || typeof data.to !== 'string' || !isValidEmail(data.to)) {
     return { valid: false, error: 'Invalid email address' };
@@ -48,53 +46,62 @@ const validateRequest = (data: any): { valid: boolean; error?: string } => {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verify JWT token - authentication check
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Create Supabase client with user's auth context
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error('Authentication failed:', authError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`Authenticated user: ${user.id}`);
-
-    // Parse and validate request body
     const requestData = await req.json();
     const validation = validateRequest(requestData);
     if (!validation.valid) {
-      console.error('Validation failed:', validation.error);
       return new Response(
         JSON.stringify({ error: validation.error }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const { to, clientName, quoteNumber, total, validUntil, pdfBase64 }: SendQuotationRequest = requestData;
+    const { to, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+
+    // Check if email is unsubscribed (use service role to bypass RLS if needed)
+    const serviceSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
+    const { data: unsubscribed } = await serviceSupabase
+      .from('unsubscribed_emails')
+      .select('id')
+      .eq('email', to.toLowerCase())
+      .maybeSingle();
+
+    if (unsubscribed) {
+      return new Response(
+        JSON.stringify({ error: 'This email has unsubscribed from communications.', unsubscribed: true }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Verify user owns this quotation
     const { data: quotation, error: quotationError } = await supabase
@@ -105,27 +112,34 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (quotationError || !quotation) {
-      console.error('Quotation not found or unauthorized:', quotationError?.message);
       return new Response(
         JSON.stringify({ error: 'Quotation not found or unauthorized' }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`Sending quotation ${quoteNumber} to ${to}`);
-
-    // Convert base64 to buffer for attachment
     const pdfBuffer = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe?email=${encodeURIComponent(to)}`;
+
+    const subject = isReminder
+      ? `Reminder: Quotation ${quoteNumber} from Noga Engineering & Technology Ltd.`
+      : `Quotation ${quoteNumber} from Noga Engineering & Technology Ltd.`;
+
+    const introText = isReminder
+      ? `<p>This is a friendly reminder regarding our quotation <strong>${quoteNumber}</strong>. Please find the updated document attached for your review.</p>`
+      : `<p>Please find attached our quotation <strong>${quoteNumber}</strong> for your review.</p>`;
 
     const emailResponse = await resend.emails.send({
       from: "Noga Engineering & Technology Ltd. <onboarding@resend.dev>",
       to: [to],
-      subject: `Quotation ${quoteNumber} from Noga Engineering & Technology Ltd.`,
+      subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #0891b2;">Quotation ${quoteNumber}</h2>
+          <h2 style="color: #0891b2;">${isReminder ? 'Reminder: ' : ''}Quotation ${quoteNumber}</h2>
           <p>Dear ${clientName},</p>
-          <p>Please find attached our quotation <strong>${quoteNumber}</strong> for your review.</p>
+          ${introText}
           <table style="margin: 20px 0; border-collapse: collapse;">
             <tr>
               <td style="padding: 8px 16px 8px 0; color: #666;">Total:</td>
@@ -143,6 +157,9 @@ const handler = async (req: Request): Promise<Response> => {
             Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel<br>
             <a href="https://www.nogamt.com" style="color: #0891b2;">www.nogamt.com</a>
           </p>
+          <p style="font-size: 11px; color: #bbb; margin-top: 20px;">
+            <a href="${unsubscribeUrl}" style="color: #bbb;">Unsubscribe</a> from future quotation emails.
+          </p>
         </div>
       `,
       attachments: [
@@ -155,6 +172,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResponse);
 
+    // If this is a reminder, update reminder_sent_at
+    if (isReminder) {
+      await supabase
+        .from('quotations')
+        .update({ reminder_sent_at: new Date().toISOString() })
+        .eq('id', quotation.id);
+    }
+
     return new Response(JSON.stringify({ success: true, data: emailResponse }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -163,12 +188,9 @@ const handler = async (req: Request): Promise<Response> => {
     console.error("Error sending quotation email:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };
 
-serve(handler);
+Deno.serve(handler);

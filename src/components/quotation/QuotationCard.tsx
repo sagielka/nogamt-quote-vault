@@ -84,10 +84,21 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
           total: totalFormatted,
           validUntil,
           pdfBase64: base64,
+          isReminder: true,
         },
       });
 
       if (error) throw error;
+
+      // Check if the response indicates unsubscribed
+      if (data?.unsubscribed) {
+        toast({
+          title: 'Email Unsubscribed',
+          description: `${quotation.clientEmail} has unsubscribed from emails.`,
+          variant: 'destructive',
+        });
+        return;
+      }
 
       toast({
         title: 'Reminder Sent',
@@ -132,6 +143,12 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   {formatDate(quotation.createdAt)}
                 </span>
                 <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
+                {quotation.reminderSentAt && (
+                  <span className="flex items-center gap-1 text-amber-600">
+                    <Mail className="w-3 h-3 shrink-0" />
+                    Reminded {formatDate(quotation.reminderSentAt)}
+                  </span>
+                )}
               </div>
             </div>
           </div>

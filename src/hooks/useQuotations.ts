@@ -23,6 +23,7 @@ const dbRowToQuotation = (row: any): Quotation => ({
   attachments: row.attachments || [],
   createdAt: new Date(row.created_at),
   validUntil: new Date(row.valid_until),
+  reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,
 });
 
 // Helper to convert QuotationFormData to database insert format

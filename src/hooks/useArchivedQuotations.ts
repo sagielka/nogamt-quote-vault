@@ -27,6 +27,7 @@ const dbRowToArchivedQuotation = (row: any): ArchivedQuotation => ({
   attachments: row.attachments || [],
   createdAt: new Date(row.created_at),
   validUntil: new Date(row.valid_until),
+  reminderSentAt: null,
   archivedAt: new Date(row.archived_at),
   archivedBy: row.archived_by,
 });

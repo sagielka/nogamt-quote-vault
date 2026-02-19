@@ -127,6 +127,7 @@ export type Database = {
           items: Json
           notes: string | null
           quote_number: string
+          reminder_sent_at: string | null
           status: string | null
           tax_rate: number
           updated_at: string
@@ -146,6 +147,7 @@ export type Database = {
           items: Json
           notes?: string | null
           quote_number: string
+          reminder_sent_at?: string | null
           status?: string | null
           tax_rate?: number
           updated_at?: string
@@ -165,11 +167,30 @@ export type Database = {
           items?: Json
           notes?: string | null
           quote_number?: string
+          reminder_sent_at?: string | null
           status?: string | null
           tax_rate?: number
           updated_at?: string
           user_id?: string
           valid_until?: string
+        }
+        Relationships: []
+      }
+      unsubscribed_emails: {
+        Row: {
+          email: string
+          id: string
+          unsubscribed_at: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          unsubscribed_at?: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          unsubscribed_at?: string
         }
         Relationships: []
       }

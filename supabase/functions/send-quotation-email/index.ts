@@ -103,18 +103,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Verify user owns this quotation
+    // Verify quotation exists (all authenticated users can send emails for any quotation in the team)
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
       .select('id')
       .eq('quote_number', quoteNumber)
-      .eq('user_id', user.id)
       .single();
 
     if (quotationError || !quotation) {
       return new Response(
-        JSON.stringify({ error: 'Quotation not found or unauthorized' }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: 'Quotation not found' }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 

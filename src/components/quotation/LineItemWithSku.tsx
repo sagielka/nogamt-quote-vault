@@ -3,7 +3,7 @@ import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
@@ -17,6 +17,7 @@ interface LineItemWithSkuProps {
   priceList: PriceList;
   onUpdate: (id: string, updates: Partial<LineItem>) => void;
   onRemove: (id: string) => void;
+  onDuplicate: (id: string) => void;
   canRemove: boolean;
 }
 
@@ -27,6 +28,7 @@ export const LineItemWithSku = ({
   priceList,
   onUpdate,
   onRemove,
+  onDuplicate,
   canRemove,
 }: LineItemWithSkuProps) => {
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
@@ -314,6 +316,16 @@ export const LineItemWithSku = ({
             title={showNotes ? 'Hide notes' : 'Add notes'}
           >
             {showNotes ? <ChevronUp className="h-4 w-4" /> : <StickyNote className="h-4 w-4" />}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onDuplicate(item.id)}
+            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+            title="Duplicate item"
+          >
+            <Copy className="h-4 w-4" />
           </Button>
           <Button
             type="button"

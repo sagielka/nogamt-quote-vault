@@ -218,6 +218,16 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     }
   };
 
+  const handleDuplicateItem = (id: string) => {
+    const source = items.find((item) => item.id === id);
+    if (!source) return;
+    const newItem: LineItem = { ...source, id: crypto.randomUUID() };
+    const idx = items.findIndex((item) => item.id === id);
+    const updated = [...items];
+    updated.splice(idx + 1, 0, newItem);
+    setItems(updated);
+  };
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -577,6 +587,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                     priceList={priceList}
                     onUpdate={handleUpdateItem}
                     onRemove={handleRemoveItem}
+                    onDuplicate={handleDuplicateItem}
                     canRemove={items.length > 1}
                   />
                 ))}

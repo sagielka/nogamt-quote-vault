@@ -1,10 +1,9 @@
 project_id = "udxfhhdoekjoofadmngu"
 
 [functions.send-quotation-email]
-verify_jwt = true
+verify_jwt = false
 
 [functions.fetch-github-catalog]
 verify_jwt = false
 
-[functions.unsubscribe]
-verify_jwt = false
+

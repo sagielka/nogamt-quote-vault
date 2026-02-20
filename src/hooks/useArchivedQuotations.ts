@@ -12,6 +12,7 @@ export interface ArchivedQuotation extends Quotation {
 // Helper to convert database row to ArchivedQuotation type
 const dbRowToArchivedQuotation = (row: any): ArchivedQuotation => ({
   id: row.id,
+  userId: row.user_id,
   originalId: row.original_id,
   quoteNumber: row.quote_number,
   clientName: row.client_name,

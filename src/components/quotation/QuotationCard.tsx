@@ -183,12 +183,22 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                     Needs Reminder
                   </span>
                 )}
-                {quotation.reminderSentAt && (
-                  <span className="flex items-center gap-1 text-amber-600">
-                    <Mail className="w-3 h-3 shrink-0" />
-                    Reminded {formatDate(quotation.reminderSentAt)}
-                  </span>
-                )}
+                {quotation.reminderSentAt && (() => {
+                  const nextReminderDate = new Date(new Date(quotation.reminderSentAt).getTime() + REMINDER_COOLDOWN_MS);
+                  const maxDate = new Date(new Date(quotation.createdAt).getTime() + MAX_AGE_MS);
+                  const isExpired = nextReminderDate > maxDate;
+                  return (
+                    <span className="flex items-center gap-1 text-amber-600">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      Reminded {formatDate(quotation.reminderSentAt)}
+                      {quotation.status !== 'accepted' && (
+                        isExpired
+                          ? <span className="text-muted-foreground ml-1">· No more reminders</span>
+                          : <span className="text-muted-foreground ml-1">· Next: {formatDate(nextReminderDate)}</span>
+                      )}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
           </div>

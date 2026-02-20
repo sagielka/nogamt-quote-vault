@@ -230,7 +230,13 @@ export const useQuotations = () => {
     }
     
     if (data.clientName !== undefined) updateData.client_name = data.clientName;
-    if (data.clientEmail !== undefined) updateData.client_email = data.clientEmail;
+    if (data.clientEmail !== undefined) {
+      updateData.client_email = data.clientEmail;
+      // Reset reminder when email changes so user can send again
+      if (existingQuotation && data.clientEmail !== existingQuotation.clientEmail) {
+        updateData.reminder_sent_at = null;
+      }
+    }
     if (data.clientAddress !== undefined) updateData.client_address = data.clientAddress || null;
     if (data.items !== undefined) updateData.items = data.items;
     if (data.taxRate !== undefined) updateData.tax_rate = data.taxRate;

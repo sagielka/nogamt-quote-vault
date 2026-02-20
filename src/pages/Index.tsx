@@ -78,10 +78,24 @@ const Index = () => {
     if (!user || !isAdmin) return;
     const fetchUserNames = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('admin-users', {
-          body: { action: 'list' },
-        });
-        if (!error && data?.users) {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+        if (!token || !projectId) return;
+
+        const res = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/admin-users?action=list`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.users) {
           const map: Record<string, string> = {};
           data.users.forEach((u: any) => {
             map[u.id] = u.email?.split('@')[0] || u.id.slice(0, 6);

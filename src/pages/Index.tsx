@@ -37,6 +37,7 @@ const Index = () => {
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const [desktopAppVersion, setDesktopAppVersion] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -71,6 +72,28 @@ const Index = () => {
     const interval = setInterval(updateLastSeen, 60000); // Every minute
     return () => clearInterval(interval);
   }, [user]);
+
+  // Fetch user names for quotation creator display
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+    const fetchUserNames = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('admin-users', {
+          body: { action: 'list' },
+        });
+        if (!error && data?.users) {
+          const map: Record<string, string> = {};
+          data.users.forEach((u: any) => {
+            map[u.id] = u.email?.split('@')[0] || u.id.slice(0, 6);
+          });
+          setUserNameMap(map);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    fetchUserNames();
+  }, [user, isAdmin]);
 
   useEffect(() => {
     let cancelled = false;
@@ -262,11 +285,11 @@ const Index = () => {
               <div className="hidden sm:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-muted/50">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                    {(user.email?.slice(0, 2) || 'U').toUpperCase()}
+                    {(user.email?.split('@')[0]?.slice(0, 2) || 'U').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs font-medium text-foreground truncate max-w-[150px]">
-                  {user.email}
+                  {user.email?.split('@')[0]}
                 </span>
               </div>
             </div>
@@ -358,6 +381,7 @@ const Index = () => {
                       key={quotation.id}
                       quotation={quotation}
                       index={filteredQuotations.length - index}
+                      creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}

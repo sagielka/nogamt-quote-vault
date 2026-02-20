@@ -29,6 +29,7 @@ import {
 interface QuotationCardProps {
   quotation: Quotation;
   index?: number;
+  creatorName?: string;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -64,7 +65,7 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
@@ -181,6 +182,9 @@ export const QuotationCard = ({ quotation, index, onView, onEdit, onDelete, onDu
                   {formatDate(quotation.createdAt)}
                 </span>
                 <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
+                {creatorName && (
+                  <span className="text-muted-foreground/70">by {creatorName}</span>
+                )}
                 {quotation.status !== 'accepted' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
                   <span className="flex items-center gap-1 text-destructive font-medium">
                     <Mail className="w-3 h-3 shrink-0 animate-pulse" />

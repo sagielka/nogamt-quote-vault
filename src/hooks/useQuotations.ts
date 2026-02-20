@@ -9,6 +9,7 @@ const STORAGE_KEY = 'quotations';
 // Helper to convert database row to Quotation type
 const dbRowToQuotation = (row: any): Quotation => ({
   id: row.id,
+  userId: row.user_id,
   quoteNumber: row.quote_number,
   clientName: row.client_name,
   clientEmail: row.client_email,

@@ -29,6 +29,7 @@ export interface LineItem {
 
 export interface Quotation {
   id: string;
+  userId: string;
   quoteNumber: string;
   clientName: string;
   clientEmail: string;
@@ -46,6 +47,6 @@ export interface Quotation {
   reminderSentAt: Date | null;
 }
 
-export type QuotationFormData = Omit<Quotation, 'id' | 'createdAt' | 'quoteNumber' | 'reminderSentAt'> & {
+export type QuotationFormData = Omit<Quotation, 'id' | 'userId' | 'createdAt' | 'quoteNumber' | 'reminderSentAt'> & {
   quoteNumber?: string; // Optional: allows manual override when editing
 };

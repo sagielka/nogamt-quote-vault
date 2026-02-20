@@ -19,7 +19,12 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface QuotationCardProps {
   quotation: Quotation;
@@ -194,23 +199,55 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   <Download className="w-3.5 h-3.5" />
                 )}
               </Button>
-              {canSendReminder(quotation.reminderSentAt) ? (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
+              {quotation.status === 'accepted' ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
-                      disabled={isSendingReminder}
-                      title="Send reminder email"
+                      className="h-7 w-7 text-green-600 cursor-default"
+                      disabled
                     >
-                      {isSendingReminder ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Mail className="w-3.5 h-3.5" />
-                      )}
+                      <CheckCircle className="w-3.5 h-3.5" />
                     </Button>
-                  </AlertDialogTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>Order already accepted — no reminder needed</TooltipContent>
+                </Tooltip>
+              ) : !canSendReminder(quotation.reminderSentAt) ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 text-muted-foreground opacity-50 cursor-not-allowed"
+                      disabled
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
+                </Tooltip>
+              ) : (
+                <AlertDialog>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          disabled={isSendingReminder}
+                        >
+                          {isSendingReminder ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Mail className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>Send reminder email</TooltipContent>
+                  </Tooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Send Reminder Email?</AlertDialogTitle>
@@ -226,16 +263,6 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              ) : (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7 text-muted-foreground opacity-50 cursor-not-allowed"
-                  disabled
-                  title={`Reminder cooldown: ${getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining`}
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                </Button>
               )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>

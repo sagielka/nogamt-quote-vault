@@ -29,6 +29,19 @@ interface QuotationCardProps {
   onDuplicate: (id: string) => void;
 }
 
+const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+
+const canSendReminder = (reminderSentAt?: string | Date): boolean => {
+  if (!reminderSentAt) return true;
+  return Date.now() - new Date(reminderSentAt).getTime() >= REMINDER_COOLDOWN_MS;
+};
+
+const getDaysUntilReminder = (reminderSentAt?: string | Date): number => {
+  if (!reminderSentAt) return 0;
+  const elapsed = Date.now() - new Date(reminderSentAt).getTime();
+  return Math.ceil((REMINDER_COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000));
+};
+
 export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -181,20 +194,49 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   <Download className="w-3.5 h-3.5" />
                 )}
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                onClick={handleSendReminder}
-                disabled={isSendingReminder}
-                title="Send reminder email"
-              >
-                {isSendingReminder ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
+              {canSendReminder(quotation.reminderSentAt) ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      disabled={isSendingReminder}
+                      title="Send reminder email"
+                    >
+                      {isSendingReminder ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Mail className="w-3.5 h-3.5" />
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Send Reminder Email?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will send a follow-up email with the quotation PDF to <strong>{quotation.clientEmail}</strong>.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSendReminder}>
+                        Send Reminder
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 text-muted-foreground opacity-50 cursor-not-allowed"
+                  disabled
+                  title={`Reminder cooldown: ${getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining`}
+                >
                   <Mail className="w-3.5 h-3.5" />
-                )}
-              </Button>
+                </Button>
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button

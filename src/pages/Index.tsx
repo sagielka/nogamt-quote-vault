@@ -10,14 +10,16 @@ import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { SyncStatusIndicator } from '@/components/SyncStatusIndicator';
+import { UserManagement } from '@/components/UserManagement';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -41,6 +43,32 @@ const Index = () => {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Track user activity (last_seen)
+  useEffect(() => {
+    if (!user) return;
+    const updateLastSeen = async () => {
+      const { data: existing } = await (supabase
+        .from('profiles' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .single() as any);
+
+      if (existing) {
+        await (supabase
+          .from('profiles' as any)
+          .update({ last_seen_at: new Date().toISOString() } as any)
+          .eq('user_id', user.id) as any);
+      } else {
+        await (supabase
+          .from('profiles' as any)
+          .insert({ user_id: user.id, last_seen_at: new Date().toISOString() } as any) as any);
+      }
+    };
+    updateLastSeen();
+    const interval = setInterval(updateLastSeen, 60000); // Every minute
+    return () => clearInterval(interval);
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,7 +282,23 @@ const Index = () => {
                   )}
                 </Button>
               )}
+              {currentView === 'list' && isAdmin && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentView('users')}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Users
+                </Button>
+              )}
               {currentView === 'archive' && (
+                <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Quotations
+                </Button>
+              )}
+              {currentView === 'users' && (
                 <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -410,6 +454,10 @@ const Index = () => {
               </p>
             )}
           </div>
+        )}
+
+        {currentView === 'users' && isAdmin && (
+          <UserManagement />
         )}
       </main>
 

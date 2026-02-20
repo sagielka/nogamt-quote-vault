@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,9 +35,54 @@ export const LineItemWithSku = ({
   const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [showNotes, setShowNotes] = useState(!!item.notes);
+  const [priceExpr, setPriceExpr] = useState(String(item.unitPrice || ''));
   const skuInputRef = useRef<HTMLInputElement>(null);
   const descInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Sync priceExpr when unitPrice changes externally (e.g. from catalog selection)
+  const lastExternalPrice = useRef(item.unitPrice);
+  useEffect(() => {
+    if (item.unitPrice !== lastExternalPrice.current) {
+      setPriceExpr(String(item.unitPrice || ''));
+      lastExternalPrice.current = item.unitPrice;
+    }
+  }, [item.unitPrice]);
+
+  const evaluateExpression = useCallback((expr: string): number | null => {
+    try {
+      const sanitized = expr.replace(/[^0-9+\-*/.() ]/g, '');
+      if (!sanitized.trim()) return null;
+      // eslint-disable-next-line no-new-func
+      const result = new Function(`return (${sanitized})`)();
+      if (typeof result === 'number' && isFinite(result) && result >= 0) {
+        return Math.round(result * 100) / 100;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const handlePriceBlur = useCallback(() => {
+    const result = evaluateExpression(priceExpr);
+    if (result !== null) {
+      onUpdate(item.id, { unitPrice: result });
+      setPriceExpr(String(result));
+      lastExternalPrice.current = result;
+    } else if (priceExpr.trim() === '') {
+      onUpdate(item.id, { unitPrice: 0 });
+      lastExternalPrice.current = 0;
+    }
+  }, [priceExpr, evaluateExpression, item.id, onUpdate]);
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handlePriceBlur();
+      (e.target as HTMLInputElement).blur();
+    }
+  };
 
   const {
     attributes,
@@ -269,16 +314,17 @@ export const LineItemWithSku = ({
           />
         </div>
         
-        {/* Unit Price */}
+        {/* Unit Price - supports expressions like 56.75*2 */}
         <div className="md:col-span-2">
           <Input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Price"
-            value={item.unitPrice || ''}
-            onChange={(e) => onUpdate(item.id, { unitPrice: parseFloat(e.target.value) || 0 })}
-            className="input-focus text-right bg-background/50 border-primary/20"
+            type="text"
+            inputMode="decimal"
+            placeholder="e.g. 56.75*2"
+            value={priceExpr}
+            onChange={(e) => setPriceExpr(e.target.value)}
+            onBlur={handlePriceBlur}
+            onKeyDown={handlePriceKeyDown}
+            className="input-focus text-right bg-background/50 border-primary/20 font-mono"
           />
         </div>
         
@@ -297,35 +343,35 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Total */}
-        <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text">
+        <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text whitespace-nowrap">
           {formatCurrency(calculateLineTotal(item), currency)}
         </div>
         
-        {/* Actions */}
-        <div className="md:col-span-2 flex justify-end gap-1">
+        {/* Actions - moved to separate column with no overlap */}
+        <div className="md:col-span-2 flex justify-end gap-0.5">
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={() => setShowNotes(!showNotes)}
-            className={`h-8 w-8 transition-colors ${
+            className={`h-7 w-7 transition-colors ${
               showNotes || item.notes 
                 ? 'text-primary hover:text-primary/80 hover:bg-primary/10' 
                 : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
             }`}
             title={showNotes ? 'Hide notes' : 'Add notes'}
           >
-            {showNotes ? <ChevronUp className="h-4 w-4" /> : <StickyNote className="h-4 w-4" />}
+            {showNotes ? <ChevronUp className="h-3.5 w-3.5" /> : <StickyNote className="h-3.5 w-3.5" />}
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={() => onDuplicate(item.id)}
-            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+            className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
             title="Duplicate item"
           >
-            <Copy className="h-4 w-4" />
+            <Copy className="h-3.5 w-3.5" />
           </Button>
           <Button
             type="button"
@@ -333,9 +379,9 @@ export const LineItemWithSku = ({
             size="icon"
             onClick={() => onRemove(item.id)}
             disabled={!canRemove}
-            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>

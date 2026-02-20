@@ -6,6 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonResponse = (data: object, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,10 +25,7 @@ Deno.serve(async (req) => {
     // Verify the caller is an admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
     const anonClient = createClient(supabaseUrl, anonKey, {
@@ -33,30 +36,23 @@ Deno.serve(async (req) => {
       data: { user },
     } = await anonClient.auth.getUser();
     if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    // Check admin role
     const { data: isAdmin } = await anonClient.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
     });
 
     if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Admin access required" }, 403);
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 
-    // LIST USERS
+    // ─── LIST USERS ───
     if (req.method === "GET" && action === "list") {
       const {
         data: { users },
@@ -65,17 +61,14 @@ Deno.serve(async (req) => {
 
       if (error) throw error;
 
-      // Get roles
       const { data: roles } = await adminClient
         .from("user_roles")
         .select("user_id, role");
 
-      // Get profiles (last_seen)
       const { data: profiles } = await adminClient
         .from("profiles")
         .select("user_id, display_name, is_active, last_seen_at");
 
-      // Get quotation counts
       const { data: quotations } = await adminClient
         .from("quotations")
         .select("user_id");
@@ -108,31 +101,104 @@ Deno.serve(async (req) => {
         quotation_count: quotationCounts[u.id] || 0,
       }));
 
-      return new Response(JSON.stringify({ users: enrichedUsers }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonResponse({ users: enrichedUsers });
+    }
+
+    // ─── INVITE USER (create + send invite email) ───
+    if (req.method === "POST" && action === "invite") {
+      const { email, role } = await req.json();
+
+      if (!email) {
+        return jsonResponse({ error: "Email is required" }, 400);
+      }
+
+      // Create user with invite (sends magic link email automatically)
+      const { data: newUser, error: createError } =
+        await adminClient.auth.admin.inviteUserByEmail(email, {
+          data: { invited_by: user.email },
+        });
+
+      if (createError) {
+        // Check for duplicate
+        if (createError.message?.includes("already been registered")) {
+          return jsonResponse({ error: "A user with this email already exists" }, 409);
+        }
+        throw createError;
+      }
+
+      // Assign role if specified
+      if (role && role !== "user" && newUser?.user) {
+        await adminClient
+          .from("user_roles")
+          .insert({ user_id: newUser.user.id, role });
+      }
+
+      return jsonResponse({
+        success: true,
+        message: `Invite sent to ${email}. They will receive an email to set up their password.`,
       });
     }
 
-    // UPDATE ROLE
+    // ─── DELETE USER ───
+    if (req.method === "POST" && action === "delete-user") {
+      const { userId } = await req.json();
+
+      if (!userId) {
+        return jsonResponse({ error: "userId required" }, 400);
+      }
+
+      if (userId === user.id) {
+        return jsonResponse({ error: "Cannot delete yourself" }, 400);
+      }
+
+      // Delete from auth (cascades to user_roles via FK if set, or clean up manually)
+      const { error: deleteError } =
+        await adminClient.auth.admin.deleteUser(userId);
+
+      if (deleteError) throw deleteError;
+
+      // Clean up related data
+      await adminClient.from("user_roles").delete().eq("user_id", userId);
+      await adminClient.from("profiles").delete().eq("user_id", userId);
+
+      return jsonResponse({ success: true });
+    }
+
+    // ─── RESET PASSWORD (send reset email) ───
+    if (req.method === "POST" && action === "reset-password") {
+      const { email } = await req.json();
+
+      if (!email) {
+        return jsonResponse({ error: "Email required" }, 400);
+      }
+
+      // Generate a password reset link and the API sends the email
+      const { error: resetError } =
+        await adminClient.auth.admin.generateLink({
+          type: "recovery",
+          email,
+        });
+
+      if (resetError) throw resetError;
+
+      return jsonResponse({
+        success: true,
+        message: `Password reset email sent to ${email}.`,
+      });
+    }
+
+    // ─── UPDATE ROLE ───
     if (req.method === "POST" && action === "update-role") {
       const { userId, role } = await req.json();
 
       if (!userId || !role) {
-        return new Response(JSON.stringify({ error: "userId and role required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "userId and role required" }, 400);
       }
 
-      // Prevent admin from changing own role
       if (userId === user.id) {
-        return new Response(JSON.stringify({ error: "Cannot change your own role" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Cannot change your own role" }, 400);
       }
 
-      // Upsert role
       const { data: existing } = await adminClient
         .from("user_roles")
         .select("id")
@@ -150,35 +216,24 @@ Deno.serve(async (req) => {
           .insert({ user_id: userId, role });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ success: true });
     }
 
-    // BAN / UNBAN USER
+    // ─── BAN / UNBAN USER ───
     if (req.method === "POST" && action === "toggle-ban") {
       const { userId, ban } = await req.json();
 
       if (!userId) {
-        return new Response(JSON.stringify({ error: "userId required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "userId required" }, 400);
       }
 
       if (userId === user.id) {
-        return new Response(JSON.stringify({ error: "Cannot ban yourself" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonResponse({ error: "Cannot ban yourself" }, 400);
       }
 
       if (ban) {
-        // Ban for 100 years
-        const banUntil = new Date();
-        banUntil.setFullYear(banUntil.getFullYear() + 100);
         await adminClient.auth.admin.updateUserById(userId, {
-          ban_duration: "876000h", // ~100 years
+          ban_duration: "876000h",
         });
       } else {
         await adminClient.auth.admin.updateUserById(userId, {
@@ -186,19 +241,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ success: true });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown action" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Unknown action" }, 400);
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: error.message }, 500);
   }
 });

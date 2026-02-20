@@ -162,6 +162,12 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   {formatDate(quotation.createdAt)}
                 </span>
                 <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
+                {quotation.status !== 'accepted' && canSendReminder(quotation.reminderSentAt) && (
+                  <span className="flex items-center gap-1 text-primary font-medium">
+                    <Mail className="w-3 h-3 shrink-0 animate-pulse" />
+                    Needs Reminder
+                  </span>
+                )}
                 {quotation.reminderSentAt && (
                   <span className="flex items-center gap-1 text-amber-600">
                     <Mail className="w-3 h-3 shrink-0" />

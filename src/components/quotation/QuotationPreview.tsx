@@ -230,7 +230,7 @@ Noga Engineering & Technology Ltd.`;
                   <tr key={item.id} className="border-b border-border print:border-gray-200">
                     <td className="py-4 text-muted-foreground print:text-gray-600 align-top">{index + 1}</td>
                     <td className="py-4 text-foreground font-mono text-sm print:text-gray-900 align-top">{item.sku || '—'}</td>
-                    <td className="py-4 text-foreground print:text-gray-900 align-top">
+                    <td className="py-4 text-foreground font-normal print:text-gray-900 align-top">
                       <div>{item.description || '—'}</div>
                       {item.notes && (
                         <div className="text-xs text-muted-foreground mt-1 italic print:text-gray-500">

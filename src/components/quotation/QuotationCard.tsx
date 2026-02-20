@@ -202,30 +202,32 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
               {quotation.status === 'accepted' ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 text-green-600 cursor-default"
-                      disabled
-                    >
-                      <CheckCircle className="w-3.5 h-3.5" />
-                    </Button>
+                    <span className="inline-flex">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-green-600 cursor-default pointer-events-none"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      </Button>
+                    </span>
                   </TooltipTrigger>
-                  <TooltipContent>Order already accepted — no reminder needed</TooltipContent>
+                  <TooltipContent side="top" className="z-50">Order already accepted — no reminder needed</TooltipContent>
                 </Tooltip>
               ) : !canSendReminder(quotation.reminderSentAt) ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 text-muted-foreground opacity-50 cursor-not-allowed"
-                      disabled
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                    </Button>
+                    <span className="inline-flex">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-muted-foreground opacity-50 cursor-not-allowed pointer-events-none"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </Button>
+                    </span>
                   </TooltipTrigger>
-                  <TooltipContent>Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
+                  <TooltipContent side="top" className="z-50">Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
                 </Tooltip>
               ) : (
                 <AlertDialog>

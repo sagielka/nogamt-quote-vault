@@ -297,10 +297,11 @@ const Index = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-4">
-                  {filteredQuotations.map((quotation) => (
+                  {filteredQuotations.map((quotation, index) => (
                     <QuotationCard
                       key={quotation.id}
                       quotation={quotation}
+                      index={filteredQuotations.length - index}
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}

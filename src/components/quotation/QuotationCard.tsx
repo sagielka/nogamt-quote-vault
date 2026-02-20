@@ -28,6 +28,7 @@ import {
 
 interface QuotationCardProps {
   quotation: Quotation;
+  index?: number;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -63,7 +64,7 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
@@ -158,6 +159,9 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
           <div className="flex items-center gap-4 min-w-0">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
+                {index !== undefined && (
+                  <span className="text-xs font-mono text-muted-foreground min-w-[2ch] text-right">{index}</span>
+                )}
                 <h3 className="font-display font-semibold text-foreground text-sm truncate">
                   {quotation.quoteNumber}
                 </h3>

@@ -36,16 +36,31 @@ interface QuotationCardProps {
 }
 
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+const MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 1 week after creation
+const MAX_AGE_MS = 6 * 7 * 24 * 60 * 60 * 1000; // 6 weeks after creation
 
-const canSendReminder = (reminderSentAt?: string | Date): boolean => {
+const canSendReminder = (createdAt: Date | string, reminderSentAt?: string | Date | null): boolean => {
+  const age = Date.now() - new Date(createdAt).getTime();
+  if (age < MIN_AGE_MS || age > MAX_AGE_MS) return false;
   if (!reminderSentAt) return true;
   return Date.now() - new Date(reminderSentAt).getTime() >= REMINDER_COOLDOWN_MS;
 };
 
-const getDaysUntilReminder = (reminderSentAt?: string | Date): number => {
-  if (!reminderSentAt) return 0;
-  const elapsed = Date.now() - new Date(reminderSentAt).getTime();
-  return Math.ceil((REMINDER_COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000));
+const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: string | Date | null): string | null => {
+  const age = Date.now() - new Date(createdAt).getTime();
+  if (age < MIN_AGE_MS) {
+    const daysLeft = Math.ceil((MIN_AGE_MS - age) / (24 * 60 * 60 * 1000));
+    return `Too early — wait ${daysLeft} day(s) before sending a reminder`;
+  }
+  if (age > MAX_AGE_MS) return 'Quote is older than 6 weeks — reminders disabled';
+  if (reminderSentAt) {
+    const elapsed = Date.now() - new Date(reminderSentAt).getTime();
+    if (elapsed < REMINDER_COOLDOWN_MS) {
+      const daysLeft = Math.ceil((REMINDER_COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000));
+      return `Reminder cooldown: ${daysLeft} day(s) remaining`;
+    }
+  }
+  return null;
 };
 
 export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
@@ -162,8 +177,8 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   {formatDate(quotation.createdAt)}
                 </span>
                 <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
-                {quotation.status !== 'accepted' && canSendReminder(quotation.reminderSentAt) && (
-                  <span className="flex items-center gap-1 text-primary font-medium">
+                {quotation.status !== 'accepted' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
+                  <span className="flex items-center gap-1 text-destructive font-medium">
                     <Mail className="w-3 h-3 shrink-0 animate-pulse" />
                     Needs Reminder
                   </span>
@@ -244,7 +259,7 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   </TooltipTrigger>
                   <TooltipContent side="top">Order already received — no reminder needed</TooltipContent>
                 </Tooltip>
-              ) : !canSendReminder(quotation.reminderSentAt) ? (
+              ) : !canSendReminder(quotation.createdAt, quotation.reminderSentAt) ? (
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <span className="inline-flex cursor-not-allowed">
@@ -257,7 +272,7 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top">Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
+                  <TooltipContent side="top">{getReminderBlockReason(quotation.createdAt, quotation.reminderSentAt)}</TooltipContent>
                 </Tooltip>
               ) : (
                 <AlertDialog>

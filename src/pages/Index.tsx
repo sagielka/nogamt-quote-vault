@@ -13,7 +13,9 @@ import { SyncStatusIndicator } from '@/components/SyncStatusIndicator';
 import { UserManagement } from '@/components/UserManagement';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User } from 'lucide-react';
+import { TeamChat } from '@/components/TeamChat';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
@@ -257,6 +259,16 @@ const Index = () => {
             <div className="flex items-center gap-3">
               <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
               <SyncStatusIndicator />
+              <div className="hidden sm:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-muted/50">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                    {(user.email?.slice(0, 2) || 'U').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs font-medium text-foreground truncate max-w-[150px]">
+                  {user.email}
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -494,6 +506,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <TeamChat />
     </div>
   );
 };

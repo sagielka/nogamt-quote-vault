@@ -118,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const pdfBuffer = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+    // Keep as base64 string for Resend attachment
 
     // Unsubscribe link points to the frontend app
     const unsubscribeUrl = `https://nogamt-quote-vault.lovable.app/#/unsubscribe?email=${encodeURIComponent(to)}`;
@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
       attachments: [
         {
           filename: `Quotation_${quoteNumber}.pdf`,
-          content: pdfBuffer,
+          content: pdfBase64,
         },
       ],
     });

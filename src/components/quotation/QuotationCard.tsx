@@ -19,7 +19,7 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +32,7 @@ interface QuotationCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
+  onStatusChange?: (id: string, status: Quotation['status']) => void;
 }
 
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -47,7 +48,7 @@ const getDaysUntilReminder = (reminderSentAt?: string | Date): number => {
   return Math.ceil((REMINDER_COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000));
 };
 
-export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
@@ -199,20 +200,43 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   <Download className="w-3.5 h-3.5" />
                 )}
               </Button>
+              {/* Order received toggle */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={`h-7 w-7 ${quotation.status === 'accepted' ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground hover:text-green-600'}`}
+                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'accepted' ? 'draft' : 'accepted')}
+                    >
+                      {quotation.status === 'accepted' ? (
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      ) : (
+                        <Circle className="w-3.5 h-3.5" />
+                      )}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {quotation.status === 'accepted' ? 'Order received — click to unmark' : 'Mark as order received'}
+                </TooltipContent>
+              </Tooltip>
+              {/* Reminder email */}
               {quotation.status === 'accepted' ? (
-                <Tooltip>
+                <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex">
+                    <span className="inline-flex cursor-not-allowed">
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-7 w-7 text-green-600 cursor-default pointer-events-none"
+                        className="h-7 w-7 text-muted-foreground opacity-50 pointer-events-none"
                       >
-                        <CheckCircle className="w-3.5 h-3.5" />
+                        <Mail className="w-3.5 h-3.5" />
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="z-50">Order already accepted — no reminder needed</TooltipContent>
+                  <TooltipContent side="top">Order already received — no reminder needed</TooltipContent>
                 </Tooltip>
               ) : !canSendReminder(quotation.reminderSentAt) ? (
                 <Tooltip delayDuration={0}>
@@ -227,11 +251,11 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" sideOffset={8}>Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
+                  <TooltipContent side="top">Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
                 </Tooltip>
               ) : (
                 <AlertDialog>
-                  <Tooltip>
+                  <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
                       <AlertDialogTrigger asChild>
                         <Button 
@@ -248,7 +272,7 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                         </Button>
                       </AlertDialogTrigger>
                     </TooltipTrigger>
-                    <TooltipContent>Send reminder email</TooltipContent>
+                    <TooltipContent side="top">Send reminder email</TooltipContent>
                   </Tooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>

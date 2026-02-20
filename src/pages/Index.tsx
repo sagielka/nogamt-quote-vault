@@ -186,6 +186,14 @@ const Index = () => {
     }
   };
 
+  const handleStatusChange = async (id: string, status: string) => {
+    await updateQuotation(id, { status: status as any });
+    toast({
+      title: status === 'accepted' ? 'Order Marked as Received' : 'Status Reset',
+      description: status === 'accepted' ? 'Quotation marked as order received.' : 'Quotation status reset to draft.',
+    });
+  };
+
   const filteredQuotations = useMemo(() => {
     if (!searchQuery.trim()) return quotations;
     const q = searchQuery.toLowerCase();
@@ -297,6 +305,7 @@ const Index = () => {
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}
                       onDuplicate={handleDuplicateQuotation}
+                      onStatusChange={handleStatusChange}
                     />
                   ))}
                   {filteredQuotations.length === 0 && searchQuery && (
@@ -441,4 +450,3 @@ const Index = () => {
 };
 
 export default Index;
-

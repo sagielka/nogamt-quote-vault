@@ -215,19 +215,19 @@ export const QuotationCard = ({ quotation, onView, onEdit, onDelete, onDuplicate
                   <TooltipContent side="top" className="z-50">Order already accepted — no reminder needed</TooltipContent>
                 </Tooltip>
               ) : !canSendReminder(quotation.reminderSentAt) ? (
-                <Tooltip>
+                <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex">
+                    <span className="inline-flex cursor-not-allowed">
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-7 w-7 text-muted-foreground opacity-50 cursor-not-allowed pointer-events-none"
+                        className="h-7 w-7 text-muted-foreground opacity-50 pointer-events-none"
                       >
                         <Mail className="w-3.5 h-3.5" />
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="z-50">Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
+                  <TooltipContent side="top" sideOffset={8}>Reminder cooldown: {getDaysUntilReminder(quotation.reminderSentAt)} day(s) remaining</TooltipContent>
                 </Tooltip>
               ) : (
                 <AlertDialog>

@@ -1,7 +1,7 @@
-import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -118,8 +118,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Keep as base64 string for Resend attachment
-
     // Unsubscribe link points to the frontend app
     const unsubscribeUrl = `https://nogamt-quote-vault.lovable.app/#/unsubscribe?email=${encodeURIComponent(to)}`;
 
@@ -131,46 +129,72 @@ const handler = async (req: Request): Promise<Response> => {
       ? `<p>This is a friendly reminder regarding our quotation <strong>${quoteNumber}</strong>. Please find the updated document attached for your review.</p>`
       : `<p>Please find attached our quotation <strong>${quoteNumber}</strong> for your review.</p>`;
 
-    const emailResponse = await resend.emails.send({
-      from: "Noga Engineering & Technology Ltd. <onboarding@resend.dev>",
-      to: [to],
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #0891b2;">${isReminder ? 'Reminder: ' : ''}Quotation ${quoteNumber}</h2>
+        <p>Dear ${clientName},</p>
+        ${introText}
+        <table style="margin: 20px 0; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 16px 8px 0; color: #666;">Total:</td>
+            <td style="padding: 8px 0; font-weight: bold;">${total}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 16px 8px 0; color: #666;">Valid Until:</td>
+            <td style="padding: 8px 0;">${validUntil}</td>
+          </tr>
+        </table>
+        <p>If you have any questions, please don't hesitate to contact us.</p>
+        <p style="margin-top: 30px;">Best regards,<br><strong>Noga Engineering & Technology Ltd.</strong></p>
+        <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
+        <p style="font-size: 12px; color: #999;">
+          Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel<br>
+          <a href="https://www.nogamt.com" style="color: #0891b2;">www.nogamt.com</a>
+        </p>
+        <p style="font-size: 11px; color: #bbb; margin-top: 20px;">
+          <a href="${unsubscribeUrl}" style="color: #bbb;">Unsubscribe</a> from future quotation emails.
+        </p>
+      </div>
+    `;
+
+    // Send via Brevo API
+    const brevoPayload = {
+      sender: {
+        name: "Noga Engineering & Technology Ltd.",
+        email: "quotes@noga-mt.com",
+      },
+      to: [{ email: to, name: clientName }],
       subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #0891b2;">${isReminder ? 'Reminder: ' : ''}Quotation ${quoteNumber}</h2>
-          <p>Dear ${clientName},</p>
-          ${introText}
-          <table style="margin: 20px 0; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px 16px 8px 0; color: #666;">Total:</td>
-              <td style="padding: 8px 0; font-weight: bold;">${total}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 16px 8px 0; color: #666;">Valid Until:</td>
-              <td style="padding: 8px 0;">${validUntil}</td>
-            </tr>
-          </table>
-          <p>If you have any questions, please don't hesitate to contact us.</p>
-          <p style="margin-top: 30px;">Best regards,<br><strong>Noga Engineering & Technology Ltd.</strong></p>
-          <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
-          <p style="font-size: 12px; color: #999;">
-            Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel<br>
-            <a href="https://www.nogamt.com" style="color: #0891b2;">www.nogamt.com</a>
-          </p>
-          <p style="font-size: 11px; color: #bbb; margin-top: 20px;">
-            <a href="${unsubscribeUrl}" style="color: #bbb;">Unsubscribe</a> from future quotation emails.
-          </p>
-        </div>
-      `,
-      attachments: [
+      htmlContent,
+      attachment: [
         {
-          filename: `Quotation_${quoteNumber}.pdf`,
           content: pdfBase64,
+          name: `Quotation_${quoteNumber}.pdf`,
         },
       ],
+    };
+
+    const brevoResponse = await fetch(BREVO_API_URL, {
+      method: "POST",
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": BREVO_API_KEY!,
+      },
+      body: JSON.stringify(brevoPayload),
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    const brevoResult = await brevoResponse.json();
+
+    if (!brevoResponse.ok) {
+      console.error("Brevo API error:", brevoResult);
+      return new Response(
+        JSON.stringify({ error: brevoResult.message || 'Failed to send email via Brevo' }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log("Email sent successfully via Brevo:", brevoResult);
 
     if (isReminder) {
       await supabase
@@ -179,7 +203,7 @@ const handler = async (req: Request): Promise<Response> => {
         .eq('id', quotation.id);
     }
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
+    return new Response(JSON.stringify({ success: true, data: brevoResult }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

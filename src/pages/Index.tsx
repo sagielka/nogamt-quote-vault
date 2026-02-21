@@ -98,7 +98,8 @@ const Index = () => {
         if (data?.users) {
           const map: Record<string, string> = {};
           data.users.forEach((u: any) => {
-            map[u.id] = u.email?.split('@')[0] || u.id.slice(0, 6);
+            const name = u.email?.split('@')[0] || u.id.slice(0, 6);
+            map[u.id] = name.charAt(0).toUpperCase() + name.slice(1);
           });
           setUserNameMap(map);
         }

@@ -193,9 +193,9 @@ export const LineItemWithSku = ({
       style={style}
       className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
     >
-      <div className="grid grid-cols-1 md:grid-cols-14 gap-3 items-center p-3">
+      <div className="grid grid-cols-14 gap-2 items-center p-3">
         {/* Drag Handle */}
-        <div className="hidden md:flex md:col-span-1 justify-center">
+        <div className="col-span-1 flex justify-center">
           <button
             type="button"
             {...attributes}
@@ -207,7 +207,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* SKU with autocomplete */}
-        <div className="md:col-span-2 relative">
+        <div className="col-span-2 relative">
           <Input
             ref={skuInputRef}
             placeholder="Type SKU..."
@@ -249,7 +249,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Description with autocomplete */}
-        <div className="md:col-span-3 relative">
+        <div className="col-span-3 relative">
           <Input
             ref={descInputRef}
             placeholder="Description"
@@ -291,7 +291,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* LT (weeks) */}
-        <div className="md:col-span-1">
+        <div className="col-span-1">
           <Input
             type="number"
             min="0"
@@ -303,7 +303,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* MOQ */}
-        <div className="md:col-span-1">
+        <div className="col-span-1">
           <Input
             type="number"
             min="1"
@@ -315,7 +315,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Unit Price - supports expressions like 56.75*2 */}
-        <div className="md:col-span-2">
+        <div className="col-span-2">
           <Input
             type="text"
             inputMode="decimal"
@@ -329,7 +329,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Discount */}
-        <div className="md:col-span-1">
+        <div className="col-span-1">
           <Input
             type="number"
             min="0"
@@ -343,12 +343,12 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Total */}
-        <div className="md:col-span-1 text-right font-mono font-medium text-primary glow-text whitespace-nowrap">
+        <div className="col-span-1 text-right font-mono font-medium text-primary glow-text whitespace-nowrap">
           {formatCurrency(calculateLineTotal(item), currency)}
         </div>
         
         {/* Actions - moved to separate column with no overlap */}
-        <div className="md:col-span-2 flex justify-end gap-0.5 pl-4">
+        <div className="col-span-2 flex justify-end gap-0.5 pl-4">
           <Button
             type="button"
             variant="ghost"

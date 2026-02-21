@@ -6,4 +6,7 @@ verify_jwt = false
 [functions.fetch-github-catalog]
 verify_jwt = false
 
+[functions.check-reminder-notifications]
+verify_jwt = false
+
 

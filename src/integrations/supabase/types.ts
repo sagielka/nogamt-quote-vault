@@ -174,6 +174,7 @@ export type Database = {
           currency: string
           discount_type: string | null
           discount_value: number | null
+          follow_up_notified_at: string | null
           id: string
           items: Json
           notes: string | null
@@ -194,6 +195,7 @@ export type Database = {
           currency?: string
           discount_type?: string | null
           discount_value?: number | null
+          follow_up_notified_at?: string | null
           id?: string
           items: Json
           notes?: string | null
@@ -214,6 +216,7 @@ export type Database = {
           currency?: string
           discount_type?: string | null
           discount_value?: number | null
+          follow_up_notified_at?: string | null
           id?: string
           items?: Json
           notes?: string | null

@@ -103,10 +103,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Verify quotation exists (all authenticated users can send emails for any quotation in the team)
+    // Verify quotation exists and get creator info
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
-      .select('id')
+      .select('id, user_id')
       .eq('quote_number', quoteNumber)
       .single();
 
@@ -194,6 +194,55 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Email sent successfully via Brevo:", brevoResult);
+
+    // Send follow-up notification to quote creator
+    try {
+      const { data: creatorData } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
+      const creatorEmail = creatorData?.user?.email;
+
+      if (creatorEmail && creatorEmail.toLowerCase() !== to.toLowerCase()) {
+        const notificationHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #0891b2;">Follow-Up Reminder</h2>
+            <p>A quotation has been sent to <strong>${clientName}</strong> (${to}).</p>
+            <table style="margin: 20px 0; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 16px 8px 0; color: #666;">Quote:</td>
+                <td style="padding: 8px 0; font-weight: bold;">${quoteNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 16px 8px 0; color: #666;">Total:</td>
+                <td style="padding: 8px 0; font-weight: bold;">${total}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 16px 8px 0; color: #666;">Valid Until:</td>
+                <td style="padding: 8px 0;">${validUntil}</td>
+              </tr>
+            </table>
+            <p>Please remember to follow up with the client to ensure they received the quotation and address any questions.</p>
+            <p style="margin-top: 30px;">— Noga Quote System</p>
+          </div>
+        `;
+
+        await fetch(BREVO_API_URL, {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "api-key": BREVO_API_KEY!,
+          },
+          body: JSON.stringify({
+            sender: { name: "Noga Quote System", email: "quotes@noga-mt.com" },
+            to: [{ email: creatorEmail }],
+            subject: `Follow-up: Quotation ${quoteNumber} sent to ${clientName}`,
+            htmlContent: notificationHtml,
+          }),
+        });
+        console.log("Follow-up notification sent to creator:", creatorEmail);
+      }
+    } catch (notifyErr) {
+      console.error("Failed to send creator notification (non-blocking):", notifyErr);
+    }
 
     if (isReminder) {
       await supabase

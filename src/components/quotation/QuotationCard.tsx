@@ -4,6 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,11 +36,13 @@ interface QuotationCardProps {
   quotation: Quotation;
   index?: number;
   creatorName?: string;
+  userList?: { id: string; name: string }[];
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onStatusChange?: (id: string, status: Quotation['status']) => void;
+  onCreatorChange?: (id: string, newUserId: string) => void;
 }
 
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -65,7 +73,7 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, creatorName, onView, onEdit, onDelete, onDuplicate, onStatusChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, userList, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
@@ -183,7 +191,28 @@ export const QuotationCard = ({ quotation, index, creatorName, onView, onEdit, o
                 </span>
                 <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
                 {creatorName && (
-                  <span className="text-muted-foreground/70">by {creatorName}</span>
+                  onCreatorChange && userList && userList.length > 1 ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="text-muted-foreground/70 hover:text-foreground hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">
+                          by {creatorName}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        {userList.map((u) => (
+                          <DropdownMenuItem
+                            key={u.id}
+                            onClick={() => onCreatorChange(quotation.id, u.id)}
+                            className={u.id === quotation.userId ? 'font-semibold' : ''}
+                          >
+                            {u.name} {u.id === quotation.userId && '✓'}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <span className="text-muted-foreground/70">by {creatorName}</span>
+                  )
                 )}
                 {quotation.status !== 'accepted' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
                   <span className="flex items-center gap-1 text-destructive font-medium">

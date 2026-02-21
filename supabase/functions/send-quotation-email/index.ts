@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify quotation exists (all authenticated users can send emails for any quotation in the team)
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
-      .select('id, user_id')
+      .select('id')
       .eq('quote_number', quoteNumber)
       .single();
 
@@ -156,23 +156,13 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // If reminder, look up the responsible person's email to CC them
-    let ccList: { email: string; name: string }[] = [];
-    if (isReminder && quotation.user_id) {
-      const { data: { user: responsibleUser } } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
-      if (responsibleUser?.email && responsibleUser.email.toLowerCase() !== to.toLowerCase()) {
-        ccList.push({ email: responsibleUser.email, name: responsibleUser.email });
-      }
-    }
-
     // Send via Brevo API
-    const brevoPayload: Record<string, unknown> = {
+    const brevoPayload = {
       sender: {
         name: "Noga Engineering & Technology Ltd.",
         email: "quotes@noga-mt.com",
       },
       to: [{ email: to, name: clientName }],
-      ...(ccList.length > 0 && { cc: ccList }),
       subject,
       htmlContent,
       attachment: [

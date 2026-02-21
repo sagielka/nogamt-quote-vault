@@ -1,0 +1,1 @@
+ALTER TABLE public.quotations ADD COLUMN follow_up_notified_at timestamp with time zone DEFAULT NULL;

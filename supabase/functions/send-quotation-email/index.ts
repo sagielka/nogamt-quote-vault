@@ -156,6 +156,15 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
+    // If reminder, look up the responsible person's email to CC them
+    let ccList: { email: string; name: string }[] = [];
+    if (isReminder && quotation.user_id) {
+      const { data: { user: responsibleUser } } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
+      if (responsibleUser?.email && responsibleUser.email.toLowerCase() !== to.toLowerCase()) {
+        ccList.push({ email: responsibleUser.email, name: responsibleUser.email });
+      }
+    }
+
     // Send via Brevo API
     const brevoPayload: Record<string, unknown> = {
       sender: {
@@ -163,6 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: "quotes@noga-mt.com",
       },
       to: [{ email: to, name: clientName }],
+      ...(ccList.length > 0 && { cc: ccList }),
       subject,
       htmlContent,
       attachment: [
@@ -182,44 +192,6 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify(brevoPayload),
     });
-
-    // If reminder, send a separate notification email to the responsible person
-    if (isReminder && quotation.user_id) {
-      const { data: { user: responsibleUser } } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
-      if (responsibleUser?.email && responsibleUser.email.toLowerCase() !== to.toLowerCase()) {
-        const notifyHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #0891b2;">תזכורת: מעקב אחרי הצעת מחיר ${quoteNumber}</h2>
-            <p>שלום,</p>
-            <p>נשלחה תזכורת ללקוח <strong>${clientName}</strong> (${to}) עבור הצעת מחיר <strong>${quoteNumber}</strong> בסך <strong>${total}</strong>.</p>
-            <p>אנא עקוב/עקבי אחרי הלקוח וודא/י שההצעה התקבלה.</p>
-            <p style="margin-top: 30px;">בברכה,<br><strong>מערכת הצעות מחיר - Noga Engineering</strong></p>
-          </div>
-        `;
-
-        const notifyPayload = {
-          sender: { name: "Noga Quotation System", email: "quotes@noga-mt.com" },
-          to: [{ email: responsibleUser.email, name: responsibleUser.email }],
-          subject: `מעקב נדרש: הצעת מחיר ${quoteNumber} ללקוח ${clientName}`,
-          htmlContent: notifyHtml,
-        };
-
-        try {
-          await fetch(BREVO_API_URL, {
-            method: "POST",
-            headers: {
-              "accept": "application/json",
-              "content-type": "application/json",
-              "api-key": BREVO_API_KEY!,
-            },
-            body: JSON.stringify(notifyPayload),
-          });
-          console.log("Notification email sent to responsible user:", responsibleUser.email);
-        } catch (notifyErr) {
-          console.error("Failed to send notification to responsible user:", notifyErr);
-        }
-      }
-    }
 
     const brevoResult = await brevoResponse.json();
 

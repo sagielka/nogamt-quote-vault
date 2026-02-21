@@ -45,8 +45,9 @@ export interface Quotation {
   currency: Currency;
   attachments: LineItemAttachment[];
   reminderSentAt: Date | null;
+  followUpNotifiedAt: Date | null;
 }
 
-export type QuotationFormData = Omit<Quotation, 'id' | 'userId' | 'createdAt' | 'quoteNumber' | 'reminderSentAt'> & {
+export type QuotationFormData = Omit<Quotation, 'id' | 'userId' | 'createdAt' | 'quoteNumber' | 'reminderSentAt' | 'followUpNotifiedAt'> & {
   quoteNumber?: string; // Optional: allows manual override when editing
 };

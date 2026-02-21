@@ -194,8 +194,9 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, onView,
                   onCreatorChange && userList && userList.length > 1 ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="text-muted-foreground/70 hover:text-foreground hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">
+                        <button className="flex items-center gap-0.5 text-muted-foreground/70 hover:text-foreground hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">
                           by {creatorName}
+                          <Pencil className="w-2.5 h-2.5 opacity-50" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">

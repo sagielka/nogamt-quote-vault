@@ -261,6 +261,28 @@ const Index = () => {
     });
   };
 
+  const handleCreatorChange = async (id: string, newUserId: string) => {
+    try {
+      const { error } = await supabase
+        .from('quotations')
+        .update({ user_id: newUserId })
+        .eq('id', id);
+      if (error) throw error;
+      toast({
+        title: 'Creator Updated',
+        description: `Quotation reassigned to ${userNameMap[newUserId] || 'user'}.`,
+      });
+      refreshQuotations();
+    } catch {
+      toast({ title: 'Error', description: 'Failed to change creator.', variant: 'destructive' });
+    }
+  };
+
+  const userList = useMemo(() => 
+    Object.entries(userNameMap).map(([id, name]) => ({ id, name })),
+    [userNameMap]
+  );
+
   const filteredQuotations = useMemo(() => {
     if (!searchQuery.trim()) return quotations;
     const q = searchQuery.toLowerCase();
@@ -396,11 +418,13 @@ const Index = () => {
                       quotation={quotation}
                       index={filteredQuotations.length - index}
                       creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
+                      userList={userList}
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}
                       onDuplicate={handleDuplicateQuotation}
                       onStatusChange={handleStatusChange}
+                      onCreatorChange={handleCreatorChange}
                     />
                   ))}
                   {filteredQuotations.length === 0 && searchQuery && (

@@ -19,7 +19,7 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -207,6 +207,12 @@ export const QuotationCard = ({ quotation, index, creatorName, onView, onEdit, o
                     </span>
                   );
                 })()}
+                {quotation.followUpNotifiedAt && (
+                  <span className="flex items-center gap-1 text-blue-600">
+                    <BellRing className="w-3 h-3 shrink-0" />
+                    Notified {formatDate(quotation.followUpNotifiedAt)}
+                  </span>
+                )}
               </div>
             </div>
           </div>

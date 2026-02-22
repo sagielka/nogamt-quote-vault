@@ -24,11 +24,9 @@ Deno.serve(async (req) => {
     const sixWeeksAgo = new Date(now.getTime() - 42 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Find quotations that need follow-up notification:
+    // Find quotations that need follow-up:
     // - Created between 1 and 6 weeks ago
     // - Status is not 'accepted'
-    // - Either no reminder sent, or last reminder was 7+ days ago
-    // - Not yet notified, or last notification was 7+ days ago
     const { data: quotations, error: fetchError } = await supabase
       .from("quotations")
       .select("*")
@@ -44,18 +42,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Filter eligible quotations
+    // Filter eligible quotations (7-day cooldown on follow_up_notified_at)
     const eligible = (quotations || []).filter((q) => {
-      // Check reminder cooldown: either no reminder sent, or 7+ days since last
       const reminderEligible =
         !q.reminder_sent_at ||
         new Date(q.reminder_sent_at).getTime() <= sevenDaysAgo.getTime();
-
-      // Check notification cooldown
       const notificationEligible =
         !q.follow_up_notified_at ||
         new Date(q.follow_up_notified_at).getTime() <= sevenDaysAgo.getTime();
-
       return reminderEligible && notificationEligible;
     });
 
@@ -67,12 +61,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get unique creator user IDs
-    const userIds = [...new Set(eligible.map((q) => q.user_id))];
+    // Group quotations by user_id
+    const byUser: Record<string, typeof eligible> = {};
+    for (const q of eligible) {
+      if (!byUser[q.user_id]) byUser[q.user_id] = [];
+      byUser[q.user_id].push(q);
+    }
 
-    // Fetch creator emails from auth.users via admin API
+    // Fetch creator emails
     const creatorEmails: Record<string, string> = {};
-    for (const uid of userIds) {
+    for (const uid of Object.keys(byUser)) {
       const { data: userData } = await supabase.auth.admin.getUserById(uid);
       if (userData?.user?.email) {
         creatorEmails[uid] = userData.user.email;
@@ -81,41 +79,52 @@ Deno.serve(async (req) => {
 
     let sentCount = 0;
 
-    for (const q of eligible) {
-      const creatorEmail = creatorEmails[q.user_id];
+    for (const [userId, userQuotations] of Object.entries(byUser)) {
+      const creatorEmail = creatorEmails[userId];
       if (!creatorEmail) {
-        console.warn(`No email found for user ${q.user_id}, skipping quote ${q.quote_number}`);
+        console.warn(`No email found for user ${userId}, skipping ${userQuotations.length} quotes`);
         continue;
       }
 
-      const daysSinceCreation = Math.floor(
-        (now.getTime() - new Date(q.created_at).getTime()) / (1000 * 60 * 60 * 24)
-      );
+      // Build quotation rows for the consolidated email
+      const quotationRows = userQuotations
+        .map((q) => {
+          const daysSinceCreation = Math.floor(
+            (now.getTime() - new Date(q.created_at).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          return `
+            <tr>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.quote_number}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.client_name}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.client_email}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${daysSinceCreation} days</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${new Date(q.valid_until).toLocaleDateString()}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.status || 'draft'}</td>
+            </tr>`;
+        })
+        .join("");
 
       const htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #0891b2;">Follow-Up Reminder</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;">
+          <h2 style="color: #0891b2;">Weekly Follow-Up Summary</h2>
           <p>Hi,</p>
-          <p>Quotation <strong>${q.quote_number}</strong> for <strong>${q.client_name}</strong> was sent ${daysSinceCreation} days ago and hasn't been accepted yet.</p>
-          <table style="margin: 20px 0; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px 16px 8px 0; color: #666;">Client:</td>
-              <td style="padding: 8px 0; font-weight: bold;">${q.client_name}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 16px 8px 0; color: #666;">Client Email:</td>
-              <td style="padding: 8px 0;">${q.client_email}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 16px 8px 0; color: #666;">Quote Number:</td>
-              <td style="padding: 8px 0;">${q.quote_number}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 16px 8px 0; color: #666;">Valid Until:</td>
-              <td style="padding: 8px 0;">${new Date(q.valid_until).toLocaleDateString()}</td>
-            </tr>
+          <p>You have <strong>${userQuotations.length}</strong> quotation${userQuotations.length > 1 ? "s" : ""} that may need follow-up:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+            <thead>
+              <tr style="background: #f3f4f6;">
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Quote #</th>
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Client</th>
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Email</th>
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Age</th>
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Valid Until</th>
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${quotationRows}
+            </tbody>
           </table>
-          <p>Consider following up with the client to check on their decision.</p>
+          <p>Consider reaching out to these clients to check on their decisions.</p>
           <p style="margin-top: 30px;">Best regards,<br><strong>Noga Quote System</strong></p>
         </div>
       `;
@@ -126,7 +135,7 @@ Deno.serve(async (req) => {
           email: "quotes@noga-mt.com",
         },
         to: [{ email: creatorEmail }],
-        subject: `Follow-Up Needed: Quotation ${q.quote_number} for ${q.client_name}`,
+        subject: `Weekly Follow-Up: ${userQuotations.length} Quotation${userQuotations.length > 1 ? "s" : ""} Need Attention`,
         htmlContent,
       };
 
@@ -141,19 +150,23 @@ Deno.serve(async (req) => {
       });
 
       if (brevoResponse.ok) {
-        await supabase
-          .from("quotations")
-          .update({ follow_up_notified_at: now.toISOString() })
-          .eq("id", q.id);
+        // Update follow_up_notified_at for all quotations in this batch
+        const ids = userQuotations.map((q) => q.id);
+        for (const id of ids) {
+          await supabase
+            .from("quotations")
+            .update({ follow_up_notified_at: now.toISOString() })
+            .eq("id", id);
+        }
         sentCount++;
-        console.log(`Notification sent to ${creatorEmail} for quote ${q.quote_number}`);
+        console.log(`Consolidated email sent to ${creatorEmail} with ${userQuotations.length} quotations`);
       } else {
         const err = await brevoResponse.json();
-        console.error(`Failed to notify for ${q.quote_number}:`, err);
+        console.error(`Failed to send consolidated email to ${creatorEmail}:`, err);
       }
     }
 
-    return new Response(JSON.stringify({ sent: sentCount }), {
+    return new Response(JSON.stringify({ sent: sentCount, totalQuotations: eligible.length }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

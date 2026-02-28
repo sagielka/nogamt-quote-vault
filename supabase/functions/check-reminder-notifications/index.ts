@@ -86,20 +86,28 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      const appUrl = "https://nogamt-quote-vault.lovable.app";
+
       // Build quotation rows for the consolidated email
       const quotationRows = userQuotations
         .map((q) => {
           const daysSinceCreation = Math.floor(
             (now.getTime() - new Date(q.created_at).getTime()) / (1000 * 60 * 60 * 24)
           );
+          const quoteLink = `${appUrl}/?highlight=${q.id}`;
           return `
             <tr>
-              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.quote_number}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">
+                <a href="${quoteLink}" style="color: #0891b2; text-decoration: none; font-weight: 500;">${q.quote_number}</a>
+              </td>
               <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.client_name}</td>
               <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.client_email}</td>
               <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${daysSinceCreation} days</td>
               <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${new Date(q.valid_until).toLocaleDateString()}</td>
               <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">${q.status || 'draft'}</td>
+              <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">
+                <a href="${quoteLink}" style="display: inline-block; padding: 4px 12px; background: #0891b2; color: #fff; border-radius: 4px; text-decoration: none; font-size: 12px;">View</a>
+              </td>
             </tr>`;
         })
         .join("");
@@ -118,6 +126,7 @@ Deno.serve(async (req) => {
                 <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Age</th>
                 <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Valid Until</th>
                 <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Status</th>
+                <th style="padding: 10px 12px; text-align: left; border-bottom: 2px solid #d1d5db;">Action</th>
               </tr>
             </thead>
             <tbody>

@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Quotation } from '@/types/quotation';
-import { calculateTotal, formatCurrency } from '@/lib/quotation-utils';
+import { calculateTotal, calculateLineTotal, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users } from 'lucide-react';
+import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface QuotationStatsProps {
   quotations: Quotation[];
@@ -144,6 +145,76 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
       Declined: u.declined,
     }));
   }, [perUserStats]);
+
+  // Extract family prefix from SKU (first 2 letters, e.g. US, UC, UF)
+  const getFamily = (sku: string): string => {
+    const clean = sku.trim().toUpperCase();
+    const match = clean.match(/^([A-Z]{2})/);
+    return match ? match[1] : 'Other';
+  };
+
+  // Product family breakdown
+  const familyStats = useMemo(() => {
+    const families: Record<string, { qty: number; value: number; quotations: Set<string> }> = {};
+
+    quotations.forEach(q => {
+      q.items.forEach(item => {
+        const family = getFamily(item.sku);
+        if (!families[family]) {
+          families[family] = { qty: 0, value: 0, quotations: new Set() };
+        }
+        families[family].qty += item.moq;
+        families[family].value += calculateLineTotal(item);
+        families[family].quotations.add(q.id);
+      });
+    });
+
+    return Object.entries(families)
+      .map(([family, data]) => ({
+        family,
+        qty: data.qty,
+        value: data.value,
+        quoteCount: data.quotations.size,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [quotations]);
+
+  // Family pie chart data
+  const familyPieData = useMemo(() => {
+    const colors = [
+      'hsl(210, 80%, 55%)', 'hsl(152, 60%, 45%)', 'hsl(35, 90%, 55%)',
+      'hsl(280, 60%, 55%)', 'hsl(0, 70%, 55%)', 'hsl(180, 60%, 45%)',
+      'hsl(60, 70%, 45%)', 'hsl(320, 60%, 55%)',
+    ];
+    return familyStats.map((f, i) => ({
+      name: f.family,
+      value: f.qty,
+      color: colors[i % colors.length],
+    }));
+  }, [familyStats]);
+
+  // Top items by quantity
+  const topItems = useMemo(() => {
+    const items: Record<string, { sku: string; description: string; qty: number; value: number; quoteCount: Set<string> }> = {};
+
+    quotations.forEach(q => {
+      q.items.forEach(item => {
+        const key = item.sku.trim().toUpperCase();
+        if (!key) return;
+        if (!items[key]) {
+          items[key] = { sku: item.sku, description: item.description, qty: 0, value: 0, quoteCount: new Set() };
+        }
+        items[key].qty += item.moq;
+        items[key].value += calculateLineTotal(item);
+        items[key].quoteCount.add(q.id);
+      });
+    });
+
+    return Object.values(items)
+      .map(i => ({ ...i, quoteCount: i.quoteCount.size }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 20);
+  }, [quotations]);
 
   const cards = [
     {
@@ -384,6 +455,127 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                     </TableBody>
                   </Table>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Product Family & Item Stats */}
+          {familyStats.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Product Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Tabs defaultValue="family" className="w-full">
+                  <TabsList className="mb-3">
+                    <TabsTrigger value="family" className="text-xs gap-1">
+                      <Layers className="w-3 h-3" /> Family Lines
+                    </TabsTrigger>
+                    <TabsTrigger value="items" className="text-xs gap-1">
+                      <Package className="w-3 h-3" /> Top Items
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="family" className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Family pie chart */}
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie
+                            data={familyPieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={80}
+                            paddingAngle={3}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            labelLine={false}
+                            style={{ fontSize: 11 }}
+                          >
+                            {familyPieData.map((entry, index) => (
+                              <Cell key={index} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: 12,
+                            }}
+                            formatter={(value: number) => [`${value} units`, 'Quantity']}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+
+                      {/* Family table */}
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs">Family</TableHead>
+                              <TableHead className="text-xs text-center">Qty</TableHead>
+                              <TableHead className="text-xs text-center">Quotes</TableHead>
+                              <TableHead className="text-xs text-right">Value</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {familyStats.map(f => (
+                              <TableRow key={f.family}>
+                                <TableCell className="text-xs font-medium">
+                                  <Badge variant="outline" className="text-[10px]">{f.family}</Badge>
+                                </TableCell>
+                                <TableCell className="text-xs text-center font-bold">{f.qty}</TableCell>
+                                <TableCell className="text-xs text-center">{f.quoteCount}</TableCell>
+                                <TableCell className="text-xs text-right">
+                                  {formatCurrency(f.value, stats.dominantCurrency as any)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="items">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs">SKU</TableHead>
+                            <TableHead className="text-xs">Description</TableHead>
+                            <TableHead className="text-xs text-center">Family</TableHead>
+                            <TableHead className="text-xs text-center">Total Qty</TableHead>
+                            <TableHead className="text-xs text-center">In Quotes</TableHead>
+                            <TableHead className="text-xs text-right">Total Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {topItems.map((item, i) => (
+                            <TableRow key={item.sku}>
+                              <TableCell className="text-xs font-mono font-medium">{item.sku}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">{item.description}</TableCell>
+                              <TableCell className="text-xs text-center">
+                                <Badge variant="outline" className="text-[10px]">{getFamily(item.sku)}</Badge>
+                              </TableCell>
+                              <TableCell className="text-xs text-center font-bold">{item.qty}</TableCell>
+                              <TableCell className="text-xs text-center">{item.quoteCount}</TableCell>
+                              <TableCell className="text-xs text-right">
+                                {formatCurrency(item.value, stats.dominantCurrency as any)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           )}

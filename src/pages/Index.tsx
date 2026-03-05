@@ -396,7 +396,7 @@ const Index = () => {
               <EmptyState onCreateNew={() => setCurrentView('create')} />
             ) : (
               <div className="space-y-6">
-                <QuotationStats quotations={quotations} />
+                <QuotationStats quotations={quotations} isAdmin={isAdmin} userNameMap={userNameMap} />
                 <div className="flex items-center justify-between">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations

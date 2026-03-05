@@ -10,7 +10,7 @@ import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
-import { SyncStatusIndicator } from '@/components/SyncStatusIndicator';
+
 import { UserManagement } from '@/components/UserManagement';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +36,7 @@ const Index = () => {
   const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
-  const [desktopAppVersion, setDesktopAppVersion] = useState<string | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -113,24 +113,6 @@ const Index = () => {
 
   useEffect(() => {
     let cancelled = false;
-
-    const loadDesktopVersion = async () => {
-      const electronAPI = (window as any).electronAPI as any;
-      if (!electronAPI?.isElectron || !electronAPI?.getAppVersion) return;
-
-      try {
-        const v = await electronAPI.getAppVersion();
-        if (!cancelled) setDesktopAppVersion(v);
-      } catch {
-        // ignore
-      }
-    };
-
-    loadDesktopVersion();
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const handleSignOut = async () => {
@@ -319,7 +301,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
-              <SyncStatusIndicator />
+              
               <div className="hidden sm:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-muted/50">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
@@ -554,20 +536,9 @@ const Index = () => {
                 www.nogamt.com
               </a>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground/60">
-                  v{window.electronAPI?.isElectron && desktopAppVersion ? desktopAppVersion : (import.meta.env.PACKAGE_VERSION || '1.0.0')}
-                </p>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  window.electronAPI?.isElectron 
-                    ? 'bg-primary/20 text-primary' 
-                    : 'bg-muted text-muted-foreground'
-                }`}>
-                  {window.electronAPI?.isElectron ? '🖥️ Desktop' : '🌐 Web'}
-                </span>
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground/60">
+              v{import.meta.env.PACKAGE_VERSION || '1.0.0'}
+            </p>
           </div>
         </div>
       </footer>

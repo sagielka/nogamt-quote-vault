@@ -505,6 +505,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                           fontSize: 12,
                           color: 'hsl(var(--foreground))',
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Bar dataKey="accepted" stackId="a" fill={STATUS_COLORS.accepted} name="Accepted" radius={[0, 0, 0, 0]} />
                       <Bar dataKey="sent" stackId="a" fill={STATUS_COLORS.sent} name="Sent" />
@@ -551,6 +553,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                           fontSize: 12,
                           color: 'hsl(var(--foreground))',
                         }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                     </PieChart>
@@ -585,6 +589,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                         fontSize: 12,
                         color: 'hsl(var(--foreground))',
                       }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
                     />
                     <Bar dataKey="Accepted" stackId="a" fill={STATUS_COLORS.accepted} />
                     <Bar dataKey="Sent" stackId="a" fill={STATUS_COLORS.sent} />
@@ -692,6 +698,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                               fontSize: 12,
                               color: 'hsl(var(--foreground))',
                             }}
+                            labelStyle={{ color: 'hsl(var(--foreground))' }}
+                            itemStyle={{ color: 'hsl(var(--foreground))' }}
                             formatter={(value: number) => [`${value} units`, 'Quantity']}
                           />
                           <Legend wrapperStyle={{ fontSize: 11 }} />

@@ -202,10 +202,19 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
   };
 
   // Extract family prefix from SKU (first 2 letters, e.g. US, UC, UF)
-  const getFamily = (sku: string): string => {
+  // For "UPON ORDER" SKUs, inspect the description to determine the real family
+  const getFamily = (sku: string, description?: string): string => {
     const clean = sku.trim().toUpperCase();
-    // "UPON ORDER" SKUs → Upon Order family
-    if (clean.startsWith('UPON')) return 'Upon Order';
+    // "UPON ORDER" SKUs → check description for family prefix
+    if (clean.startsWith('UPON') && description) {
+      const descClean = description.trim().toUpperCase();
+      const descMatch = descClean.match(/^([A-Z]{2})/);
+      if (descMatch) {
+        const code = descMatch[1];
+        return FAMILY_NAMES[code] || code;
+      }
+      return 'Upon Order';
+    }
     const match = clean.match(/^([A-Z]{2})/);
     const code = match ? match[1] : 'Other';
     return FAMILY_NAMES[code] || code;
@@ -217,7 +226,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
 
     filteredQuotations.forEach(q => {
       q.items.forEach(item => {
-        const family = getFamily(item.sku);
+        const family = getFamily(item.sku, item.description);
         if (!families[family]) {
           families[family] = { qty: 0, value: 0, quotations: new Set() };
         }
@@ -317,7 +326,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
       rows.push(['=== TOP ITEMS ===']);
       rows.push(['SKU', 'Description', 'Family', 'Quantity', 'In Quotes', 'Value']);
       topItems.forEach(item => {
-        rows.push([item.sku, item.description, getFamily(item.sku), String(item.qty), String(item.quoteCount), item.value.toFixed(2)]);
+        rows.push([item.sku, item.description, getFamily(item.sku, item.description), String(item.qty), String(item.quoteCount), item.value.toFixed(2)]);
       });
     }
 
@@ -734,7 +743,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                               <TableCell className="text-xs font-mono font-medium">{item.sku}</TableCell>
                               <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">{item.description}</TableCell>
                               <TableCell className="text-xs text-center">
-                                <Badge variant="outline" className="text-[10px]">{getFamily(item.sku)}</Badge>
+                                <Badge variant="outline" className="text-[10px]">{getFamily(item.sku, item.description)}</Badge>
                               </TableCell>
                               <TableCell className="text-xs text-center font-bold">{item.qty}</TableCell>
                               <TableCell className="text-xs text-center">{item.quoteCount}</TableCell>

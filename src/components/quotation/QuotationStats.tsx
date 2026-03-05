@@ -190,11 +190,25 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
     }));
   }, [perUserStats]);
 
+  // Family name mapping
+  const FAMILY_NAMES: Record<string, string> = {
+    US: 'Uspot',
+    UC: 'Uchamf',
+    UF: 'Ufiber',
+    UX: 'Uxpert',
+    UB: 'Ubore',
+    CA: 'Catalogs',
+    UP: 'Upon Order',
+  };
+
   // Extract family prefix from SKU (first 2 letters, e.g. US, UC, UF)
   const getFamily = (sku: string): string => {
     const clean = sku.trim().toUpperCase();
+    // "UPON ORDER" SKUs → Upon Order family
+    if (clean.startsWith('UPON')) return 'Upon Order';
     const match = clean.match(/^([A-Z]{2})/);
-    return match ? match[1] : 'Other';
+    const code = match ? match[1] : 'Other';
+    return FAMILY_NAMES[code] || code;
   };
 
   // Product family breakdown

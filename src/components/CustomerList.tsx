@@ -44,7 +44,11 @@ interface Customer {
   quotation_count?: number;
 }
 
-export const CustomerList = () => {
+interface CustomerListProps {
+  onSelectCustomer?: (email: string) => void;
+}
+
+export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -214,7 +218,11 @@ export const CustomerList = () => {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((customer) => (
-            <Card key={customer.id} className="group hover:border-primary/30 transition-colors">
+            <Card 
+              key={customer.id} 
+              className="group hover:border-primary/30 transition-colors cursor-pointer"
+              onClick={() => onSelectCustomer?.(customer.email)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-foreground text-sm truncate flex-1 mr-2">
@@ -225,7 +233,7 @@ export const CustomerList = () => {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-primary"
-                      onClick={() => openEdit(customer)}
+                      onClick={(e) => { e.stopPropagation(); openEdit(customer); }}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -233,7 +241,8 @@ export const CustomerList = () => {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setDeletingCustomerId(customer.id);
                         setDeleteDialogOpen(true);
                       }}

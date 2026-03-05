@@ -33,6 +33,7 @@ import {
   MapPin,
   FileText,
   Users,
+  Download,
 } from 'lucide-react';
 
 interface Customer {
@@ -108,6 +109,26 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
         (c.address || '').toLowerCase().includes(q)
     );
   }, [customers, searchQuery]);
+
+  const exportCustomers = () => {
+    const data = filtered.length > 0 ? filtered : customers;
+    if (data.length === 0) return;
+
+    const escape = (val: string) => `"${(val || '').replace(/"/g, '""')}"`;
+    const header = 'Name,Email,Address,Quotations';
+    const rows = data.map((c) =>
+      [escape(c.name), escape(c.email), escape(c.address || ''), c.quotation_count ?? 0].join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Exported', description: `${data.length} customers exported to CSV.` });
+  };
 
   const openCreate = () => {
     setEditingCustomer(null);
@@ -186,6 +207,10 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
           <p className="text-sm text-muted-foreground">
             {filtered.length} of {customers.length} customer{customers.length !== 1 ? 's' : ''}
           </p>
+          <Button size="sm" variant="outline" onClick={() => exportCustomers()}>
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
           <Button size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />
             Add Customer

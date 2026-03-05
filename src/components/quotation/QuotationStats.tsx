@@ -4,7 +4,7 @@ import { Quotation } from '@/types/quotation';
 import { calculateTotal, calculateLineTotal, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X } from 'lucide-react';
+import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -260,6 +260,63 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
       .slice(0, 20);
   }, [filteredQuotations]);
 
+  const exportCSV = () => {
+    const rows: string[][] = [];
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+
+    // Summary
+    rows.push(['=== SUMMARY ===']);
+    rows.push(['Metric', 'Value']);
+    rows.push(['Total Quotes', String(stats.total)]);
+    rows.push(['Total Value', String(stats.totalValue.toFixed(2))]);
+    rows.push(['Orders Received', String(stats.byStatus.accepted)]);
+    rows.push(['Accepted Value', String(stats.acceptedValue.toFixed(2))]);
+    rows.push(['Conversion Rate', `${stats.conversionRate.toFixed(1)}%`]);
+    rows.push(['Pending (Sent)', String(stats.byStatus.sent)]);
+    rows.push(['Drafts', String(stats.byStatus.draft)]);
+    rows.push(['Declined', String(stats.byStatus.declined)]);
+    rows.push(['Expiring Soon', String(stats.expiringSoon)]);
+    rows.push([]);
+
+    // Team performance
+    if (isAdmin && perUserStats.length > 0) {
+      rows.push(['=== TEAM PERFORMANCE ===']);
+      rows.push(['User', 'Total', 'Draft', 'Sent', 'Accepted', 'Declined', 'Conv. %', 'Total Value', 'Accepted Value']);
+      perUserStats.forEach(u => {
+        rows.push([u.name, String(u.total), String(u.draft), String(u.sent), String(u.accepted), String(u.declined), `${u.conversionRate.toFixed(1)}%`, u.totalValue.toFixed(2), u.acceptedValue.toFixed(2)]);
+      });
+      rows.push([]);
+    }
+
+    // Product families
+    if (familyStats.length > 0) {
+      rows.push(['=== PRODUCT FAMILIES ===']);
+      rows.push(['Family', 'Quantity', 'Quotes', 'Value']);
+      familyStats.forEach(f => {
+        rows.push([f.family, String(f.qty), String(f.quoteCount), f.value.toFixed(2)]);
+      });
+      rows.push([]);
+    }
+
+    // Top items
+    if (topItems.length > 0) {
+      rows.push(['=== TOP ITEMS ===']);
+      rows.push(['SKU', 'Description', 'Family', 'Quantity', 'In Quotes', 'Value']);
+      topItems.forEach(item => {
+        rows.push([item.sku, item.description, getFamily(item.sku), String(item.qty), String(item.quoteCount), item.value.toFixed(2)]);
+      });
+    }
+
+    const csv = rows.map(r => r.map(c => esc(c)).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quotation-stats-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const cards = [
     {
       label: 'Total Quotes',
@@ -361,6 +418,10 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
             Showing {filteredQuotations.length} of {quotations.length} quotations
           </span>
         )}
+        <Button variant="outline" size="sm" className="h-7 text-xs px-2.5 gap-1 ml-auto" onClick={exportCSV}>
+          <Download className="w-3 h-3" />
+          Export CSV
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

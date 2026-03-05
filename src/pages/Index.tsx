@@ -12,9 +12,10 @@ import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
 
 import { UserManagement } from '@/components/UserManagement';
+import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser } from 'lucide-react';
 import { TeamChat } from '@/components/TeamChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -22,7 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -347,6 +348,16 @@ const Index = () => {
                   Users
                 </Button>
               )}
+              {currentView === 'list' && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCurrentView('customers')}
+                >
+                  <BookUser className="w-4 h-4 mr-2" />
+                  Customers
+                </Button>
+              )}
               {currentView === 'archive' && (
                 <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
@@ -354,6 +365,12 @@ const Index = () => {
                 </Button>
               )}
               {currentView === 'users' && (
+                <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Quotations
+                </Button>
+              )}
+              {currentView === 'customers' && (
                 <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -517,6 +534,10 @@ const Index = () => {
 
         {currentView === 'users' && isAdmin && (
           <UserManagement />
+        )}
+
+        {currentView === 'customers' && (
+          <CustomerList />
         )}
       </main>
 

@@ -1,13 +1,17 @@
 import { useMemo, useState } from 'react';
+import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval } from 'date-fns';
 import { Quotation } from '@/types/quotation';
 import { calculateTotal, calculateLineTotal, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers } from 'lucide-react';
+import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface QuotationStatsProps {
   quotations: Quotation[];
@@ -33,31 +37,71 @@ const USER_COLORS = [
   'hsl(320, 60%, 55%)',
 ];
 
+type PresetRange = 'all' | '7d' | '30d' | '90d' | 'this-month' | 'last-month' | 'this-year' | 'custom';
+
+const getPresetDates = (preset: PresetRange): { from: Date | undefined; to: Date | undefined } => {
+  const now = new Date();
+  switch (preset) {
+    case '7d': return { from: subDays(now, 7), to: now };
+    case '30d': return { from: subDays(now, 30), to: now };
+    case '90d': return { from: subDays(now, 90), to: now };
+    case 'this-month': return { from: startOfMonth(now), to: now };
+    case 'last-month': {
+      const last = subMonths(now, 1);
+      return { from: startOfMonth(last), to: endOfMonth(last) };
+    }
+    case 'this-year': return { from: startOfYear(now), to: now };
+    default: return { from: undefined, to: undefined };
+  }
+};
+
 export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: QuotationStatsProps) => {
   const [chartsOpen, setChartsOpen] = useState(false);
+  const [rangePreset, setRangePreset] = useState<PresetRange>('all');
+  const [customFrom, setCustomFrom] = useState<Date | undefined>();
+  const [customTo, setCustomTo] = useState<Date | undefined>();
+
+  const dateRange = useMemo(() => {
+    if (rangePreset === 'custom') return { from: customFrom, to: customTo };
+    if (rangePreset === 'all') return { from: undefined, to: undefined };
+    return getPresetDates(rangePreset);
+  }, [rangePreset, customFrom, customTo]);
+
+  const filteredQuotations = useMemo(() => {
+    if (!dateRange.from && !dateRange.to) return quotations;
+    return quotations.filter(q => {
+      const created = new Date(q.createdAt);
+      if (dateRange.from && dateRange.to) {
+        return isWithinInterval(created, { start: dateRange.from, end: dateRange.to });
+      }
+      if (dateRange.from) return created >= dateRange.from;
+      if (dateRange.to) return created <= dateRange.to;
+      return true;
+    });
+  }, [quotations, dateRange]);
 
   const stats = useMemo(() => {
-    const total = quotations.length;
+    const total = filteredQuotations.length;
     const byStatus = {
-      draft: quotations.filter(q => q.status === 'draft').length,
-      sent: quotations.filter(q => q.status === 'sent').length,
-      accepted: quotations.filter(q => q.status === 'accepted').length,
-      declined: quotations.filter(q => q.status === 'declined').length,
+      draft: filteredQuotations.filter(q => q.status === 'draft').length,
+      sent: filteredQuotations.filter(q => q.status === 'sent').length,
+      accepted: filteredQuotations.filter(q => q.status === 'accepted').length,
+      declined: filteredQuotations.filter(q => q.status === 'declined').length,
     };
 
-    const totalValue = quotations.reduce((sum, q) => {
+    const totalValue = filteredQuotations.reduce((sum, q) => {
       const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
       return sum + val;
     }, 0);
 
-    const acceptedValue = quotations
+    const acceptedValue = filteredQuotations
       .filter(q => q.status === 'accepted')
       .reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
 
     const conversionRate = total > 0 ? ((byStatus.accepted / total) * 100) : 0;
 
     const now = new Date();
-    const expiringSoon = quotations.filter(q => {
+    const expiringSoon = filteredQuotations.filter(q => {
       if (q.status === 'accepted' || q.status === 'declined') return false;
       const validUntil = new Date(q.validUntil);
       const daysLeft = (validUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
@@ -65,19 +109,19 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
     }).length;
 
     const currencyCounts: Record<string, number> = {};
-    quotations.forEach(q => {
+    filteredQuotations.forEach(q => {
       currencyCounts[q.currency] = (currencyCounts[q.currency] || 0) + 1;
     });
     const dominantCurrency = Object.entries(currencyCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
     return { total, byStatus, totalValue, acceptedValue, conversionRate, expiringSoon, dominantCurrency };
-  }, [quotations]);
+  }, [filteredQuotations]);
 
   // Monthly trend data
   const monthlyData = useMemo(() => {
     const months: Record<string, { month: string; draft: number; sent: number; accepted: number; declined: number; total: number }> = {};
     
-    quotations.forEach(q => {
+    filteredQuotations.forEach(q => {
       const date = new Date(q.createdAt);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
@@ -93,7 +137,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-12)
       .map(([, v]) => v);
-  }, [quotations]);
+  }, [filteredQuotations]);
 
   // Status distribution for pie chart
   const statusData = useMemo(() => {
@@ -111,7 +155,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
 
     const byUser: Record<string, { total: number; draft: number; sent: number; accepted: number; declined: number; totalValue: number; acceptedValue: number }> = {};
 
-    quotations.forEach(q => {
+    filteredQuotations.forEach(q => {
       const uid = q.userId;
       if (!byUser[uid]) {
         byUser[uid] = { total: 0, draft: 0, sent: 0, accepted: 0, declined: 0, totalValue: 0, acceptedValue: 0 };
@@ -133,7 +177,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
         conversionRate: data.total > 0 ? (data.accepted / data.total) * 100 : 0,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [quotations, isAdmin, userNameMap]);
+  }, [filteredQuotations, isAdmin, userNameMap]);
 
   // Per-user bar chart data
   const perUserChartData = useMemo(() => {
@@ -157,7 +201,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
   const familyStats = useMemo(() => {
     const families: Record<string, { qty: number; value: number; quotations: Set<string> }> = {};
 
-    quotations.forEach(q => {
+    filteredQuotations.forEach(q => {
       q.items.forEach(item => {
         const family = getFamily(item.sku);
         if (!families[family]) {
@@ -177,7 +221,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
         quoteCount: data.quotations.size,
       }))
       .sort((a, b) => b.value - a.value);
-  }, [quotations]);
+  }, [filteredQuotations]);
 
   // Family pie chart data
   const familyPieData = useMemo(() => {
@@ -197,7 +241,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
   const topItems = useMemo(() => {
     const items: Record<string, { sku: string; description: string; qty: number; value: number; quoteCount: Set<string> }> = {};
 
-    quotations.forEach(q => {
+    filteredQuotations.forEach(q => {
       q.items.forEach(item => {
         const key = item.sku.trim().toUpperCase();
         if (!key) return;
@@ -214,7 +258,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
       .map(i => ({ ...i, quoteCount: i.quoteCount.size }))
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 20);
-  }, [quotations]);
+  }, [filteredQuotations]);
 
   const cards = [
     {
@@ -266,6 +310,59 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
 
   return (
     <div className="space-y-3">
+      {/* Date range filter */}
+      <div className="flex flex-wrap items-center gap-2">
+        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+        {(['all', '7d', '30d', '90d', 'this-month', 'last-month', 'this-year', 'custom'] as PresetRange[]).map(preset => (
+          <Button
+            key={preset}
+            variant={rangePreset === preset ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs px-2.5"
+            onClick={() => setRangePreset(preset)}
+          >
+            {{ all: 'All Time', '7d': '7 Days', '30d': '30 Days', '90d': '90 Days', 'this-month': 'This Month', 'last-month': 'Last Month', 'this-year': 'This Year', custom: 'Custom' }[preset]}
+          </Button>
+        ))}
+        {rangePreset === 'custom' && (
+          <div className="flex items-center gap-1.5 ml-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-7 text-xs px-2.5 gap-1", !customFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="w-3 h-3" />
+                  {customFrom ? format(customFrom, 'MMM d, yyyy') : 'From'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} initialFocus className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+            <span className="text-xs text-muted-foreground">–</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-7 text-xs px-2.5 gap-1", !customTo && "text-muted-foreground")}>
+                  <CalendarIcon className="w-3 h-3" />
+                  {customTo ? format(customTo, 'MMM d, yyyy') : 'To'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={customTo} onSelect={setCustomTo} initialFocus className="p-3 pointer-events-auto" />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+        {rangePreset !== 'all' && (
+          <Button variant="ghost" size="sm" className="h-7 text-xs px-1.5" onClick={() => { setRangePreset('all'); setCustomFrom(undefined); setCustomTo(undefined); }}>
+            <X className="w-3 h-3" />
+          </Button>
+        )}
+        {rangePreset !== 'all' && (
+          <span className="text-xs text-muted-foreground ml-1">
+            Showing {filteredQuotations.length} of {quotations.length} quotations
+          </span>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {cards.map((card) => (
           <Card key={card.label} className="overflow-hidden">

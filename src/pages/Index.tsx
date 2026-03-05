@@ -9,6 +9,7 @@ import { QuotationCard } from '@/components/quotation/QuotationCard';
 import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
+import { QuotationStats } from '@/components/quotation/QuotationStats';
 import { SyncStatusIndicator } from '@/components/SyncStatusIndicator';
 import { UserManagement } from '@/components/UserManagement';
 import { Button } from '@/components/ui/button';
@@ -395,6 +396,7 @@ const Index = () => {
               <EmptyState onCreateNew={() => setCurrentView('create')} />
             ) : (
               <div className="space-y-6">
+                <QuotationStats quotations={quotations} />
                 <div className="flex items-center justify-between">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations

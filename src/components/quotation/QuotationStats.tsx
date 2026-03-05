@@ -192,13 +192,13 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
 
   // Family name mapping
   const FAMILY_NAMES: Record<string, string> = {
-    US: 'Uspot',
-    UC: 'Uchamf',
-    UF: 'Ufiber',
+    US: 'USPOT',
+    UC: 'UCHAMF',
+    UF: 'UFIBER',
     UX: 'UX',
-    UB: 'Ubore',
-    CA: 'Catalogs',
-    UP: 'Upon Order',
+    UB: 'UBURR',
+    CA: 'CATALOGS',
+    UP: 'UPON ORDER',
   };
 
   // Extract family prefix from SKU (first 2 letters, e.g. US, UC, UF)
@@ -213,7 +213,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
         const code = descMatch[1];
         return FAMILY_NAMES[code] || code;
       }
-      return 'Upon Order';
+      return 'UPON ORDER';
     }
     const match = clean.match(/^([A-Z]{2})/);
     const code = match ? match[1] : 'Other';

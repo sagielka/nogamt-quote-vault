@@ -503,6 +503,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '8px',
                           fontSize: 12,
+                          color: 'hsl(var(--foreground))',
                         }}
                       />
                       <Bar dataKey="accepted" stackId="a" fill={STATUS_COLORS.accepted} name="Accepted" radius={[0, 0, 0, 0]} />
@@ -548,6 +549,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '8px',
                           fontSize: 12,
+                          color: 'hsl(var(--foreground))',
                         }}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -581,6 +583,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                         border: '1px solid hsl(var(--border))',
                         borderRadius: '8px',
                         fontSize: 12,
+                        color: 'hsl(var(--foreground))',
                       }}
                     />
                     <Bar dataKey="Accepted" stackId="a" fill={STATUS_COLORS.accepted} />
@@ -687,6 +690,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
                               border: '1px solid hsl(var(--border))',
                               borderRadius: '8px',
                               fontSize: 12,
+                              color: 'hsl(var(--foreground))',
                             }}
                             formatter={(value: number) => [`${value} units`, 'Quantity']}
                           />

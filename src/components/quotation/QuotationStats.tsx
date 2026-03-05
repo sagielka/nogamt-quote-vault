@@ -195,7 +195,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
     US: 'Uspot',
     UC: 'Uchamf',
     UF: 'Ufiber',
-    UX: 'Uxpert',
+    UX: 'UX',
     UB: 'Ubore',
     CA: 'Catalogs',
     UP: 'Upon Order',

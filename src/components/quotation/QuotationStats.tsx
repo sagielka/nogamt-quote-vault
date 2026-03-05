@@ -2,12 +2,16 @@ import { useMemo, useState } from 'react';
 import { Quotation } from '@/types/quotation';
 import { calculateTotal, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface QuotationStatsProps {
   quotations: Quotation[];
+  isAdmin?: boolean;
+  userNameMap?: Record<string, string>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -17,7 +21,18 @@ const STATUS_COLORS: Record<string, string> = {
   declined: 'hsl(0, 70%, 55%)',
 };
 
-export const QuotationStats = ({ quotations }: QuotationStatsProps) => {
+const USER_COLORS = [
+  'hsl(210, 80%, 55%)',
+  'hsl(152, 60%, 45%)',
+  'hsl(35, 90%, 55%)',
+  'hsl(280, 60%, 55%)',
+  'hsl(0, 70%, 55%)',
+  'hsl(180, 60%, 45%)',
+  'hsl(60, 70%, 45%)',
+  'hsl(320, 60%, 55%)',
+];
+
+export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: QuotationStatsProps) => {
   const [chartsOpen, setChartsOpen] = useState(false);
 
   const stats = useMemo(() => {
@@ -88,6 +103,47 @@ export const QuotationStats = ({ quotations }: QuotationStatsProps) => {
       { name: 'Declined', value: stats.byStatus.declined, color: STATUS_COLORS.declined },
     ].filter(d => d.value > 0);
   }, [stats.byStatus]);
+
+  // Per-user breakdown
+  const perUserStats = useMemo(() => {
+    if (!isAdmin) return [];
+
+    const byUser: Record<string, { total: number; draft: number; sent: number; accepted: number; declined: number; totalValue: number; acceptedValue: number }> = {};
+
+    quotations.forEach(q => {
+      const uid = q.userId;
+      if (!byUser[uid]) {
+        byUser[uid] = { total: 0, draft: 0, sent: 0, accepted: 0, declined: 0, totalValue: 0, acceptedValue: 0 };
+      }
+      byUser[uid].total += 1;
+      byUser[uid][q.status as 'draft' | 'sent' | 'accepted' | 'declined'] += 1;
+      const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
+      byUser[uid].totalValue += val;
+      if (q.status === 'accepted') {
+        byUser[uid].acceptedValue += val;
+      }
+    });
+
+    return Object.entries(byUser)
+      .map(([userId, data]) => ({
+        userId,
+        name: userNameMap[userId] || userId.slice(0, 6),
+        ...data,
+        conversionRate: data.total > 0 ? (data.accepted / data.total) * 100 : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [quotations, isAdmin, userNameMap]);
+
+  // Per-user bar chart data
+  const perUserChartData = useMemo(() => {
+    return perUserStats.map(u => ({
+      name: u.name,
+      Accepted: u.accepted,
+      Sent: u.sent,
+      Draft: u.draft,
+      Declined: u.declined,
+    }));
+  }, [perUserStats]);
 
   const cards = [
     {
@@ -176,17 +232,96 @@ export const QuotationStats = ({ quotations }: QuotationStatsProps) => {
       </div>
 
       {chartsOpen && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Monthly trend bar chart */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Quotation Trends</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={monthlyData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Monthly trend bar chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Quotation Trends</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {monthlyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={monthlyData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: 12,
+                        }}
+                      />
+                      <Bar dataKey="accepted" stackId="a" fill={STATUS_COLORS.accepted} name="Accepted" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="sent" stackId="a" fill={STATUS_COLORS.sent} name="Sent" />
+                      <Bar dataKey="draft" stackId="a" fill={STATUS_COLORS.draft} name="Draft" />
+                      <Bar dataKey="declined" stackId="a" fill={STATUS_COLORS.declined} name="Declined" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-10">No data yet</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Status distribution pie chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Status Distribution</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {statusData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={statusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                        style={{ fontSize: 11 }}
+                      >
+                        {statusData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          fontSize: 12,
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-10">No data yet</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Per-user breakdown (admin only) */}
+          {isAdmin && perUserStats.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Team Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {/* Per-user bar chart */}
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={perUserChartData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                     <Tooltip
                       contentStyle={{
@@ -196,59 +331,62 @@ export const QuotationStats = ({ quotations }: QuotationStatsProps) => {
                         fontSize: 12,
                       }}
                     />
-                    <Bar dataKey="accepted" stackId="a" fill={STATUS_COLORS.accepted} name="Accepted" radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="sent" stackId="a" fill={STATUS_COLORS.sent} name="Sent" />
-                    <Bar dataKey="draft" stackId="a" fill={STATUS_COLORS.draft} name="Draft" />
-                    <Bar dataKey="declined" stackId="a" fill={STATUS_COLORS.declined} name="Declined" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Accepted" stackId="a" fill={STATUS_COLORS.accepted} />
+                    <Bar dataKey="Sent" stackId="a" fill={STATUS_COLORS.sent} />
+                    <Bar dataKey="Draft" stackId="a" fill={STATUS_COLORS.draft} />
+                    <Bar dataKey="Declined" stackId="a" fill={STATUS_COLORS.declined} radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-10">No data yet</p>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Status distribution pie chart */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Status Distribution</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {statusData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={3}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      labelLine={false}
-                      style={{ fontSize: 11 }}
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
+                {/* Per-user table */}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">User</TableHead>
+                        <TableHead className="text-xs text-center">Total</TableHead>
+                        <TableHead className="text-xs text-center">Draft</TableHead>
+                        <TableHead className="text-xs text-center">Sent</TableHead>
+                        <TableHead className="text-xs text-center">Accepted</TableHead>
+                        <TableHead className="text-xs text-center">Declined</TableHead>
+                        <TableHead className="text-xs text-center">Conv. %</TableHead>
+                        <TableHead className="text-xs text-right">Total Value</TableHead>
+                        <TableHead className="text-xs text-right">Accepted Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {perUserStats.map((u, i) => (
+                        <TableRow key={u.userId}>
+                          <TableCell className="text-xs font-medium">{u.name}</TableCell>
+                          <TableCell className="text-xs text-center font-bold">{u.total}</TableCell>
+                          <TableCell className="text-xs text-center">{u.draft}</TableCell>
+                          <TableCell className="text-xs text-center">{u.sent}</TableCell>
+                          <TableCell className="text-xs text-center">
+                            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 text-[10px]">
+                              {u.accepted}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-center">{u.declined}</TableCell>
+                          <TableCell className="text-xs text-center">
+                            <span className={u.conversionRate >= 50 ? 'text-emerald-500 font-medium' : 'text-amber-500 font-medium'}>
+                              {u.conversionRate.toFixed(0)}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-xs text-right">
+                            {formatCurrency(u.totalValue, stats.dominantCurrency as any)}
+                          </TableCell>
+                          <TableCell className="text-xs text-right font-medium text-emerald-600">
+                            {formatCurrency(u.acceptedValue, stats.dominantCurrency as any)}
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        fontSize: 12,
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-10">No data yet</p>
-              )}
-            </CardContent>
-          </Card>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>

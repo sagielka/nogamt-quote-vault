@@ -537,7 +537,10 @@ const Index = () => {
         )}
 
         {currentView === 'customers' && (
-          <CustomerList />
+          <CustomerList onSelectCustomer={(email) => {
+            setSearchQuery(email);
+            setCurrentView('list');
+          }} />
         )}
       </main>
 

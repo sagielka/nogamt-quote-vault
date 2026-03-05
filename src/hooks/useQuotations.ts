@@ -201,6 +201,22 @@ export const useQuotations = () => {
 
       const newQuotation = dbRowToQuotation(newRow);
       setQuotations((prev) => [newQuotation, ...prev]);
+
+      // Auto-sync client to customers table
+      try {
+        await supabase.from('customers').upsert(
+          {
+            user_id: user.id,
+            name: data.clientName.trim(),
+            email: data.clientEmail.trim(),
+            address: data.clientAddress?.trim() || null,
+          },
+          { onConflict: 'user_id,email', ignoreDuplicates: false }
+        );
+      } catch {
+        // Non-critical — don't block quotation creation
+      }
+
       return newQuotation;
     } catch (err) {
       console.error('Error adding quotation:', err);

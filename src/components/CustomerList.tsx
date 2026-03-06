@@ -51,7 +51,7 @@ const EMAIL_TEMPLATES = [
   {
     id: 'follow-up',
     name: 'Follow Up',
-    subject: 'Follow Up on Our Recent Quotation',
+    subject: 'NOGA MT - Follow Up on Our Recent Quotation',
     message: `Dear Customer,
 
 I hope this message finds you well. I wanted to follow up on the quotation we recently sent you and check if you have any questions or need further clarification.
@@ -63,7 +63,7 @@ Looking forward to hearing from you.`,
   {
     id: 'new-products',
     name: 'New Products Announcement',
-    subject: 'Exciting New Products Available',
+    subject: 'NOGA MT - Exciting New Products Available',
     message: `Dear Customer,
 
 We are pleased to inform you about our latest product additions. We believe these new offerings could be valuable for your operations.
@@ -75,7 +75,7 @@ We look forward to the opportunity to serve you.`,
   {
     id: 'price-update',
     name: 'Price Update Notice',
-    subject: 'Important Price Update Notice',
+    subject: 'NOGA MT - Important Price Update Notice',
     message: `Dear Customer,
 
 We are writing to inform you about upcoming changes to our pricing structure. These adjustments will take effect soon, and we wanted to give you advance notice.
@@ -87,7 +87,7 @@ Thank you for your continued partnership.`,
   {
     id: 'thank-you',
     name: 'Thank You',
-    subject: 'Thank You for Your Business',
+    subject: 'NOGA MT - Thank You for Your Business',
     message: `Dear Customer,
 
 Thank you for your recent order. We truly appreciate your business and trust in our products.
@@ -99,7 +99,7 @@ We look forward to continuing our partnership.`,
   {
     id: 'reminder',
     name: 'Payment Reminder',
-    subject: 'Friendly Payment Reminder',
+    subject: 'NOGA MT - Friendly Payment Reminder',
     message: `Dear Customer,
 
 This is a friendly reminder regarding an outstanding payment on your account. We would appreciate your prompt attention to this matter.
@@ -140,8 +140,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [ccSelf, setCcSelf] = useState(true);
-  const [bccEmail, setBccEmail] = useState('');
+  const [ccSelf, setCcSelf] = useState(false);
   const [attachments, setAttachments] = useState<{ name: string; content: string; size: number }[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -339,7 +338,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
             ccSender: ccSelf,
-            bcc: bccEmail.trim() || undefined,
+            bcc: 'sagi@noga.com',
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }
@@ -632,15 +631,6 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               <Label htmlFor="cc-self" className="text-sm font-normal cursor-pointer">
                 CC myself ({user?.email})
               </Label>
-            </div>
-            <div>
-              <Label>BCC</Label>
-              <Input
-                value={bccEmail}
-                onChange={(e) => setBccEmail(e.target.value)}
-                placeholder="bcc@example.com"
-                type="email"
-              />
             </div>
           </div>
           <DialogFooter>

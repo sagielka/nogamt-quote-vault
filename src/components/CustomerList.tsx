@@ -155,6 +155,8 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [ccSelf, setCcSelf] = useState(false);
+  const [ccField, setCcField] = useState('');
+  const [bccField, setBccField] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [attachments, setAttachments] = useState<{ name: string; content: string; size: number }[]>([]);
   const [customTemplates, setCustomTemplates] = useState<{ id: string; name: string; subject: string; message: string }[]>([]);
@@ -404,6 +406,8 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     setEmailSubject('');
     setEmailMessage('');
     setAttachments([]);
+    setCcField('');
+    setBccField('');
     setEmailDialogOpen(true);
     // Clear editor content after dialog opens
     setTimeout(() => {
@@ -475,7 +479,8 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             message: emailMessage.trim(),
             messageHtml: getEditorHtml(),
             ccSender: ccSelf,
-            bcc: 'sagi@noga.com',
+            cc: ccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)),
+            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))],
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }
@@ -688,6 +693,14 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                   ? `${emailRecipients[0].name} <${emailRecipients[0].email}>`
                   : `${emailRecipients.length} recipients`}
               </p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">CC (comma-separated)</Label>
+              <Input value={ccField} onChange={(e) => setCcField(e.target.value)} placeholder="cc1@example.com, cc2@example.com" type="text" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">BCC (comma-separated)</Label>
+              <Input value={bccField} onChange={(e) => setBccField(e.target.value)} placeholder="bcc@example.com" type="text" />
             </div>
             <div>
               <Label>Template</Label>

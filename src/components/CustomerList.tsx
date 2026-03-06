@@ -146,6 +146,8 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -405,6 +407,23 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const { error } = await supabase.from('customers').delete().in('id', Array.from(selectedIds));
+      if (error) throw error;
+      toast({ title: 'Customers Deleted', description: `${selectedIds.size} customer${selectedIds.size !== 1 ? 's' : ''} removed.` });
+      setSelectedIds(new Set());
+      setBulkDeleteDialogOpen(false);
+      fetchCustomers();
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete customers.', variant: 'destructive' });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   const openEmailDialog = (recipients: Customer[]) => {
     setEmailRecipients(recipients);
     // Pre-populate To field with all emails from all recipients
@@ -610,9 +629,15 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               : 'Select all'}
           </span>
           {selectedIds.size > 0 && (
-            <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setSelectedIds(new Set())}>
-              Clear
-            </Button>
+            <>
+              <Button size="sm" variant="ghost" className="h-6 text-xs px-2 text-destructive hover:text-destructive" onClick={() => setBulkDeleteDialogOpen(true)}>
+                <Trash2 className="w-3 h-3 mr-1" />
+                Delete
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </Button>
+            </>
           )}
         </div>
       )}
@@ -757,7 +782,24 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Email Compose Dialog */}
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} Customer{selectedIds.size !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the selected customers from your list. Existing quotations will not be affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} disabled={bulkDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {bulkDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

@@ -46,6 +46,8 @@ import {
   SendHorizonal,
   Paperclip,
   X,
+  Save,
+  BookmarkPlus,
 } from 'lucide-react';
 
 const EMAIL_TEMPLATES = [
@@ -144,8 +146,59 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [ccSelf, setCcSelf] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [attachments, setAttachments] = useState<{ name: string; content: string; size: number }[]>([]);
+  const [customTemplates, setCustomTemplates] = useState<{ id: string; name: string; subject: string; message: string }[]>([]);
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const allTemplates = useMemo(() => [
+    ...EMAIL_TEMPLATES.map(t => ({ ...t, isCustom: false })),
+    ...customTemplates.map(t => ({ ...t, isCustom: true })),
+  ], [customTemplates]);
+
+  const fetchCustomTemplates = async () => {
+    const { data } = await supabase
+      .from('email_templates')
+      .select('*')
+      .order('name');
+    if (data) {
+      setCustomTemplates(data.map((t: any) => ({ id: t.id, name: t.name, subject: t.subject, message: t.message })));
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim() || !emailSubject.trim() || !emailMessage.trim()) {
+      toast({ title: 'Validation Error', description: 'Template name, subject, and message are required.', variant: 'destructive' });
+      return;
+    }
+    try {
+      const { error } = await supabase.from('email_templates').insert({
+        user_id: user!.id,
+        name: templateName.trim(),
+        subject: emailSubject.trim(),
+        message: emailMessage.trim(),
+      });
+      if (error) throw error;
+      toast({ title: 'Template Saved', description: `"${templateName.trim()}" saved for future use.` });
+      setSaveTemplateOpen(false);
+      setTemplateName('');
+      fetchCustomTemplates();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to save template.', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      const { error } = await supabase.from('email_templates').delete().eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Template Deleted' });
+      fetchCustomTemplates();
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete template.', variant: 'destructive' });
+    }
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -181,6 +234,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
 
   useEffect(() => {
     fetchCustomers();
+    fetchCustomTemplates();
   }, []);
 
   const filtered = useMemo(() => {
@@ -555,7 +609,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               <Select
                 value=""
                 onValueChange={(id) => {
-                  const tpl = EMAIL_TEMPLATES.find((t) => t.id === id);
+                  const tpl = allTemplates.find((t) => t.id === id);
                   if (tpl) {
                     setEmailSubject(tpl.subject);
                     setEmailMessage(tpl.message);
@@ -566,11 +620,37 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                   <SelectValue placeholder="Load a template..." />
                 </SelectTrigger>
                 <SelectContent>
+                  {EMAIL_TEMPLATES.length > 0 && (
+                    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Built-in</div>
+                  )}
                   {EMAIL_TEMPLATES.map((tpl) => (
                     <SelectItem key={tpl.id} value={tpl.id}>
                       {tpl.name}
                     </SelectItem>
                   ))}
+                  {customTemplates.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1">Saved</div>
+                      {customTemplates.map((tpl) => (
+                        <div key={tpl.id} className="flex items-center group">
+                          <SelectItem value={tpl.id} className="flex-1">
+                            {tpl.name}
+                          </SelectItem>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0 mr-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTemplate(tpl.id);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -635,8 +715,16 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               </Label>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
             <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setSaveTemplateOpen(true)}
+              disabled={!emailSubject.trim() || !emailMessage.trim()}
+            >
+              <BookmarkPlus className="w-4 h-4 mr-2" />
+              Save Template
+            </Button>
             <Button
               variant="outline"
               onClick={() => setPreviewOpen(true)}
@@ -691,6 +779,35 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setPreviewOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Save Template Dialog */}
+      <Dialog open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save as Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Template Name *</Label>
+              <Input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g. Monthly Update"
+                maxLength={100}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The current subject and message will be saved. You can load this template from the dropdown next time.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveTemplateOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveTemplate}>
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

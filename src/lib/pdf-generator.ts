@@ -89,7 +89,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     console.warn('Could not load logo images:', e);
   }
 
-  y += 22;
+  y += 30;
 
   // Title
   pdf.setFontSize(18);

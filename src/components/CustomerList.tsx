@@ -251,10 +251,11 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
         if (e) countMap[e] = (countMap[e] || 0) + 1;
       });
 
-      const enriched = (data || []).map((c: any) => ({
-        ...c,
-        quotation_count: countMap[c.email?.toLowerCase()] || 0,
-      }));
+      const enriched = (data || []).map((c: any) => {
+        const emails = (c.email || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+        const totalCount = emails.reduce((sum: number, e: string) => sum + (countMap[e] || 0), 0);
+        return { ...c, quotation_count: totalCount };
+      });
 
       setCustomers(enriched);
     } catch {
@@ -352,6 +353,13 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const handleSave = async () => {
     if (!name.trim() || !email.trim()) {
       toast({ title: 'Validation Error', description: 'Name and email are required.', variant: 'destructive' });
+      return;
+    }
+    const emailList = email.split(',').map(e => e.trim()).filter(Boolean);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = emailList.filter(e => !emailRegex.test(e));
+    if (invalid.length > 0) {
+      toast({ title: 'Invalid Email', description: `Invalid email(s): ${invalid.join(', ')}`, variant: 'destructive' });
       return;
     }
 
@@ -459,7 +467,10 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            recipients: emailRecipients.map((c) => ({ email: c.email, name: c.name })),
+            recipients: emailRecipients.flatMap((c) => {
+              const emails = c.email.split(',').map(e => e.trim()).filter(e => e);
+              return emails.map(e => ({ email: e, name: c.name }));
+            }),
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
             messageHtml: getEditorHtml(),
@@ -627,7 +638,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             </div>
             <div>
               <Label>Email *</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" type="email" />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com, email2@example.com" type="text" />
             </div>
             <div>
               <Label>Address</Label>

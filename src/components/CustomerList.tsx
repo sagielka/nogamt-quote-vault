@@ -151,6 +151,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [address, setAddress] = useState('');
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState<Customer[]>([]);
+  const [toField, setToField] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -403,6 +404,9 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
 
   const openEmailDialog = (recipients: Customer[]) => {
     setEmailRecipients(recipients);
+    // Pre-populate To field with all emails from all recipients
+    const allEmails = recipients.flatMap(c => c.email.split(',').map(e => e.trim()).filter(Boolean));
+    setToField(allEmails.join(', '));
     setEmailSubject('');
     setEmailMessage('');
     setAttachments([]);
@@ -454,6 +458,17 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
       toast({ title: 'Validation Error', description: 'Subject and message are required.', variant: 'destructive' });
       return;
     }
+    const toEmails = toField.split(',').map(e => e.trim()).filter(Boolean);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidTo = toEmails.filter(e => !emailRegex.test(e));
+    if (invalidTo.length > 0) {
+      toast({ title: 'Invalid Email', description: `Invalid To email(s): ${invalidTo.join(', ')}`, variant: 'destructive' });
+      return;
+    }
+    if (toEmails.length === 0) {
+      toast({ title: 'Validation Error', description: 'At least one recipient is required.', variant: 'destructive' });
+      return;
+    }
     setSendingEmail(true);
     try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
@@ -461,6 +476,8 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
       const token = session.data.session?.access_token;
       if (!token || !projectId) throw new Error('Not authenticated');
 
+      // Use the To field emails as recipients, associate with first recipient's name
+      const recipientName = emailRecipients.length === 1 ? emailRecipients[0].name : 'Customer';
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/send-customer-email`,
         {
@@ -471,16 +488,13 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            recipients: emailRecipients.flatMap((c) => {
-              const emails = c.email.split(',').map(e => e.trim()).filter(e => e);
-              return emails.map(e => ({ email: e, name: c.name }));
-            }),
+            recipients: toEmails.map(e => ({ email: e, name: recipientName })),
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
             messageHtml: getEditorHtml(),
             ccSender: ccSelf,
-            cc: ccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)),
-            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))],
+            cc: ccField.split(',').map(e => e.trim()).filter(e => emailRegex.test(e)),
+            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => emailRegex.test(e))],
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }
@@ -488,6 +502,19 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Failed to send email');
+
+      // Save any new emails back to the customer record (single customer only)
+      if (emailRecipients.length === 1) {
+        const customer = emailRecipients[0];
+        const existingEmails = customer.email.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+        const newEmails = toEmails.filter(e => !existingEmails.includes(e.toLowerCase()));
+        if (newEmails.length > 0) {
+          const updatedEmail = [...existingEmails, ...newEmails.map(e => e.toLowerCase())].join(', ');
+          await supabase.from('customers').update({ email: updatedEmail }).eq('id', customer.id);
+          // Refresh customer list
+          fetchCustomers();
+        }
+      }
 
       const skippedMsg = result.skipped > 0 ? ` (${result.skipped} unsubscribed, skipped)` : '';
       toast({ title: 'Email Sent', description: `Successfully sent to ${result.sent} recipient${result.sent !== 1 ? 's' : ''}${skippedMsg}.` });
@@ -692,12 +719,11 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-muted-foreground">To</Label>
-              <p className="text-sm text-foreground mt-1">
-                {emailRecipients.length === 1
-                  ? `${emailRecipients[0].name} <${emailRecipients[0].email}>`
-                  : `${emailRecipients.length} recipients`}
-              </p>
+              <Label className="text-xs text-muted-foreground">To (comma-separated)</Label>
+              <Input value={toField} onChange={(e) => setToField(e.target.value)} placeholder="email@example.com, email2@example.com" type="text" />
+              {emailRecipients.length === 1 && (
+                <p className="text-[10px] text-muted-foreground mt-1">New emails added here will be saved to {emailRecipients[0].name}'s contact</p>
+              )}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">CC (comma-separated)</Label>

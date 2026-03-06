@@ -9,4 +9,6 @@ verify_jwt = false
 [functions.check-reminder-notifications]
 verify_jwt = false
 
+[functions.send-customer-email]
+verify_jwt = false
 

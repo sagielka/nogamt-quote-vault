@@ -609,7 +609,12 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                 <div className="space-y-1.5 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Mail className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{customer.email}</span>
+                    <span className="truncate flex-1">{customer.email}</span>
+                    {customer.email.includes(',') && (
+                      <span className="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-medium px-1.5 py-0.5 shrink-0">
+                        {customer.email.split(',').filter(e => e.trim()).length}
+                      </span>
+                    )}
                   </div>
                   {customer.address && (
                     <div className="flex items-start gap-2">

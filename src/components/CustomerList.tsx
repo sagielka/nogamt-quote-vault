@@ -59,6 +59,8 @@ import {
   ClipboardPaste,
   Undo,
   Redo,
+  Minimize2,
+  Maximize2,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -154,6 +156,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [editorMinimized, setEditorMinimized] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState<Customer[]>([]);
   const [toField, setToField] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -888,82 +891,103 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               />
             </div>
             <div>
-              <Label>Message *</Label>
-              <TooltipProvider delayDuration={300}>
-                <div className="border rounded-md overflow-hidden">
-                  <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
-                        <Bold className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
-                        <Italic className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
-                        <Underline className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
-                    <div className="w-px h-5 bg-border mx-1" />
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
-                        <List className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
-                        <ListOrdered className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
-                    <div className="w-px h-5 bg-border mx-1" />
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
-                        <Undo className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
-                        <Redo className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
-                    <div className="w-px h-5 bg-border mx-1" />
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
-                        const text = window.getSelection()?.toString();
-                        if (text) {
-                          await navigator.clipboard.writeText(text);
-                          toast({ title: 'Copied to clipboard' });
-                        }
-                      }}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
-                    <Tooltip><TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
-                        try {
-                          const text = await navigator.clipboard.readText();
-                          execFormat('insertText', text);
-                        } catch {
-                          toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
-                        }
-                      }}>
-                        <ClipboardPaste className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Message *</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-muted-foreground"
+                  onClick={() => setEditorMinimized(prev => !prev)}
+                >
+                  {editorMinimized ? <Maximize2 className="h-3 w-3 mr-1" /> : <Minimize2 className="h-3 w-3 mr-1" />}
+                  {editorMinimized ? 'Expand' : 'Minimize'}
+                </Button>
+              </div>
+              {!editorMinimized ? (
+                <TooltipProvider delayDuration={300}>
+                  <div className="border rounded-md overflow-hidden">
+                    <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
+                          <Bold className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
+                          <Italic className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
+                          <Underline className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
+                      <div className="w-px h-5 bg-border mx-1" />
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
+                          <List className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
+                          <ListOrdered className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
+                      <div className="w-px h-5 bg-border mx-1" />
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
+                          <Undo className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
+                          <Redo className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
+                      <div className="w-px h-5 bg-border mx-1" />
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                          const text = window.getSelection()?.toString();
+                          if (text) {
+                            await navigator.clipboard.writeText(text);
+                            toast({ title: 'Copied to clipboard' });
+                          }
+                        }}>
+                          <Copy className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
+                      <Tooltip><TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                          try {
+                            const text = await navigator.clipboard.readText();
+                            execFormat('insertText', text);
+                          } catch {
+                            toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
+                          }
+                        }}>
+                          <ClipboardPaste className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
+                    </div>
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
+                      onInput={handleEditorInput}
+                      data-placeholder="Write your message..."
+                      style={{ whiteSpace: 'pre-wrap' }}
+                    />
                   </div>
-                  <div
-                    ref={editorRef}
-                    contentEditable
-                    className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
-                    onInput={handleEditorInput}
-                    data-placeholder="Write your message..."
-                    style={{ whiteSpace: 'pre-wrap' }}
-                  />
+                </TooltipProvider>
+              ) : (
+                <div className="border rounded-md p-3 bg-muted/30 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setEditorMinimized(false)}>
+                  {emailMessage.trim() ? (
+                    <p className="line-clamp-2">{emailMessage.substring(0, 120)}{emailMessage.length > 120 ? '...' : ''}</p>
+                  ) : (
+                    <p className="italic">Click to expand editor...</p>
+                  )}
                 </div>
-              </TooltipProvider>
+              )}
               <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
             </div>
             <div>

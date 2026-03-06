@@ -47,13 +47,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { recipients, subject, message, messageHtml, ccSender, bcc, attachments: rawAttachments } = body as {
+    const { recipients, subject, message, messageHtml, ccSender, cc, bcc, attachments: rawAttachments } = body as {
       recipients: { email: string; name: string }[];
       subject: string;
       message: string;
       messageHtml?: string;
       ccSender?: boolean;
-      bcc?: string;
+      cc?: string[];
+      bcc?: string[];
       attachments?: { name: string; content: string }[];
     };
 
@@ -69,7 +70,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Resolve sender email for CC
     const senderEmail = ccSender ? user.email : null;
-    const bccEmail = bcc && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bcc) ? bcc : null;
+    const ccList = (Array.isArray(cc) ? cc : []).filter(e => isValidEmail(e)).map(e => ({ email: e }));
+    const bccList = (Array.isArray(bcc) ? bcc : []).filter(e => isValidEmail(e)).map(e => ({ email: e }));
+    if (senderEmail) ccList.unshift({ email: senderEmail });
 
     // Validate
     if (!subject || typeof subject !== "string" || subject.trim().length === 0 || subject.length > 200) {
@@ -165,8 +168,8 @@ const handler = async (req: Request): Promise<Response> => {
           email: "quotes@noga-mt.com",
         },
         to: [{ email: recipient.email, name: recipient.name }],
-        ...(senderEmail ? { cc: [{ email: senderEmail }] } : {}),
-        ...(bccEmail ? { bcc: [{ email: bccEmail }] } : {}),
+        ...(ccList.length > 0 ? { cc: ccList } : {}),
+        ...(bccList.length > 0 ? { bcc: bccList } : {}),
         subject,
         htmlContent: personalHtml,
       };

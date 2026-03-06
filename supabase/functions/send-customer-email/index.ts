@@ -47,11 +47,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { recipients, subject, message } = body as {
+    const { recipients, subject, message, ccSender } = body as {
       recipients: { email: string; name: string }[];
       subject: string;
       message: string;
+      ccSender?: boolean;
     };
+
+    // Resolve sender email for CC
+    const senderEmail = ccSender ? user.email : null;
 
     // Validate
     if (!subject || typeof subject !== "string" || subject.trim().length === 0 || subject.length > 200) {
@@ -143,6 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
           email: "quotes@noga-mt.com",
         },
         to: [{ email: recipient.email, name: recipient.name }],
+        ...(senderEmail ? { cc: [{ email: senderEmail }] } : {}),
         subject,
         htmlContent: personalHtml,
       };

@@ -25,6 +25,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Search,
   Plus,
   Pencil,
@@ -39,6 +46,69 @@ import {
   Paperclip,
   X,
 } from 'lucide-react';
+
+const EMAIL_TEMPLATES = [
+  {
+    id: 'follow-up',
+    name: 'Follow Up',
+    subject: 'Follow Up on Our Recent Quotation',
+    message: `Dear Customer,
+
+I hope this message finds you well. I wanted to follow up on the quotation we recently sent you and check if you have any questions or need further clarification.
+
+We would be happy to discuss any adjustments or provide additional information to help you make your decision.
+
+Looking forward to hearing from you.`,
+  },
+  {
+    id: 'new-products',
+    name: 'New Products Announcement',
+    subject: 'Exciting New Products Available',
+    message: `Dear Customer,
+
+We are pleased to inform you about our latest product additions. We believe these new offerings could be valuable for your operations.
+
+Please feel free to reach out if you would like to receive a detailed quotation or technical specifications for any of our products.
+
+We look forward to the opportunity to serve you.`,
+  },
+  {
+    id: 'price-update',
+    name: 'Price Update Notice',
+    subject: 'Important Price Update Notice',
+    message: `Dear Customer,
+
+We are writing to inform you about upcoming changes to our pricing structure. These adjustments will take effect soon, and we wanted to give you advance notice.
+
+If you would like to place an order at current pricing, please contact us at your earliest convenience.
+
+Thank you for your continued partnership.`,
+  },
+  {
+    id: 'thank-you',
+    name: 'Thank You',
+    subject: 'Thank You for Your Business',
+    message: `Dear Customer,
+
+Thank you for your recent order. We truly appreciate your business and trust in our products.
+
+If you need any assistance or have questions about your order, please don't hesitate to reach out.
+
+We look forward to continuing our partnership.`,
+  },
+  {
+    id: 'reminder',
+    name: 'Payment Reminder',
+    subject: 'Friendly Payment Reminder',
+    message: `Dear Customer,
+
+This is a friendly reminder regarding an outstanding payment on your account. We would appreciate your prompt attention to this matter.
+
+If payment has already been made, please disregard this message. Otherwise, please let us know if you have any questions.
+
+Thank you for your cooperation.`,
+  },
+];
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 interface Customer {
@@ -478,6 +548,30 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                   ? `${emailRecipients[0].name} <${emailRecipients[0].email}>`
                   : `${emailRecipients.length} recipients`}
               </p>
+            </div>
+            <div>
+              <Label>Template</Label>
+              <Select
+                value=""
+                onValueChange={(id) => {
+                  const tpl = EMAIL_TEMPLATES.find((t) => t.id === id);
+                  if (tpl) {
+                    setEmailSubject(tpl.subject);
+                    setEmailMessage(tpl.message);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Load a template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {EMAIL_TEMPLATES.map((tpl) => (
+                    <SelectItem key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Subject *</Label>

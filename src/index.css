@@ -246,3 +246,11 @@
     background: white;
   }
 }
+
+/* Rich text editor placeholder */
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  opacity: 0.5;
+  pointer-events: none;
+}

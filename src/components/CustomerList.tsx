@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -48,7 +48,17 @@ import {
   X,
   Save,
   BookmarkPlus,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Copy,
+  ClipboardPaste,
+  Undo,
+  Redo,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const EMAIL_TEMPLATES = [
   {
@@ -149,7 +159,27 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [customTemplates, setCustomTemplates] = useState<{ id: string; name: string; subject: string; message: string }[]>([]);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const editorRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+
+  const execFormat = useCallback((command: string, value?: string) => {
+    document.execCommand(command, false, value);
+    editorRef.current?.focus();
+    // Sync content back to state
+    if (editorRef.current) {
+      setEmailMessage(editorRef.current.innerText);
+    }
+  }, []);
+
+  const handleEditorInput = useCallback(() => {
+    if (editorRef.current) {
+      setEmailMessage(editorRef.current.innerText);
+    }
+  }, []);
+
+  const getEditorHtml = useCallback(() => {
+    return editorRef.current?.innerHTML || emailMessage.replace(/\n/g, '<br>');
+  }, [emailMessage]);
   const { toast } = useToast();
 
   const allTemplates = useMemo(() => [
@@ -332,6 +362,10 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     setEmailMessage('');
     setAttachments([]);
     setEmailDialogOpen(true);
+    // Clear editor content after dialog opens
+    setTimeout(() => {
+      if (editorRef.current) editorRef.current.innerHTML = '';
+    }, 50);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -393,6 +427,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             recipients: emailRecipients.map((c) => ({ email: c.email, name: c.name })),
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
+            messageHtml: getEditorHtml(),
             ccSender: ccSelf,
             bcc: 'sagi@noga.com',
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
@@ -613,6 +648,9 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                   if (tpl) {
                     setEmailSubject(tpl.subject);
                     setEmailMessage(tpl.message);
+                    if (editorRef.current) {
+                      editorRef.current.innerHTML = tpl.message.replace(/\n/g, '<br>');
+                    }
                   }
                 }}
               >
@@ -665,13 +703,81 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             </div>
             <div>
               <Label>Message *</Label>
-              <Textarea
-                value={emailMessage}
-                onChange={(e) => setEmailMessage(e.target.value)}
-                placeholder="Write your message..."
-                rows={6}
-                maxLength={5000}
-              />
+              <TooltipProvider delayDuration={300}>
+                <div className="border rounded-md overflow-hidden">
+                  <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
+                        <Bold className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
+                        <Italic className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
+                        <Underline className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
+                    <div className="w-px h-5 bg-border mx-1" />
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
+                        <List className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
+                        <ListOrdered className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
+                    <div className="w-px h-5 bg-border mx-1" />
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
+                        <Undo className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
+                        <Redo className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
+                    <div className="w-px h-5 bg-border mx-1" />
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                        const text = window.getSelection()?.toString();
+                        if (text) {
+                          await navigator.clipboard.writeText(text);
+                          toast({ title: 'Copied to clipboard' });
+                        }
+                      }}>
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                        try {
+                          const text = await navigator.clipboard.readText();
+                          execFormat('insertText', text);
+                        } catch {
+                          toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
+                        }
+                      }}>
+                        <ClipboardPaste className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
+                  </div>
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
+                    onInput={handleEditorInput}
+                    data-placeholder="Write your message..."
+                    style={{ whiteSpace: 'pre-wrap' }}
+                  />
+                </div>
+              </TooltipProvider>
               <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
             </div>
             <div>
@@ -760,7 +866,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                       <img src="/logo.png" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px;" />
                     </div>
                     <h2 style="color: #ff9004;">${emailSubject}</h2>
-                    <div style="line-height: 1.6; color: #333;">${emailMessage.replace(/\n/g, '<br>')}</div>
+                    <div style="line-height: 1.6; color: #333;">${getEditorHtml()}</div>
                     <p style="margin-top: 30px; color: #ff9004;">Best regards,<br><strong>Noga MT Team</strong></p>
                     <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
                     <p style="font-size: 12px; color: #999;">

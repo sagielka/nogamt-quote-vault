@@ -42,6 +42,7 @@ import {
   FileText,
   Users,
   Download,
+  Upload,
   Send,
   SendHorizonal,
   Paperclip,
@@ -160,6 +161,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
+  const [importing, setImporting] = useState(false);
   const { user } = useAuth();
 
   const execFormat = useCallback((command: string, value?: string) => {
@@ -296,6 +298,39 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     link.click();
     URL.revokeObjectURL(url);
     toast({ title: 'Exported', description: `${data.length} customers exported to CSV.` });
+  };
+
+  const handleBatchImport = async () => {
+    if (!user) return;
+    setImporting(true);
+    try {
+      const { importCustomers } = await import('@/data/import-customers');
+      const existingEmails = new Set(customers.map(c => c.email.toLowerCase()));
+      const newCustomers = importCustomers.filter(c => !existingEmails.has(c.email.toLowerCase()));
+      
+      if (newCustomers.length === 0) {
+        toast({ title: 'No New Customers', description: 'All customers from the import list already exist.' });
+        setImporting(false);
+        return;
+      }
+
+      const rows = newCustomers.map(c => ({
+        name: c.name,
+        email: c.email,
+        address: c.address || null,
+        user_id: user.id,
+      }));
+
+      const { error } = await supabase.from('customers').insert(rows);
+      if (error) throw error;
+
+      toast({ title: 'Import Complete', description: `${newCustomers.length} new customers imported successfully.` });
+      fetchCustomers();
+    } catch (err: any) {
+      toast({ title: 'Import Failed', description: err.message || 'Failed to import customers.', variant: 'destructive' });
+    } finally {
+      setImporting(false);
+    }
   };
 
   const openCreate = () => {
@@ -477,6 +512,10 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               Email All ({filtered.length})
             </Button>
           )}
+          <Button size="sm" variant="outline" onClick={handleBatchImport} disabled={importing}>
+            <Upload className="w-4 h-4 mr-2" />
+            {importing ? 'Importing...' : 'Import List'}
+          </Button>
           <Button size="sm" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />
             Add Customer

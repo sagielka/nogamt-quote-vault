@@ -47,10 +47,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { recipients, subject, message, ccSender, bcc, attachments: rawAttachments } = body as {
+    const { recipients, subject, message, messageHtml, ccSender, bcc, attachments: rawAttachments } = body as {
       recipients: { email: string; name: string }[];
       subject: string;
       message: string;
+      messageHtml?: string;
       ccSender?: boolean;
       bcc?: string;
       attachments?: { name: string; content: string }[];
@@ -127,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Build HTML
     const unsubscribeBaseUrl = "https://nogamt-quote-vault.lovable.app/#/unsubscribe";
-    const messageHtml = message.replace(/\n/g, "<br>");
+    const messageBody = messageHtml || message.replace(/\n/g, "<br>");
 
     const logoUrl = "https://nogamt-quote-vault.lovable.app/logo.png";
     const htmlContent = `
@@ -136,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
           <img src="${logoUrl}" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px;" />
         </div>
         <h2 style="color: #ff9004;">${subject}</h2>
-        <div style="line-height: 1.6; color: #333;">${messageHtml}</div>
+        <div style="line-height: 1.6; color: #333;">${messageBody}</div>
         <p style="margin-top: 30px; color: #ff9004;">Best regards,<br><strong>Noga MT Team</strong></p>
         <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
         <p style="font-size: 12px; color: #999;">

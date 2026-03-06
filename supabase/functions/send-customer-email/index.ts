@@ -134,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #ff9004; margin-bottom: 20px;">
-          <img src="${logoUrl}" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px;" />
+          <img src="${logoUrl}" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px; background-color: #ffffff; padding: 4px; border-radius: 4px;" />
         </div>
         <h2 style="color: #ff9004;">${subject}</h2>
         <div style="line-height: 1.6; color: #333;">${messageBody}</div>

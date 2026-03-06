@@ -756,6 +756,9 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               dangerouslySetInnerHTML={{
                 __html: `
                   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #0891b2; margin-bottom: 20px;">
+                      <img src="/logo.png" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px;" />
+                    </div>
                     <h2 style="color: #0891b2;">${emailSubject}</h2>
                     <div style="line-height: 1.6; color: #333;">${emailMessage.replace(/\n/g, '<br>')}</div>
                     <p style="margin-top: 30px;">Best regards,<br><strong>Noga Engineering & Technology Ltd.</strong></p>

@@ -129,8 +129,12 @@ const handler = async (req: Request): Promise<Response> => {
     const unsubscribeBaseUrl = "https://nogamt-quote-vault.lovable.app/#/unsubscribe";
     const messageHtml = message.replace(/\n/g, "<br>");
 
+    const logoUrl = "https://nogamt-quote-vault.lovable.app/logo.png";
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #0891b2; margin-bottom: 20px;">
+          <img src="${logoUrl}" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px;" />
+        </div>
         <h2 style="color: #0891b2;">${subject}</h2>
         <div style="line-height: 1.6; color: #333;">${messageHtml}</div>
         <p style="margin-top: 30px;">Best regards,<br><strong>Noga Engineering & Technology Ltd.</strong></p>

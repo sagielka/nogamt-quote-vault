@@ -285,6 +285,28 @@ export const useQuotations = () => {
       setQuotations((prev) =>
         prev.map((q) => (q.id === id ? { ...q, ...updatedData } : q))
       );
+
+      // Auto-sync client to customers table when client details change
+      if (data.clientEmail !== undefined || data.clientName !== undefined) {
+        const clientEmail = data.clientEmail ?? existingQuotation?.clientEmail;
+        const clientName = data.clientName ?? existingQuotation?.clientName;
+        const clientAddress = data.clientAddress ?? existingQuotation?.clientAddress;
+        if (clientEmail && clientName) {
+          try {
+            await supabase.from('customers').upsert(
+              {
+                user_id: user.id,
+                name: clientName.trim(),
+                email: clientEmail.trim(),
+                address: clientAddress?.trim() || null,
+              },
+              { onConflict: 'user_id,email', ignoreDuplicates: false }
+            );
+          } catch {
+            // Non-critical
+          }
+        }
+      }
     } catch (err) {
       console.error('Error updating quotation:', err);
     }

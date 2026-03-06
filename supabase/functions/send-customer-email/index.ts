@@ -47,18 +47,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { recipients, subject, message, ccSender, attachments: rawAttachments } = body as {
+    const { recipients, subject, message, ccSender, bcc, attachments: rawAttachments } = body as {
       recipients: { email: string; name: string }[];
       subject: string;
       message: string;
       ccSender?: boolean;
+      bcc?: string;
       attachments?: { name: string; content: string }[];
     };
 
     // Validate attachments
     const attachments = Array.isArray(rawAttachments) ? rawAttachments.slice(0, 10) : [];
     const totalSize = attachments.reduce((sum, a) => sum + (a.content?.length || 0), 0);
-    if (totalSize > 15 * 1024 * 1024) { // ~10MB in base64
+    if (totalSize > 15 * 1024 * 1024) {
       return new Response(
         JSON.stringify({ error: "Attachments total too large (max 10MB)" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -67,6 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Resolve sender email for CC
     const senderEmail = ccSender ? user.email : null;
+    const bccEmail = bcc && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bcc) ? bcc : null;
 
     // Validate
     if (!subject || typeof subject !== "string" || subject.trim().length === 0 || subject.length > 200) {
@@ -159,6 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
         },
         to: [{ email: recipient.email, name: recipient.name }],
         ...(senderEmail ? { cc: [{ email: senderEmail }] } : {}),
+        ...(bccEmail ? { bcc: [{ email: bccEmail }] } : {}),
         subject,
         htmlContent: personalHtml,
       };

@@ -71,6 +71,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [ccSelf, setCcSelf] = useState(true);
+  const [bccEmail, setBccEmail] = useState('');
   const [attachments, setAttachments] = useState<{ name: string; content: string; size: number }[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -268,6 +269,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
             ccSender: ccSelf,
+            bcc: bccEmail.trim() || undefined,
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }
@@ -536,6 +538,15 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               <Label htmlFor="cc-self" className="text-sm font-normal cursor-pointer">
                 CC myself ({user?.email})
               </Label>
+            </div>
+            <div>
+              <Label>BCC</Label>
+              <Input
+                value={bccEmail}
+                onChange={(e) => setBccEmail(e.target.value)}
+                placeholder="bcc@example.com"
+                type="email"
+              />
             </div>
           </div>
           <DialogFooter>

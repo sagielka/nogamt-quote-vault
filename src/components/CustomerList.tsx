@@ -36,6 +36,8 @@ import {
   Download,
   Send,
   SendHorizonal,
+  Paperclip,
+  X,
 } from 'lucide-react';
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
@@ -69,6 +71,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [ccSelf, setCcSelf] = useState(true);
+  const [attachments, setAttachments] = useState<{ name: string; content: string; size: number }[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -201,7 +204,42 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     setEmailRecipients(recipients);
     setEmailSubject('');
     setEmailMessage('');
+    setAttachments([]);
     setEmailDialogOpen(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const maxSize = 5 * 1024 * 1024; // 5MB per file
+    const maxTotal = 10 * 1024 * 1024; // 10MB total
+
+    const currentTotal = attachments.reduce((sum, a) => sum + a.size, 0);
+
+    Array.from(files).forEach((file) => {
+      if (file.size > maxSize) {
+        toast({ title: 'File Too Large', description: `${file.name} exceeds 5MB limit.`, variant: 'destructive' });
+        return;
+      }
+      if (currentTotal + file.size > maxTotal) {
+        toast({ title: 'Total Size Exceeded', description: 'Attachments total cannot exceed 10MB.', variant: 'destructive' });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setAttachments((prev) => [...prev, { name: file.name, content: base64, size: file.size }]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSendEmail = async () => {
@@ -230,6 +268,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
             ccSender: ccSelf,
+            attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }
       );
@@ -457,6 +496,34 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                 maxLength={5000}
               />
               <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
+            </div>
+            <div>
+              <Label className="text-sm">Attachments</Label>
+              <div className="mt-1 space-y-2">
+                {attachments.map((att, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
+                    <Paperclip className="w-3 h-3 shrink-0 text-muted-foreground" />
+                    <span className="truncate flex-1">{att.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {(att.size / 1024).toFixed(0)}KB
+                    </span>
+                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeAttachment(i)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
+                  <Paperclip className="w-4 h-4" />
+                  Add file
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+                <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <input

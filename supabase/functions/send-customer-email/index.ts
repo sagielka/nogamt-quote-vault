@@ -47,12 +47,23 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { recipients, subject, message, ccSender } = body as {
+    const { recipients, subject, message, ccSender, attachments: rawAttachments } = body as {
       recipients: { email: string; name: string }[];
       subject: string;
       message: string;
       ccSender?: boolean;
+      attachments?: { name: string; content: string }[];
     };
+
+    // Validate attachments
+    const attachments = Array.isArray(rawAttachments) ? rawAttachments.slice(0, 10) : [];
+    const totalSize = attachments.reduce((sum, a) => sum + (a.content?.length || 0), 0);
+    if (totalSize > 15 * 1024 * 1024) { // ~10MB in base64
+      return new Response(
+        JSON.stringify({ error: "Attachments total too large (max 10MB)" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Resolve sender email for CC
     const senderEmail = ccSender ? user.email : null;
@@ -141,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
         `${unsubscribeBaseUrl}?email=${encodeURIComponent(recipient.email)}`
       );
 
-      const brevoPayload = {
+      const brevoPayload: any = {
         sender: {
           name: "Noga Engineering & Technology Ltd.",
           email: "quotes@noga-mt.com",
@@ -151,6 +162,13 @@ const handler = async (req: Request): Promise<Response> => {
         subject,
         htmlContent: personalHtml,
       };
+
+      if (attachments.length > 0) {
+        brevoPayload.attachment = attachments.map((a) => ({
+          content: a.content,
+          name: a.name,
+        }));
+      }
 
       try {
         const res = await fetch(BREVO_API_URL, {

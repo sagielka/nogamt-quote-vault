@@ -37,6 +37,7 @@ import {
   Pencil,
   Trash2,
   Mail,
+  Eye,
   MapPin,
   FileText,
   Users,
@@ -141,6 +142,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [ccSelf, setCcSelf] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [attachments, setAttachments] = useState<{ name: string; content: string; size: number }[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -635,6 +637,14 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setPreviewOpen(true)}
+              disabled={!emailSubject.trim() || !emailMessage.trim()}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
             <Button onClick={handleSendEmail} disabled={sendingEmail}>
               {sendingEmail ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2" />
@@ -643,6 +653,44 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               )}
               {sendingEmail ? 'Sending...' : 'Send'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+          </DialogHeader>
+          <div className="border rounded-lg p-4 bg-white">
+            <div
+              dangerouslySetInnerHTML={{
+                __html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #0891b2;">${emailSubject}</h2>
+                    <div style="line-height: 1.6; color: #333;">${emailMessage.replace(/\n/g, '<br>')}</div>
+                    <p style="margin-top: 30px;">Best regards,<br><strong>Noga Engineering & Technology Ltd.</strong></p>
+                    <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
+                    <p style="font-size: 12px; color: #999;">
+                      Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel<br>
+                      <a href="https://www.nogamt.com" style="color: #0891b2;">www.nogamt.com</a>
+                    </p>
+                    <p style="font-size: 11px; color: #bbb; margin-top: 20px;">
+                      <a href="#" style="color: #bbb;">Unsubscribe</a> from future emails.
+                    </p>
+                  </div>
+                `,
+              }}
+            />
+          </div>
+          {attachments.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium">Attachments:</span> {attachments.map(a => a.name).join(', ')}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -55,11 +55,13 @@ import {
   List,
   ListOrdered,
   Copy,
+  CheckSquare,
   ClipboardPaste,
   Undo,
   Redo,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const EMAIL_TEMPLATES = [
   {
@@ -152,6 +154,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState<Customer[]>([]);
   const [toField, setToField] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -526,6 +529,19 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filtered.map(c => c.id)));
+  };
+  const selectedCustomers = filtered.filter(c => selectedIds.has(c.id));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -549,12 +565,17 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
-          {filtered.length > 0 && (
+          {filtered.length > 0 && selectedCustomers.length > 0 ? (
+            <Button size="sm" variant="outline" onClick={() => openEmailDialog(selectedCustomers)}>
+              <SendHorizonal className="w-4 h-4 mr-2" />
+              Email Selected ({selectedCustomers.length})
+            </Button>
+          ) : filtered.length > 0 ? (
             <Button size="sm" variant="outline" onClick={() => openEmailDialog(filtered)}>
               <SendHorizonal className="w-4 h-4 mr-2" />
               Email All ({filtered.length})
             </Button>
-          )}
+          ) : null}
           <Button size="sm" variant="outline" onClick={handleBatchImport} disabled={importing}>
             <Upload className="w-4 h-4 mr-2" />
             {importing ? 'Importing...' : 'Import List'}
@@ -576,6 +597,26 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
         />
       </div>
 
+      {filtered.length > 0 && (
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Checkbox
+            checked={selectedIds.size === filtered.length && filtered.length > 0}
+            onCheckedChange={toggleSelectAll}
+            aria-label="Select all"
+          />
+          <span>
+            {selectedIds.size > 0
+              ? `${selectedIds.size} selected`
+              : 'Select all'}
+          </span>
+          {selectedIds.size > 0 && (
+            <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setSelectedIds(new Set())}>
+              Clear
+            </Button>
+          )}
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <div className="text-center py-12">
           <Users className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
@@ -593,14 +634,23 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
           {filtered.map((customer) => (
             <Card 
               key={customer.id} 
-              className="group hover:border-primary/30 transition-colors cursor-pointer"
+              className={`group hover:border-primary/30 transition-colors cursor-pointer ${selectedIds.has(customer.id) ? 'border-primary/50 bg-primary/5' : ''}`}
               onClick={() => onSelectCustomer?.(customer.email)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-foreground text-sm truncate flex-1 mr-2">
-                    {customer.name}
-                  </h3>
+                  <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                    <Checkbox
+                      checked={selectedIds.has(customer.id)}
+                      onCheckedChange={() => toggleSelect(customer.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${customer.name}`}
+                      className="shrink-0"
+                    />
+                    <h3 className="font-semibold text-foreground text-sm truncate">
+                      {customer.name}
+                    </h3>
+                  </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                     <Button
                       variant="ghost"

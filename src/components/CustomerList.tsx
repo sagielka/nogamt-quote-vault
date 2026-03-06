@@ -68,6 +68,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [ccSelf, setCcSelf] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -228,6 +229,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             recipients: emailRecipients.map((c) => ({ email: c.email, name: c.name })),
             subject: emailSubject.trim(),
             message: emailMessage.trim(),
+            ccSender: ccSelf,
           }),
         }
       );
@@ -455,6 +457,18 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                 maxLength={5000}
               />
               <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="cc-self"
+                checked={ccSelf}
+                onChange={(e) => setCcSelf(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <Label htmlFor="cc-self" className="text-sm font-normal cursor-pointer">
+                CC myself ({user?.email})
+              </Label>
             </div>
           </div>
           <DialogFooter>

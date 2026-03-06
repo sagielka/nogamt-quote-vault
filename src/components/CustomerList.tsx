@@ -801,7 +801,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
       </AlertDialog>
 
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {emailRecipients.length === 1

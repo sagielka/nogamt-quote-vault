@@ -804,7 +804,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
       </AlertDialog>
 
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>
               {emailRecipients.length === 1
@@ -812,7 +812,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                 : `Email ${emailRecipients.length} Customers`}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             <div>
               <Label className="text-xs text-muted-foreground">To (comma-separated)</Label>
               <Input value={toField} onChange={(e) => setToField(e.target.value)} placeholder="email@example.com, email2@example.com" type="text" />
@@ -1031,7 +1031,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
               </Label>
             </div>
           </div>
-          <DialogFooter className="flex-wrap gap-2">
+          <DialogFooter className="flex-wrap gap-2 border-t pt-4 shrink-0">
             <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
             <Button
               variant="outline"

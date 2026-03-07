@@ -1,10 +1,12 @@
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
 
@@ -28,11 +30,12 @@ declare global {
 
 interface QuotationPreviewProps {
   quotation: Quotation;
+  emailTracking?: EmailTrackingRecord[];
   onBack: () => void;
   onEdit?: () => void;
 }
 
-export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreviewProps) => {
+export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit }: QuotationPreviewProps) => {
   const { toast } = useToast();
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
@@ -286,6 +289,54 @@ Noga Engineering & Technology Ltd.`;
             <div className="pt-6 border-t print:border-gray-200">
               <h2 className="text-sm font-medium text-muted-foreground mb-2 print:text-gray-500">NOTES</h2>
               <p className="text-muted-foreground whitespace-pre-line print:text-gray-600">{quotation.notes}</p>
+            </div>
+          )}
+
+          {/* Email Tracking History - not printed */}
+          {emailTracking.length > 0 && (
+            <div className="pt-6 border-t no-print">
+              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <Send className="w-4 h-4" />
+                EMAIL HISTORY ({emailTracking.length})
+              </h2>
+              <div className="space-y-2">
+                {emailTracking
+                  .sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())
+                  .map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between text-sm py-2 px-3 rounded-md bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {record.read_at ? (
+                          <MailOpen className="w-4 h-4 text-green-600 shrink-0" />
+                        ) : (
+                          <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                        )}
+                        <div>
+                          <span className="text-foreground">{record.recipient_email}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {record.email_type === 'reminder' ? 'Reminder' : record.email_type === 'quotation' ? 'Quotation' : 'Custom'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Sent {formatDate(new Date(record.sent_at))}</span>
+                        {record.read_at ? (
+                          <span className="flex items-center gap-1 text-green-600 font-medium">
+                            <Eye className="w-3 h-3" />
+                            Read {formatDate(new Date(record.read_at))}
+                            {record.read_count > 1 && (
+                              <span className="text-muted-foreground ml-1">({record.read_count}×)</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Not read yet</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </div>
           )}
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useEmailTracking } from '@/hooks/useEmailTracking';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,6 +38,7 @@ import {
   Pencil,
   Trash2,
   Mail,
+  MailOpen,
   Eye,
   MapPin,
   FileText,
@@ -174,6 +176,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [importing, setImporting] = useState(false);
   const { user } = useAuth();
+  const { tracking } = useEmailTracking();
 
   const execFormat = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);
@@ -292,6 +295,44 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     );
   }, [customers, searchQuery]);
 
+  // Build email tracking stats per customer
+  const customerTrackingMap = useMemo(() => {
+    const map: Record<string, { sent: number; read: number; lastReadAt: string | null; lastSentAt: string | null }> = {};
+    for (const record of tracking) {
+      const email = record.recipient_email.toLowerCase();
+      if (!map[email]) {
+        map[email] = { sent: 0, read: 0, lastReadAt: null, lastSentAt: null };
+      }
+      map[email].sent++;
+      if (!map[email].lastSentAt || record.sent_at > map[email].lastSentAt!) {
+        map[email].lastSentAt = record.sent_at;
+      }
+      if (record.read_at) {
+        map[email].read++;
+        if (!map[email].lastReadAt || record.read_at > map[email].lastReadAt!) {
+          map[email].lastReadAt = record.read_at;
+        }
+      }
+    }
+    return map;
+  }, [tracking]);
+
+  const getCustomerTrackingStats = useCallback((customerEmail: string) => {
+    const emails = customerEmail.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    let sent = 0, read = 0;
+    let lastReadAt: string | null = null;
+    let lastSentAt: string | null = null;
+    for (const e of emails) {
+      const stats = customerTrackingMap[e];
+      if (stats) {
+        sent += stats.sent;
+        read += stats.read;
+        if (stats.lastReadAt && (!lastReadAt || stats.lastReadAt > lastReadAt)) lastReadAt = stats.lastReadAt;
+        if (stats.lastSentAt && (!lastSentAt || stats.lastSentAt > lastSentAt)) lastSentAt = stats.lastSentAt;
+      }
+    }
+    return { sent, read, lastReadAt, lastSentAt };
+  }, [customerTrackingMap]);
   const exportCustomers = () => {
     const data = filtered.length > 0 ? filtered : customers;
     if (data.length === 0) return;
@@ -733,6 +774,32 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                       {customer.quotation_count} quotation{customer.quotation_count !== 1 ? 's' : ''}
                     </span>
                   </div>
+                  {(() => {
+                    const stats = getCustomerTrackingStats(customer.email);
+                    if (stats.sent === 0) return null;
+                    return (
+                      <div className="flex items-center gap-2 pt-0.5">
+                        {stats.read > 0 ? (
+                          <>
+                            <MailOpen className="w-3 h-3 shrink-0 text-green-600" />
+                            <span className="text-green-600 font-medium">
+                              {stats.read}/{stats.sent} read
+                            </span>
+                            {stats.lastReadAt && (
+                              <span className="text-muted-foreground">
+                                · Last: {new Date(stats.lastReadAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-3 h-3 shrink-0" />
+                            <span>{stats.sent} sent · Not read yet</span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>

@@ -423,6 +423,7 @@ const Index = () => {
                       index={filteredQuotations.length - index}
                       creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
                       userList={userList}
+                      emailReadAt={getLatestRead(quotation.id)?.read_at ?? null}
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}

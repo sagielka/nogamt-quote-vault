@@ -103,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Verify quotation exists (all authenticated users can send emails for any quotation in the team)
+    // Verify quotation exists
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
       .select('id')
@@ -117,6 +117,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Create email tracking record
+    const { data: trackingRecord } = await serviceSupabase
+      .from('email_tracking')
+      .insert({
+        quotation_id: quotation.id,
+        recipient_email: to.toLowerCase(),
+        email_type: isReminder ? 'reminder' : 'quotation',
+      })
+      .select('tracking_id')
+      .single();
+
+    const trackingPixelUrl = trackingRecord
+      ? `${Deno.env.get('SUPABASE_URL')}/functions/v1/track-email-open?t=${trackingRecord.tracking_id}`
+      : '';
+
     // Unsubscribe link points to the frontend app
     const unsubscribeUrl = `https://nogamt-quote-vault.lovable.app/#/unsubscribe?email=${encodeURIComponent(to)}`;
 
@@ -127,6 +142,10 @@ const handler = async (req: Request): Promise<Response> => {
     const introText = isReminder
       ? `<p>This is a friendly reminder regarding our quotation <strong>${quoteNumber}</strong>. Please find the updated document attached for your review.</p>`
       : `<p>Please find attached our quotation <strong>${quoteNumber}</strong> for your review.</p>`;
+
+    const trackingPixelHtml = trackingPixelUrl
+      ? `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none;border:0;" alt="" />`
+      : '';
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -153,6 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p style="font-size: 11px; color: #bbb; margin-top: 20px;">
           <a href="${unsubscribeUrl}" style="color: #bbb;">Unsubscribe</a> from future quotation emails.
         </p>
+        ${trackingPixelHtml}
       </div>
     `;
 

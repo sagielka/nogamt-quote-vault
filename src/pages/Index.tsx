@@ -483,6 +483,7 @@ const Index = () => {
         {currentView === 'preview' && selectedQuotation && (
           <QuotationPreview
             quotation={selectedQuotation}
+            emailTracking={getTrackingForQuotation(selectedQuotation.id)}
             onBack={() => {
               setSelectedQuotationId(null);
               setCurrentView('list');

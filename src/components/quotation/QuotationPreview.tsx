@@ -30,6 +30,7 @@ declare global {
 
 interface QuotationPreviewProps {
   quotation: Quotation;
+  emailTracking?: EmailTrackingRecord[];
   onBack: () => void;
   onEdit?: () => void;
 }

@@ -147,6 +147,7 @@ interface CustomerListProps {
 export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -284,17 +285,6 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     fetchCustomTemplates();
   }, []);
 
-  const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return customers;
-    const q = searchQuery.toLowerCase();
-    return customers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        (c.address || '').toLowerCase().includes(q)
-    );
-  }, [customers, searchQuery]);
-
   // Build email tracking stats per customer
   const customerTrackingMap = useMemo(() => {
     const map: Record<string, { sent: number; read: number; lastReadAt: string | null; lastSentAt: string | null }> = {};
@@ -333,6 +323,26 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     }
     return { sent, read, lastReadAt, lastSentAt };
   }, [customerTrackingMap]);
+
+  const filtered = useMemo(() => {
+    let result = customers;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          (c.address || '').toLowerCase().includes(q)
+      );
+    }
+    if (showUnreadOnly) {
+      result = result.filter((c) => {
+        const stats = getCustomerTrackingStats(c.email);
+        return stats.sent > 0 && stats.read < stats.sent;
+      });
+    }
+    return result;
+  }, [customers, searchQuery, showUnreadOnly, getCustomerTrackingStats]);
   const exportCustomers = () => {
     const data = filtered.length > 0 ? filtered : customers;
     if (data.length === 0) return;
@@ -650,14 +660,32 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, email, or address..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or address..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant={showUnreadOnly ? 'default' : 'outline'}
+                onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+                className="shrink-0 h-10"
+              >
+                <Mail className="w-4 h-4 mr-1" />
+                Unread
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Show only customers with unread emails</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {filtered.length > 0 && (

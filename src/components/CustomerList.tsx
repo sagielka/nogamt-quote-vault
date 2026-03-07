@@ -774,6 +774,32 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                       {customer.quotation_count} quotation{customer.quotation_count !== 1 ? 's' : ''}
                     </span>
                   </div>
+                  {(() => {
+                    const stats = getCustomerTrackingStats(customer.email);
+                    if (stats.sent === 0) return null;
+                    return (
+                      <div className="flex items-center gap-2 pt-0.5">
+                        {stats.read > 0 ? (
+                          <>
+                            <MailOpen className="w-3 h-3 shrink-0 text-green-600" />
+                            <span className="text-green-600 font-medium">
+                              {stats.read}/{stats.sent} read
+                            </span>
+                            {stats.lastReadAt && (
+                              <span className="text-muted-foreground">
+                                · Last: {new Date(stats.lastReadAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-3 h-3 shrink-0" />
+                            <span>{stats.sent} sent · Not read yet</span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>

@@ -1,10 +1,12 @@
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
 

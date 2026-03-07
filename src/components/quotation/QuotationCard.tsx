@@ -244,6 +244,12 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     Notified {formatDate(quotation.followUpNotifiedAt)}
                   </span>
                 )}
+                {emailReadAt && (
+                  <span className="flex items-center gap-1 text-green-600 font-medium">
+                    <MailOpen className="w-3 h-3 shrink-0" />
+                    📧 Read {formatDate(new Date(emailReadAt))}
+                  </span>
+                )}
               </div>
             </div>
           </div>

@@ -292,6 +292,54 @@ Noga Engineering & Technology Ltd.`;
             </div>
           )}
 
+          {/* Email Tracking History - not printed */}
+          {emailTracking.length > 0 && (
+            <div className="pt-6 border-t no-print">
+              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <Send className="w-4 h-4" />
+                EMAIL HISTORY ({emailTracking.length})
+              </h2>
+              <div className="space-y-2">
+                {emailTracking
+                  .sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())
+                  .map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between text-sm py-2 px-3 rounded-md bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {record.read_at ? (
+                          <MailOpen className="w-4 h-4 text-green-600 shrink-0" />
+                        ) : (
+                          <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                        )}
+                        <div>
+                          <span className="text-foreground">{record.recipient_email}</span>
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            {record.email_type === 'reminder' ? 'Reminder' : record.email_type === 'quotation' ? 'Quotation' : 'Custom'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Sent {formatDate(new Date(record.sent_at))}</span>
+                        {record.read_at ? (
+                          <span className="flex items-center gap-1 text-green-600 font-medium">
+                            <Eye className="w-3 h-3" />
+                            Read {formatDate(new Date(record.read_at))}
+                            {record.read_count > 1 && (
+                              <span className="text-muted-foreground ml-1">({record.read_count}×)</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Not read yet</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Print Footer */}
           <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">
             <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>

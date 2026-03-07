@@ -412,8 +412,16 @@ const Index = () => {
                     placeholder="Search by quote #, client, SKU, or description..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 pr-9"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 <div className="flex flex-col gap-4">
                   {filteredQuotations.map((quotation, index) => (

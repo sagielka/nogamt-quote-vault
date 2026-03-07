@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
 import { useAuth } from '@/hooks/useAuth';
+import { useEmailTracking } from '@/hooks/useEmailTracking';
 import { QuotationFormData } from '@/types/quotation';
 import { QuotationForm } from '@/components/quotation/QuotationForm';
 import { QuotationCard } from '@/components/quotation/QuotationCard';

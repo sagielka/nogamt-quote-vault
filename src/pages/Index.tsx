@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
 import { useAuth } from '@/hooks/useAuth';
+import { useEmailTracking } from '@/hooks/useEmailTracking';
 import { QuotationFormData } from '@/types/quotation';
 import { QuotationForm } from '@/components/quotation/QuotationForm';
 import { QuotationCard } from '@/components/quotation/QuotationCard';
@@ -27,6 +28,7 @@ type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'cust
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
+  const { getLatestRead } = useEmailTracking();
   const { 
     archivedQuotations, 
     isAdmin, 
@@ -421,6 +423,7 @@ const Index = () => {
                       index={filteredQuotations.length - index}
                       creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
                       userList={userList}
+                      emailReadAt={getLatestRead(quotation.id)?.read_at ?? null}
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}

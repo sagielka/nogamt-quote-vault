@@ -47,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    const { recipients, subject, message, messageHtml, ccSender, cc, bcc, attachments: rawAttachments } = body as {
+    const { recipients, subject, message, messageHtml, ccSender, cc, bcc, attachments: rawAttachments, quotationId } = body as {
       recipients: { email: string; name: string }[];
       subject: string;
       message: string;
@@ -56,6 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
       cc?: string[];
       bcc?: string[];
       attachments?: { name: string; content: string }[];
+      quotationId?: string;
     };
 
     // Validate attachments
@@ -134,7 +135,33 @@ const handler = async (req: Request): Promise<Response> => {
     const messageBody = messageHtml || message.replace(/\n/g, "<br>");
 
     const logoUrl = "https://nogamt-quote-vault.lovable.app/logo.png";
-    const htmlContent = `
+
+    // Send individually to respect unsubscribe links per recipient
+    const results: { email: string; success: boolean; error?: string }[] = [];
+
+    for (const recipient of validRecipients) {
+      // Create tracking record for each recipient
+      let trackingPixelHtml = '';
+      try {
+        const { data: trackingRecord } = await serviceSupabase
+          .from("email_tracking")
+          .insert({
+            quotation_id: quotationId || null,
+            recipient_email: recipient.email.toLowerCase(),
+            email_type: 'custom',
+          })
+          .select('tracking_id')
+          .single();
+
+        if (trackingRecord) {
+          const trackingPixelUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/track-email-open?t=${trackingRecord.tracking_id}`;
+          trackingPixelHtml = `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none;border:0;" alt="" />`;
+        }
+      } catch (e) {
+        console.error("Failed to create tracking record:", e);
+      }
+
+      const personalHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #ff9004; margin-bottom: 20px;">
           <img src="${logoUrl}" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px; background-color: #ffffff; padding: 4px; border-radius: 4px;" />
@@ -148,19 +175,11 @@ const handler = async (req: Request): Promise<Response> => {
           <a href="https://www.nogamt.com" style="color: #ff9004;">www.nogamt.com</a>
         </p>
         <p style="font-size: 11px; color: #bbb; margin-top: 20px;">
-          <a href="${unsubscribeBaseUrl}" style="color: #bbb;">Unsubscribe</a> from future emails.
+          <a href="${unsubscribeBaseUrl}?email=${encodeURIComponent(recipient.email)}" style="color: #bbb;">Unsubscribe</a> from future emails.
         </p>
+        ${trackingPixelHtml}
       </div>
-    `;
-
-    // Send individually to respect unsubscribe links per recipient
-    const results: { email: string; success: boolean; error?: string }[] = [];
-
-    for (const recipient of validRecipients) {
-      const personalHtml = htmlContent.replace(
-        `${unsubscribeBaseUrl}`,
-        `${unsubscribeBaseUrl}?email=${encodeURIComponent(recipient.email)}`
-      );
+      `;
 
       const brevoPayload: any = {
         sender: {

@@ -143,6 +143,47 @@ export type Database = {
         }
         Relationships: []
       }
+      email_tracking: {
+        Row: {
+          email_type: string
+          id: string
+          quotation_id: string | null
+          read_at: string | null
+          read_count: number
+          recipient_email: string
+          sent_at: string
+          tracking_id: string
+        }
+        Insert: {
+          email_type?: string
+          id?: string
+          quotation_id?: string | null
+          read_at?: string | null
+          read_count?: number
+          recipient_email: string
+          sent_at?: string
+          tracking_id?: string
+        }
+        Update: {
+          email_type?: string
+          id?: string
+          quotation_id?: string | null
+          read_at?: string | null
+          read_count?: number
+          recipient_email?: string
+          sent_at?: string
+          tracking_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_tracking_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string

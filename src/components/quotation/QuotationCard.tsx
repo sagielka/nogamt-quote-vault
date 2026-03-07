@@ -25,7 +25,7 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +37,7 @@ interface QuotationCardProps {
   index?: number;
   creatorName?: string;
   userList?: { id: string; name: string }[];
+  emailReadAt?: string | null;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -73,7 +74,7 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, creatorName, userList, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
@@ -241,6 +242,12 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, onView,
                   <span className="flex items-center gap-1 text-blue-600">
                     <BellRing className="w-3 h-3 shrink-0" />
                     Notified {formatDate(quotation.followUpNotifiedAt)}
+                  </span>
+                )}
+                {emailReadAt && (
+                  <span className="flex items-center gap-1 text-green-600 font-medium">
+                    <MailOpen className="w-3 h-3 shrink-0" />
+                    📧 Read {formatDate(new Date(emailReadAt))}
                   </span>
                 )}
               </div>

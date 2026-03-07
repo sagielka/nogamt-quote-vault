@@ -37,6 +37,7 @@ interface QuotationCardProps {
   index?: number;
   creatorName?: string;
   userList?: { id: string; name: string }[];
+  emailReadAt?: string | null;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;

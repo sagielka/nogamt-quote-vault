@@ -286,15 +286,24 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   }, []);
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return customers;
-    const q = searchQuery.toLowerCase();
-    return customers.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.email.toLowerCase().includes(q) ||
-        (c.address || '').toLowerCase().includes(q)
-    );
-  }, [customers, searchQuery]);
+    let result = customers;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          (c.address || '').toLowerCase().includes(q)
+      );
+    }
+    if (showUnreadOnly) {
+      result = result.filter((c) => {
+        const stats = getCustomerTrackingStats(c.email);
+        return stats.sent > 0 && stats.read < stats.sent;
+      });
+    }
+    return result;
+  }, [customers, searchQuery, showUnreadOnly, getCustomerTrackingStats]);
 
   // Build email tracking stats per customer
   const customerTrackingMap = useMemo(() => {

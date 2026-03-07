@@ -35,7 +35,7 @@ interface QuotationPreviewProps {
   onEdit?: () => void;
 }
 
-export const QuotationPreview = ({ quotation, onBack, onEdit }: QuotationPreviewProps) => {
+export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit }: QuotationPreviewProps) => {
   const { toast } = useToast();
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);

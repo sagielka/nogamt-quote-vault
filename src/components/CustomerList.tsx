@@ -285,26 +285,6 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     fetchCustomTemplates();
   }, []);
 
-  const filtered = useMemo(() => {
-    let result = customers;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          (c.address || '').toLowerCase().includes(q)
-      );
-    }
-    if (showUnreadOnly) {
-      result = result.filter((c) => {
-        const stats = getCustomerTrackingStats(c.email);
-        return stats.sent > 0 && stats.read < stats.sent;
-      });
-    }
-    return result;
-  }, [customers, searchQuery, showUnreadOnly, getCustomerTrackingStats]);
-
   // Build email tracking stats per customer
   const customerTrackingMap = useMemo(() => {
     const map: Record<string, { sent: number; read: number; lastReadAt: string | null; lastSentAt: string | null }> = {};
@@ -343,6 +323,26 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     }
     return { sent, read, lastReadAt, lastSentAt };
   }, [customerTrackingMap]);
+
+  const filtered = useMemo(() => {
+    let result = customers;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          (c.address || '').toLowerCase().includes(q)
+      );
+    }
+    if (showUnreadOnly) {
+      result = result.filter((c) => {
+        const stats = getCustomerTrackingStats(c.email);
+        return stats.sent > 0 && stats.read < stats.sent;
+      });
+    }
+    return result;
+  }, [customers, searchQuery, showUnreadOnly, getCustomerTrackingStats]);
   const exportCustomers = () => {
     const data = filtered.length > 0 ? filtered : customers;
     if (data.length === 0) return;

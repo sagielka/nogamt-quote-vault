@@ -147,6 +147,7 @@ interface CustomerListProps {
 export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

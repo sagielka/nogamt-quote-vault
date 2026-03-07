@@ -176,6 +176,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [importing, setImporting] = useState(false);
   const { user } = useAuth();
+  const { tracking } = useEmailTracking();
 
   const execFormat = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);

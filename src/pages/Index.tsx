@@ -28,7 +28,7 @@ type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'cust
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
-  const { getLatestRead } = useEmailTracking();
+  const { getLatestRead, getTrackingForQuotation } = useEmailTracking();
   const { 
     archivedQuotations, 
     isAdmin, 

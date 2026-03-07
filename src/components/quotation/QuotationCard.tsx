@@ -74,7 +74,7 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, creatorName, userList, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);

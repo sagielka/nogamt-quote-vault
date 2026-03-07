@@ -660,14 +660,32 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, email, or address..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or address..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant={showUnreadOnly ? 'default' : 'outline'}
+                onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+                className="shrink-0 h-10"
+              >
+                <Mail className="w-4 h-4 mr-1" />
+                Unread
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Show only customers with unread emails</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {filtered.length > 0 && (

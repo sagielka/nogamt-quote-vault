@@ -295,6 +295,44 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
     );
   }, [customers, searchQuery]);
 
+  // Build email tracking stats per customer
+  const customerTrackingMap = useMemo(() => {
+    const map: Record<string, { sent: number; read: number; lastReadAt: string | null; lastSentAt: string | null }> = {};
+    for (const record of tracking) {
+      const email = record.recipient_email.toLowerCase();
+      if (!map[email]) {
+        map[email] = { sent: 0, read: 0, lastReadAt: null, lastSentAt: null };
+      }
+      map[email].sent++;
+      if (!map[email].lastSentAt || record.sent_at > map[email].lastSentAt!) {
+        map[email].lastSentAt = record.sent_at;
+      }
+      if (record.read_at) {
+        map[email].read++;
+        if (!map[email].lastReadAt || record.read_at > map[email].lastReadAt!) {
+          map[email].lastReadAt = record.read_at;
+        }
+      }
+    }
+    return map;
+  }, [tracking]);
+
+  const getCustomerTrackingStats = useCallback((customerEmail: string) => {
+    const emails = customerEmail.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    let sent = 0, read = 0;
+    let lastReadAt: string | null = null;
+    let lastSentAt: string | null = null;
+    for (const e of emails) {
+      const stats = customerTrackingMap[e];
+      if (stats) {
+        sent += stats.sent;
+        read += stats.read;
+        if (stats.lastReadAt && (!lastReadAt || stats.lastReadAt > lastReadAt)) lastReadAt = stats.lastReadAt;
+        if (stats.lastSentAt && (!lastSentAt || stats.lastSentAt > lastSentAt)) lastSentAt = stats.lastSentAt;
+      }
+    }
+    return { sent, read, lastReadAt, lastSentAt };
+  }, [customerTrackingMap]);
   const exportCustomers = () => {
     const data = filtered.length > 0 ? filtered : customers;
     if (data.length === 0) return;

@@ -159,6 +159,23 @@ export const UserManagement = () => {
     }
   };
 
+  const handleSetPassword = async (userId: string) => {
+    if (!newPassword.trim() || newPassword.length < 6) {
+      toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
+      return;
+    }
+    setSetPasswordLoading(true);
+    try {
+      const result = await invokeAdminAction('set-password', { userId, password: newPassword });
+      toast({ title: 'Password Set', description: result.message });
+      setSetPasswordOpen(null);
+      setNewPassword('');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to set password', variant: 'destructive' });
+    } finally {
+      setSetPasswordLoading(false);
+    }
+
   const handleRoleChange = async (userId: string, role: string) => {
     setActionLoading(userId);
     try {

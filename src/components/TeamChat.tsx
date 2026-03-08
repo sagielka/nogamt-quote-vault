@@ -90,12 +90,8 @@ export const TeamChat = () => {
         if (msg.user_id !== user?.id) {
           playNotificationSound();
           if (!open) {
-            setUnread((u) => u + 1);
-            const senderName = profiles[msg.user_id]?.display_name || msg.user_id.slice(0, 6);
-            toast({
-              title: `💬 ${senderName}`,
-              description: msg.content.length > 60 ? msg.content.slice(0, 60) + '…' : msg.content,
-            });
+            setOpen(true);
+            setUnread(0);
           }
         }
       })

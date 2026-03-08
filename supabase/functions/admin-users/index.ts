@@ -28,22 +28,19 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Use admin client to get user from token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: callerUser }, error: userError } = await adminClient.auth.getUser(token);
+    if (userError || !callerUser) {
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    const user = { id: callerUser.id, email: callerUser.email };
+
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      // Fallback to getUser if getClaims not available
-      const { data: { user: fallbackUser } } = await anonClient.auth.getUser();
-      if (!fallbackUser) {
-        return jsonResponse({ error: "Unauthorized" }, 401);
-      }
-      var user = { id: fallbackUser.id, email: fallbackUser.email };
-    } else {
-      var user = { id: claimsData.claims.sub as string, email: claimsData.claims.email as string };
-    }
 
     const { data: isAdmin } = await anonClient.rpc("has_role", {
       _user_id: user.id,
@@ -54,7 +51,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Admin access required" }, 403);
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    // adminClient already created above
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 

@@ -28,19 +28,20 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
-    // Use admin client to get user from token
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: callerUser }, error: userError } = await adminClient.auth.getUser(token);
-    if (userError || !callerUser) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
-    }
-    const user = { id: callerUser.id, email: callerUser.email };
-
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+
+    // Use getClaims to verify JWT without requiring active session
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error("getClaims failed:", claimsError?.message);
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+    const user = { id: claimsData.claims.sub, email: claimsData.claims.email };
+
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: isAdmin } = await anonClient.rpc("has_role", {
       _user_id: user.id,

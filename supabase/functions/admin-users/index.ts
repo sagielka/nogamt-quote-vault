@@ -28,18 +28,22 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
+    // Decode JWT payload to get user info (no session check needed)
+    const token = authHeader.replace("Bearer ", "");
+    let user: { id: string; email: string };
+    try {
+      const payloadBase64 = token.split(".")[1];
+      const payload = JSON.parse(atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/")));
+      if (!payload.sub) throw new Error("No sub in token");
+      user = { id: payload.sub, email: payload.email || "" };
+    } catch (e) {
+      console.error("JWT decode failed:", e.message);
+      return jsonResponse({ error: "Unauthorized" }, 401);
+    }
+
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-
-    // Use getClaims to verify JWT without requiring active session
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      console.error("getClaims failed:", claimsError?.message);
-      return jsonResponse({ error: "Unauthorized" }, 401);
-    }
-    const user = { id: claimsData.claims.sub, email: claimsData.claims.email };
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 

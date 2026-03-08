@@ -164,7 +164,20 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30 rounded-t-xl">
             <h3 className="font-semibold text-sm text-foreground">Team Chat</h3>
-            <span className="text-xs text-muted-foreground">{messages.length} messages</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  localStorage.setItem('chat-sound-enabled', String(next));
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title={soundEnabled ? 'Mute notifications' : 'Unmute notifications'}
+              >
+                {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
+              <span className="text-xs text-muted-foreground">{messages.length} messages</span>
+            </div>
           </div>
 
           {/* Messages */}

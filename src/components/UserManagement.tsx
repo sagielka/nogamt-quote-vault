@@ -399,6 +399,47 @@ export const UserManagement = () => {
                 </AlertDialogContent>
               </AlertDialog>
 
+              {/* Set Password */}
+              <Dialog open={setPasswordOpen === u.id} onOpenChange={(open) => { setSetPasswordOpen(open ? u.id : null); setNewPassword(''); }}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                  >
+                    <KeyRound className="w-3 h-3 mr-1" />
+                    Set PW
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Set Password for {u.email}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>New Password</Label>
+                      <Input
+                        type="password"
+                        placeholder="Min 6 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="input-focus"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This will immediately set a new password for the user. They will not receive an email notification.
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => { setSetPasswordOpen(null); setNewPassword(''); }}>Cancel</Button>
+                    <Button onClick={() => handleSetPassword(u.id)} disabled={setPasswordLoading || newPassword.length < 6}>
+                      {setPasswordLoading ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <KeyRound className="w-4 h-4 mr-1" />}
+                      Set Password
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               {/* Activate / Deactivate */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>

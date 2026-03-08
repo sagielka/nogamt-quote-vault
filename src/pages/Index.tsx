@@ -43,6 +43,7 @@ const Index = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
+  const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 

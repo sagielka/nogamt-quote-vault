@@ -16,9 +16,10 @@ import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle } from 'lucide-react';
 import { TeamChat } from '@/components/TeamChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
@@ -42,6 +43,7 @@ const Index = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
+  const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -113,6 +115,62 @@ const Index = () => {
     };
     fetchUserNames();
   }, [user, isAdmin]);
+
+  // Fetch online users
+  useEffect(() => {
+    if (!user) return;
+    const fetchOnline = async () => {
+      try {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+        if (!token || !projectId) return;
+
+        const res = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/admin-users?action=list`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        if (!res.ok) {
+          // Non-admin: fall back to profiles table
+          const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, last_seen_at')
+            .gte('last_seen_at', fiveMinAgo);
+          if (profiles) {
+            setOnlineUsers(profiles.map((p: any) => ({
+              email: p.user_id === user.id ? (user.email || 'You') : p.user_id.slice(0, 6),
+              lastSeen: p.last_seen_at,
+            })));
+          }
+          return;
+        }
+        const data = await res.json();
+        if (data?.users) {
+          const now = Date.now();
+          const online = data.users.filter((u: any) => {
+            if (!u.last_seen_at) return false;
+            return now - new Date(u.last_seen_at).getTime() < 5 * 60 * 1000;
+          });
+          setOnlineUsers(online.map((u: any) => ({
+            email: u.email,
+            lastSeen: u.last_seen_at,
+          })));
+        }
+      } catch {
+        // ignore
+      }
+    };
+    fetchOnline();
+    const interval = setInterval(fetchOnline, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -315,6 +373,34 @@ const Index = () => {
                   {user.email?.split('@')[0]}
                 </span>
               </div>
+
+              {/* Online Users */}
+              {onlineUsers.length > 0 && (
+                <TooltipProvider>
+                  <div className="hidden sm:flex items-center gap-1 ml-2">
+                    <Circle className="w-2 h-2 fill-green-500 text-green-500" />
+                    <div className="flex -space-x-2">
+                      {onlineUsers.slice(0, 5).map((ou, i) => (
+                        <Tooltip key={i}>
+                          <TooltipTrigger asChild>
+                            <Avatar className="h-6 w-6 border-2 border-background">
+                              <AvatarFallback className="text-[9px] bg-green-500/15 text-green-700 dark:text-green-400">
+                                {(ou.email?.split('@')[0]?.slice(0, 2) || '??').toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">
+                            {ou.email?.split('@')[0]} — online
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                    {onlineUsers.length > 5 && (
+                      <span className="text-[10px] text-muted-foreground ml-1">+{onlineUsers.length - 5}</span>
+                    )}
+                  </div>
+                </TooltipProvider>
+              )}
             </div>
             <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">

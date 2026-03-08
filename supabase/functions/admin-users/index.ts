@@ -244,6 +244,29 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: true });
     }
 
+    // ─── SET PASSWORD ───
+    if (req.method === "POST" && action === "set-password") {
+      const { userId, password } = await req.json();
+
+      if (!userId || !password) {
+        return jsonResponse({ error: "userId and password required" }, 400);
+      }
+
+      if (password.length < 6) {
+        return jsonResponse({ error: "Password must be at least 6 characters" }, 400);
+      }
+
+      const { error: updateError } =
+        await adminClient.auth.admin.updateUserById(userId, { password });
+
+      if (updateError) throw updateError;
+
+      return jsonResponse({
+        success: true,
+        message: "Password has been set successfully.",
+      });
+    }
+
     return jsonResponse({ error: "Unknown action" }, 400);
   } catch (error) {
     return jsonResponse({ error: error.message }, 500);

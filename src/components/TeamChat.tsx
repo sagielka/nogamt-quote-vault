@@ -87,8 +87,16 @@ export const TeamChat = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const msg = payload.new as ChatMessage;
         setMessages((prev) => [...prev, msg]);
-        if (!open && msg.user_id !== user?.id) {
-          setUnread((u) => u + 1);
+        if (msg.user_id !== user?.id) {
+          playNotificationSound();
+          if (!open) {
+            setUnread((u) => u + 1);
+            const senderName = profiles[msg.user_id]?.display_name || msg.user_id.slice(0, 6);
+            toast({
+              title: `💬 ${senderName}`,
+              description: msg.content.length > 60 ? msg.content.slice(0, 60) + '…' : msg.content,
+            });
+          }
         }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {

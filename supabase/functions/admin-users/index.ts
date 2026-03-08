@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Admin access required" }, 403);
     }
 
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    // adminClient already created above
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 

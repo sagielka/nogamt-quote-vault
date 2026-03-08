@@ -48,6 +48,9 @@ export const UserManagement = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('user');
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [setPasswordOpen, setSetPasswordOpen] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [setPasswordLoading, setSetPasswordLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = useCallback(async () => {

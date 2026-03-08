@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
 
     // Verify the caller is an admin
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
@@ -32,11 +32,17 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const {
-      data: { user },
-    } = await anonClient.auth.getUser();
-    if (!user) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      // Fallback to getUser if getClaims not available
+      const { data: { user: fallbackUser } } = await anonClient.auth.getUser();
+      if (!fallbackUser) {
+        return jsonResponse({ error: "Unauthorized" }, 401);
+      }
+      var user = { id: fallbackUser.id, email: fallbackUser.email };
+    } else {
+      var user = { id: claimsData.claims.sub as string, email: claimsData.claims.email as string };
     }
 
     const { data: isAdmin } = await anonClient.rpc("has_role", {

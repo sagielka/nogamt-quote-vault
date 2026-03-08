@@ -18,7 +18,7 @@ interface ChatMessage {
   email?: string;
 }
 
-export const TeamChat = () => {
+export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, string> }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -125,6 +125,7 @@ export const TeamChat = () => {
   };
 
   const getUserLabel = (userId: string) => {
+    if (userNameMap[userId]) return userNameMap[userId];
     const profile = profiles[userId];
     if (profile?.display_name) return profile.display_name;
     if (userId === user?.id) return user?.email?.split('@')[0] || 'You';

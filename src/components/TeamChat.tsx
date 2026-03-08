@@ -125,6 +125,7 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
   };
 
   const getUserLabel = (userId: string) => {
+    if (userNameMap[userId]) return userNameMap[userId];
     const profile = profiles[userId];
     if (profile?.display_name) return profile.display_name;
     if (userId === user?.id) return user?.email?.split('@')[0] || 'You';

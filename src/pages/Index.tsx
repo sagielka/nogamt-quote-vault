@@ -116,6 +116,62 @@ const Index = () => {
     fetchUserNames();
   }, [user, isAdmin]);
 
+  // Fetch online users
+  useEffect(() => {
+    if (!user) return;
+    const fetchOnline = async () => {
+      try {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+        if (!token || !projectId) return;
+
+        const res = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/admin-users?action=list`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+          }
+        );
+        if (!res.ok) {
+          // Non-admin: fall back to profiles table
+          const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('user_id, last_seen_at')
+            .gte('last_seen_at', fiveMinAgo);
+          if (profiles) {
+            setOnlineUsers(profiles.map((p: any) => ({
+              email: p.user_id === user.id ? (user.email || 'You') : p.user_id.slice(0, 6),
+              lastSeen: p.last_seen_at,
+            })));
+          }
+          return;
+        }
+        const data = await res.json();
+        if (data?.users) {
+          const now = Date.now();
+          const online = data.users.filter((u: any) => {
+            if (!u.last_seen_at) return false;
+            return now - new Date(u.last_seen_at).getTime() < 5 * 60 * 1000;
+          });
+          setOnlineUsers(online.map((u: any) => ({
+            email: u.email,
+            lastSeen: u.last_seen_at,
+          })));
+        }
+      } catch {
+        // ignore
+      }
+    };
+    fetchOnline();
+    const interval = setInterval(fetchOnline, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffect(() => {
     let cancelled = false;
   }, []);

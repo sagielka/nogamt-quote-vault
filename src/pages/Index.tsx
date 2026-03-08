@@ -373,7 +373,34 @@ const Index = () => {
                   {user.email?.split('@')[0]}
                 </span>
               </div>
-            </div>
+
+              {/* Online Users */}
+              {onlineUsers.length > 0 && (
+                <TooltipProvider>
+                  <div className="hidden sm:flex items-center gap-1 ml-2">
+                    <Circle className="w-2 h-2 fill-green-500 text-green-500" />
+                    <div className="flex -space-x-2">
+                      {onlineUsers.slice(0, 5).map((ou, i) => (
+                        <Tooltip key={i}>
+                          <TooltipTrigger asChild>
+                            <Avatar className="h-6 w-6 border-2 border-background">
+                              <AvatarFallback className="text-[9px] bg-green-500/15 text-green-700 dark:text-green-400">
+                                {(ou.email?.split('@')[0]?.slice(0, 2) || '??').toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="text-xs">
+                            {ou.email?.split('@')[0]} — online
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                    </div>
+                    {onlineUsers.length > 5 && (
+                      <span className="text-[10px] text-muted-foreground ml-1">+{onlineUsers.length - 5}</span>
+                    )}
+                  </div>
+                </TooltipProvider>
+              )}
             <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {currentView === 'list' && quotations.length > 0 && (

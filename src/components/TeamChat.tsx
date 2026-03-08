@@ -25,6 +25,10 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
   const [newMessage, setNewMessage] = useState('');
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null; email: string }>>({});
   const [unread, setUnread] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const stored = localStorage.getItem('chat-sound-enabled');
+    return stored !== null ? stored === 'true' : true;
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSeenRef = useRef<string | null>(null);
   const { toast } = useToast();

@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle } from 'lucide-react';
 import { TeamChat } from '@/components/TeamChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';

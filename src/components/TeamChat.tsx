@@ -107,7 +107,7 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [open, user?.id]);
+  }, [open, user?.id, soundEnabled]);
 
   // Scroll to bottom on new messages
   useEffect(() => {

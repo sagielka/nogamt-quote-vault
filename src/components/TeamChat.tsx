@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatMessage {
   id: string;
@@ -26,6 +27,25 @@ export const TeamChat = () => {
   const [unread, setUnread] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSeenRef = useRef<string | null>(null);
+  const { toast } = useToast();
+
+  const playNotificationSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.3);
+    } catch {
+      // Audio not supported
+    }
+  }, []);
 
   // Load profiles for display names
   useEffect(() => {
@@ -67,8 +87,16 @@ export const TeamChat = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const msg = payload.new as ChatMessage;
         setMessages((prev) => [...prev, msg]);
-        if (!open && msg.user_id !== user?.id) {
-          setUnread((u) => u + 1);
+        if (msg.user_id !== user?.id) {
+          playNotificationSound();
+          if (!open) {
+            setUnread((u) => u + 1);
+            const senderName = profiles[msg.user_id]?.display_name || msg.user_id.slice(0, 6);
+            toast({
+              title: `💬 ${senderName}`,
+              description: msg.content.length > 60 ? msg.content.slice(0, 60) + '…' : msg.content,
+            });
+          }
         }
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {

@@ -175,6 +175,7 @@ export const UserManagement = () => {
     } finally {
       setSetPasswordLoading(false);
     }
+  };
 
   const handleRoleChange = async (userId: string, role: string) => {
     setActionLoading(userId);

@@ -662,7 +662,7 @@ const Index = () => {
         </div>
       </footer>
 
-      <TeamChat />
+      <TeamChat userNameMap={userNameMap} />
     </div>
   );
 };

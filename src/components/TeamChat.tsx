@@ -18,7 +18,7 @@ interface ChatMessage {
   email?: string;
 }
 
-export const TeamChat = () => {
+export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, string> }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);

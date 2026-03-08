@@ -92,7 +92,7 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
         const msg = payload.new as ChatMessage;
         setMessages((prev) => [...prev, msg]);
         if (msg.user_id !== user?.id) {
-          playNotificationSound();
+          if (soundEnabled) playNotificationSound();
           if (!open) {
             setOpen(true);
             setUnread(0);

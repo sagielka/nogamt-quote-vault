@@ -222,6 +222,19 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     Needs Reminder
                   </span>
                 )}
+                {quotation.status !== 'accepted' && !quotation.reminderSentAt && (() => {
+                  const age = Date.now() - new Date(quotation.createdAt).getTime();
+                  if (age < MIN_AGE_MS) {
+                    const daysLeft = Math.ceil((MIN_AGE_MS - age) / (24 * 60 * 60 * 1000));
+                    return (
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Mail className="w-3 h-3 shrink-0" />
+                        Reminder in {daysLeft} day{daysLeft !== 1 ? 's' : ''}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
                 {quotation.reminderSentAt && (() => {
                   const nextReminderDate = new Date(new Date(quotation.reminderSentAt).getTime() + REMINDER_COOLDOWN_MS);
                   const maxDate = new Date(new Date(quotation.createdAt).getTime() + MAX_AGE_MS);

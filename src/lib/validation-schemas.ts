@@ -15,7 +15,10 @@ export const lineItemSchema = z.object({
 // Quotation form validation schema
 export const quotationSchema = z.object({
   clientName: z.string().trim().min(1, 'Client name is required').max(200, 'Client name must be 200 characters or less'),
-  clientEmail: z.string().trim().email('Invalid email address').max(255, 'Email must be 255 characters or less'),
+  clientEmail: z.string().trim().min(1, 'Email is required').max(500, 'Email must be 500 characters or less').refine(
+    (val) => val.split(',').every(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim())),
+    'One or more email addresses are invalid'
+  ),
   clientAddress: z.string().max(500, 'Address must be 500 characters or less').optional().or(z.literal('')),
   items: z.array(lineItemSchema).min(1, 'At least one line item is required').max(100, 'Too many line items'),
   taxRate: z.number().min(0, 'Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%'),

@@ -645,6 +645,67 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             </div>
           )}
 
+          {/* Attached Outlook Emails - not printed */}
+          <div className="pt-6 border-t no-print">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                ATTACHED EMAILS ({emailAttachments.length})
+              </h2>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".eml,.msg"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUploadEmailFile(e.target.files)}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={uploadingEmail}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploadingEmail ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <Upload className="w-3 h-3 mr-1" />
+                  )}
+                  {uploadingEmail ? 'Uploading...' : 'Attach Email'}
+                </Button>
+              </div>
+            </div>
+            {emailAttachments.length > 0 ? (
+              <div className="space-y-2">
+                {emailAttachments.map((att) => (
+                  <div key={att.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-md bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-primary shrink-0" />
+                      <div>
+                        <span className="text-foreground font-medium">{att.file_name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({(att.file_size / 1024).toFixed(0)} KB)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{formatDate(new Date(att.uploaded_at))}</span>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDownloadAttachment(att)} title="Download">
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteAttachment(att)} title="Delete">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No Outlook emails attached. Click "Attach Email" to upload .eml or .msg files.</p>
+            )}
+          </div>
+
           {/* Print Footer */}
           <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">
             <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>

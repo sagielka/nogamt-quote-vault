@@ -1090,8 +1090,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           </CardContent>
         </Card>
       )}
-
-
+      <div className="flex gap-3 justify-end">
         <Button 
           type="submit" 
           size="lg" 

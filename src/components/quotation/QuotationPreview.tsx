@@ -372,6 +372,42 @@ Noga Engineering & Technology Ltd.`;
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Customer Dialog */}
+      {onEditCustomer && (
+        <Dialog open={editCustomerOpen} onOpenChange={setEditCustomerOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Customer Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="preview-edit-name">Name</Label>
+                <Input id="preview-edit-name" value={editClientName} onChange={(e) => setEditClientName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="preview-edit-email">Email</Label>
+                <Input id="preview-edit-email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="preview-edit-address">Address</Label>
+                <Input id="preview-edit-address" value={editClientAddress} onChange={(e) => setEditClientAddress(e.target.value)} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditCustomerOpen(false)}>Cancel</Button>
+              <Button onClick={() => {
+                onEditCustomer(quotation.id, {
+                  clientName: editClientName,
+                  clientEmail: editClientEmail,
+                  clientAddress: editClientAddress,
+                });
+                setEditCustomerOpen(false);
+              }}>Save</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

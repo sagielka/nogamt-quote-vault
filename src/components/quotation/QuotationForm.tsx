@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemWithSku } from './LineItemWithSku';
-import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search } from 'lucide-react';
+import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search, Paperclip, Upload, ExternalLink, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';

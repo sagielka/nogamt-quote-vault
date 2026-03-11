@@ -49,6 +49,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSentEmails = async () => {

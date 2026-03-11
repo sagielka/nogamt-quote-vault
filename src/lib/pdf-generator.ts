@@ -35,27 +35,13 @@ const loadImageAsBase64 = (src: string): Promise<{ data: string; width: number; 
 const containsHebrew = (text: string): boolean => /[\u0590-\u05FF]/.test(text);
 
 // Process text for RTL rendering in jsPDF
-// jsPDF renders characters left-to-right, so Hebrew words need to be reversed at the character level,
-// and the overall word order for Hebrew text needs to be reversed.
+// jsPDF renders characters left-to-right, so for Hebrew text we reverse the entire string
+// character by character. This makes the visual output appear correctly RTL.
 const processText = (text: string): string => {
   if (!containsHebrew(text)) return text;
   
-  // Split into words
-  const words = text.split(' ');
-  
-  // Process each word: reverse Hebrew words character-by-character
-  const processedWords = words.map(word => {
-    if (containsHebrew(word)) {
-      // Reverse the characters in Hebrew words
-      return word.split('').reverse().join('');
-    }
-    return word;
-  });
-  
-  // Reverse the overall word order for RTL layout
-  processedWords.reverse();
-  
-  return processedWords.join(' ');
+  // Reverse the entire string character by character for correct RTL rendering
+  return text.split('').reverse().join('');
 };
 
 // Load font as base64

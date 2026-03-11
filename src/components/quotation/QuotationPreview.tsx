@@ -480,6 +480,21 @@ Noga Engineering & Technology Ltd.`;
                           className="mt-2 text-sm text-foreground bg-background rounded p-3 max-h-60 overflow-y-auto border"
                           dangerouslySetInnerHTML={{ __html: email.body_html }}
                         />
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={resendingId === email.id}
+                            onClick={() => handleResendEmail(email)}
+                          >
+                            {resendingId === email.id ? (
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <Forward className="w-3 h-3 mr-1" />
+                            )}
+                            Resend
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

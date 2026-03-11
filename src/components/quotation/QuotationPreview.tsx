@@ -213,8 +213,23 @@ Noga Engineering & Technology Ltd.`;
           </div>
 
           {/* Client Info */}
-          <div className="mb-8">
-            <h2 className="text-sm font-medium text-muted-foreground mb-2 print:text-gray-500">BILL TO</h2>
+          <div className="mb-8 group/client">
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-sm font-medium text-muted-foreground print:text-gray-500">BILL TO</h2>
+              {onEditCustomer && (
+                <button
+                  className="no-print opacity-0 group-hover/client:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setEditClientName(quotation.clientName);
+                    setEditClientEmail(quotation.clientEmail);
+                    setEditClientAddress(quotation.clientAddress);
+                    setEditCustomerOpen(true);
+                  }}
+                >
+                  <UserPen className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
             <p className="font-semibold text-foreground print:text-gray-900">{quotation.clientName}</p>
             <p className="text-muted-foreground print:text-gray-600">{quotation.clientEmail}</p>
             {quotation.clientAddress && (

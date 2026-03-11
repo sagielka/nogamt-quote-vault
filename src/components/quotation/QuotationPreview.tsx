@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2 } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
@@ -43,6 +44,8 @@ interface QuotationPreviewProps {
 
 export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer }: QuotationPreviewProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
@@ -52,6 +55,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
+  const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
+  const [uploadingEmail, setUploadingEmail] = useState(false);
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses
@@ -83,9 +88,86 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     ));
   }, [quotation.id, quotation.clientEmail]);
 
+  const refreshEmailAttachments = useCallback(async () => {
+    const { data } = await supabase
+      .from('quotation_email_attachments')
+      .select('*')
+      .eq('quotation_id', quotation.id)
+      .order('uploaded_at', { ascending: false });
+    if (data) setEmailAttachments(data);
+  }, [quotation.id]);
+
   useEffect(() => {
     refreshSentEmails();
-  }, [refreshSentEmails]);
+    refreshEmailAttachments();
+  }, [refreshSentEmails, refreshEmailAttachments]);
+
+  const handleUploadEmailFile = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !user) return;
+    setUploadingEmail(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (!['eml', 'msg'].includes(ext || '')) {
+          toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
+          continue;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
+          continue;
+        }
+
+        const filePath = `${quotation.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('email-attachments')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { error: dbError } = await supabase
+          .from('quotation_email_attachments')
+          .insert({
+            quotation_id: quotation.id,
+            user_id: user.id,
+            file_name: file.name,
+            file_path: filePath,
+            file_size: file.size,
+          });
+
+        if (dbError) throw dbError;
+      }
+
+      toast({ title: 'Email(s) Attached', description: `Successfully attached ${files.length} file(s).` });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      toast({ title: 'Upload Failed', description: err.message || 'Failed to upload email file.', variant: 'destructive' });
+    } finally {
+      setUploadingEmail(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteAttachment = async (attachment: any) => {
+    try {
+      await supabase.storage.from('email-attachments').remove([attachment.file_path]);
+      await supabase.from('quotation_email_attachments').delete().eq('id', attachment.id);
+      toast({ title: 'Deleted', description: 'Email attachment removed.' });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment: any) => {
+    const { data } = await supabase.storage
+      .from('email-attachments')
+      .createSignedUrl(attachment.file_path, 60);
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, '_blank');
+    }
+  };
 
   const handleResendEmail = useCallback(async (email: any) => {
     setResendingId(email.id);
@@ -562,6 +644,67 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
               </div>
             </div>
           )}
+
+          {/* Attached Outlook Emails - not printed */}
+          <div className="pt-6 border-t no-print">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                ATTACHED EMAILS ({emailAttachments.length})
+              </h2>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".eml,.msg"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUploadEmailFile(e.target.files)}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={uploadingEmail}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploadingEmail ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <Upload className="w-3 h-3 mr-1" />
+                  )}
+                  {uploadingEmail ? 'Uploading...' : 'Attach Email'}
+                </Button>
+              </div>
+            </div>
+            {emailAttachments.length > 0 ? (
+              <div className="space-y-2">
+                {emailAttachments.map((att) => (
+                  <div key={att.id} className="flex items-center justify-between text-sm py-2 px-3 rounded-md bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-primary shrink-0" />
+                      <div>
+                        <span className="text-foreground font-medium">{att.file_name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({(att.file_size / 1024).toFixed(0)} KB)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{formatDate(new Date(att.uploaded_at))}</span>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleDownloadAttachment(att)} title="Download">
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => handleDeleteAttachment(att)} title="Delete">
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">No Outlook emails attached. Click "Attach Email" to upload .eml or .msg files.</p>
+            )}
+          </div>
 
           {/* Print Footer */}
           <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">

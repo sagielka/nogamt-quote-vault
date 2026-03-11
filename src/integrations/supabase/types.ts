@@ -235,6 +235,44 @@ export type Database = {
         }
         Relationships: []
       }
+      quotation_email_attachments: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          quotation_id: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size?: number
+          id?: string
+          quotation_id: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          quotation_id?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_email_attachments_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotations: {
         Row: {
           attachments: Json | null

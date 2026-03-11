@@ -550,17 +550,33 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-2">
-            <input
-              type="checkbox"
-              id="saveCustomer"
-              checked={saveCustomer}
-              onChange={(e) => setSaveCustomer(e.target.checked)}
-              className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
-            />
-            <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
-              Save customer for future quotations
-            </Label>
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="saveCustomer"
+                checked={saveCustomer}
+                onChange={(e) => setSaveCustomer(e.target.checked)}
+                className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
+              />
+              <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
+                Save customer for future quotations
+              </Label>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!clientName || !clientEmail || (() => {
+                const emails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+                return emails.length === 0 || emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+              })()}
+              onClick={async () => {
+                await saveCustomerToDatabase();
+              }}
+            >
+              Save Customer
+            </Button>
           </div>
         </CardContent>
       </Card>

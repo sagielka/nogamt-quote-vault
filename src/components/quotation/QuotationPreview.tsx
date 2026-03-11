@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
@@ -49,6 +49,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSentEmails = async () => {
@@ -61,6 +62,52 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     };
     fetchSentEmails();
   }, [quotation.id]);
+
+  const handleResendEmail = useCallback(async (email: any) => {
+    setResendingId(email.id);
+    try {
+      const recipients = (email.recipient_emails || []).map((e: string) => ({
+        email: e,
+        name: quotation.clientName,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('send-customer-email', {
+        body: {
+          recipients,
+          subject: email.subject,
+          message: email.body_html,
+          messageHtml: email.body_html,
+          cc: email.cc_emails || [],
+          bcc: email.bcc_emails || [],
+          quotationId: quotation.id,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Email Resent',
+        description: `Successfully resent to ${data?.sent || recipients.length} recipient(s).`,
+      });
+
+      // Refresh sent emails list
+      const { data: updated } = await supabase
+        .from('sent_emails')
+        .select('*')
+        .eq('quotation_id', quotation.id)
+        .order('sent_at', { ascending: false });
+      if (updated) setSentEmails(updated);
+    } catch (err: any) {
+      console.error('Resend failed:', err);
+      toast({
+        title: 'Resend Failed',
+        description: err.message || 'Failed to resend email.',
+        variant: 'destructive',
+      });
+    } finally {
+      setResendingId(null);
+    }
+  }, [quotation.id, quotation.clientName, toast]);
 
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
@@ -433,6 +480,21 @@ Noga Engineering & Technology Ltd.`;
                           className="mt-2 text-sm text-foreground bg-background rounded p-3 max-h-60 overflow-y-auto border"
                           dangerouslySetInnerHTML={{ __html: email.body_html }}
                         />
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={resendingId === email.id}
+                            onClick={() => handleResendEmail(email)}
+                          >
+                            {resendingId === email.id ? (
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <Forward className="w-3 h-3 mr-1" />
+                            )}
+                            Resend
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

@@ -47,6 +47,21 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
   const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
+  const [sentEmails, setSentEmails] = useState<any[]>([]);
+  const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSentEmails = async () => {
+      const { data } = await supabase
+        .from('sent_emails')
+        .select('*')
+        .eq('quotation_id', quotation.id)
+        .order('sent_at', { ascending: false });
+      if (data) setSentEmails(data);
+    };
+    fetchSentEmails();
+  }, [quotation.id]);
+
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;

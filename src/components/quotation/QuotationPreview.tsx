@@ -386,8 +386,20 @@ Noga Engineering & Technology Ltd.`;
                 <Input id="preview-edit-name" value={editClientName} onChange={(e) => setEditClientName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="preview-edit-email">Email</Label>
-                <Input id="preview-edit-email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)} />
+                <Label htmlFor="preview-edit-email">Email(s)</Label>
+                <Input
+                  id="preview-edit-email"
+                  value={editClientEmail}
+                  onChange={(e) => setEditClientEmail(e.target.value)}
+                  placeholder="email@example.com, another@example.com"
+                />
+                <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
+                {editClientEmail && (() => {
+                  const invalid = editClientEmail.split(',').map(e => e.trim()).filter(e => e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+                  return invalid.length > 0 ? (
+                    <p className="text-xs text-destructive">Invalid: {invalid.join(', ')}</p>
+                  ) : null;
+                })()}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="preview-edit-address">Address</Label>
@@ -396,14 +408,20 @@ Noga Engineering & Technology Ltd.`;
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditCustomerOpen(false)}>Cancel</Button>
-              <Button onClick={() => {
-                onEditCustomer(quotation.id, {
-                  clientName: editClientName,
-                  clientEmail: editClientEmail,
-                  clientAddress: editClientAddress,
-                });
-                setEditCustomerOpen(false);
-              }}>Save</Button>
+              <Button
+                disabled={(() => {
+                  const emails = editClientEmail.split(',').map(e => e.trim()).filter(Boolean);
+                  return emails.length === 0 || emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+                })()}
+                onClick={() => {
+                  onEditCustomer(quotation.id, {
+                    clientName: editClientName,
+                    clientEmail: editClientEmail.split(',').map(e => e.trim()).filter(Boolean).join(', '),
+                    clientAddress: editClientAddress,
+                  });
+                  setEditCustomerOpen(false);
+                }}
+              >Save</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

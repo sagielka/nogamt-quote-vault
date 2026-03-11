@@ -31,10 +31,99 @@ const loadImageAsBase64 = (src: string): Promise<{ data: string; width: number; 
   });
 };
 
+// Helper to detect if text contains Hebrew characters
+const containsHebrew = (text: string): boolean => /[\u0590-\u05FF]/.test(text);
+
+// Helper to reverse Hebrew text for RTL display in jsPDF
+const processText = (text: string): string => {
+  if (!containsHebrew(text)) return text;
+  // Reverse the string for RTL display since jsPDF doesn't natively support RTL
+  const segments: { text: string; isHebrew: boolean }[] = [];
+  let current = '';
+  let currentIsHebrew = false;
+  
+  for (const char of text) {
+    const charIsHebrew = /[\u0590-\u05FF]/.test(char);
+    if (current === '') {
+      currentIsHebrew = charIsHebrew;
+      current = char;
+    } else if (charIsHebrew === currentIsHebrew || char === ' ' || char === '"' || char === "'" || char === '.' || char === ',') {
+      current += char;
+    } else {
+      segments.push({ text: current, isHebrew: currentIsHebrew });
+      current = char;
+      currentIsHebrew = charIsHebrew;
+    }
+  }
+  if (current) {
+    segments.push({ text: current, isHebrew: currentIsHebrew });
+  }
+  
+  // Reverse the order of segments and reverse Hebrew segments internally
+  const reversed = segments.reverse().map(seg => {
+    if (seg.isHebrew) {
+      return seg.text.split('').reverse().join('');
+    }
+    return seg.text;
+  });
+  
+  return reversed.join('');
+};
+
+// Load font as base64
+const loadFontAsBase64 = async (url: string): Promise<string> => {
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
+
+// Register NotoSans fonts with jsPDF
+let fontsRegistered = false;
+const registerFonts = async (pdf: jsPDF) => {
+  try {
+    const [regularBase64, boldBase64] = await Promise.all([
+      loadFontAsBase64('/fonts/NotoSans-Regular.ttf'),
+      loadFontAsBase64('/fonts/NotoSans-Bold.ttf'),
+    ]);
+    
+    pdf.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
+    pdf.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    
+    pdf.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
+    pdf.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    
+    fontsRegistered = true;
+  } catch (e) {
+    console.warn('Could not load NotoSans fonts, falling back to helvetica:', e);
+    fontsRegistered = false;
+  }
+};
+
+// Helper to set font - uses NotoSans if available, falls back to helvetica
+const setFont = (pdf: jsPDF, style: 'normal' | 'bold' = 'normal') => {
+  if (fontsRegistered) {
+    pdf.setFont('NotoSans', style);
+  } else {
+    pdf.setFont('helvetica', style);
+  }
+};
+
+// Helper to get text alignment for potentially Hebrew text
+const getAlign = (text: string, defaultAlign: string = 'left'): string => {
+  if (containsHebrew(text)) return 'right';
+  return defaultAlign;
+};
+
 // Helper to wrap text and return lines
 const wrapText = (pdf: jsPDF, text: string, maxWidth: number): string[] => {
   if (!text) return [''];
-  return pdf.splitTextToSize(text, maxWidth) as string[];
+  const processed = processText(text);
+  return pdf.splitTextToSize(processed, maxWidth) as string[];
 };
 
 export const generateQuotationPdf = async (quotation: Quotation): Promise<GeneratedPdf> => {
@@ -50,6 +139,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     format: 'a4',
     compress: true,
   });
+
+  // Register Unicode fonts
+  await registerFonts(pdf);
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -93,7 +185,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
   // Title
   pdf.setFontSize(18);
-  pdf.setFont('helvetica', 'bold');
+  setFont(pdf, 'bold');
   pdf.setTextColor(...cyan);
   const titleText = 'QUOTATION  ';
   const titleWidth = pdf.getTextWidth(titleText);
@@ -110,7 +202,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
   // Dates - right aligned
   pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
+  setFont(pdf, 'normal');
   pdf.setTextColor(...gray);
   const createdText = `Created: ${formatDate(quotation.createdAt)}`;
   const validText = `Valid Until: ${formatDate(quotation.validUntil)}`;
@@ -128,17 +220,23 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   // Bill To
   pdf.setFontSize(8);
   pdf.setTextColor(...gray);
-  pdf.setFont('helvetica', 'normal');
+  setFont(pdf, 'normal');
   pdf.text('BILL TO', margin, y);
   y += 5;
 
   pdf.setFontSize(10);
   pdf.setTextColor(...black);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text(quotation.clientName, margin, y);
+  setFont(pdf, 'bold');
+  const clientNameProcessed = processText(quotation.clientName);
+  const clientNameIsHebrew = containsHebrew(quotation.clientName);
+  if (clientNameIsHebrew) {
+    pdf.text(clientNameProcessed, pageWidth - margin, y, { align: 'right' });
+  } else {
+    pdf.text(clientNameProcessed, margin, y);
+  }
   y += 4.5;
 
-  pdf.setFont('helvetica', 'normal');
+  setFont(pdf, 'normal');
   pdf.setTextColor(...gray);
   pdf.setFontSize(9);
   pdf.text(quotation.clientEmail, margin, y);
@@ -147,7 +245,13 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   if (quotation.clientAddress) {
     const addressLines = quotation.clientAddress.split('\n');
     for (const line of addressLines) {
-      pdf.text(line, margin, y);
+      const processedLine = processText(line);
+      const lineIsHebrew = containsHebrew(line);
+      if (lineIsHebrew) {
+        pdf.text(processedLine, pageWidth - margin, y, { align: 'right' });
+      } else {
+        pdf.text(processedLine, margin, y);
+      }
       y += 4;
     }
   }
@@ -168,7 +272,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const descWidth = 53;
 
   pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
+  setFont(pdf, 'bold');
   pdf.setTextColor(...gray);
   pdf.text('#', colX.num, y);
   pdf.text('SKU', colX.sku, y);
@@ -186,7 +290,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   y += 5;
 
   // Table rows
-  pdf.setFont('helvetica', 'normal');
+  setFont(pdf, 'normal');
   pdf.setFontSize(8);
 
   for (let i = 0; i < quotation.items.length; i++) {
@@ -212,11 +316,11 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.setTextColor(...gray);
     pdf.text(String(i + 1), colX.num, rowY);
 
-    pdf.setFont('helvetica', 'normal');
+    setFont(pdf, 'normal');
     pdf.setFontSize(8);
     pdf.text(item.sku || '—', colX.sku, rowY);
 
-    pdf.setFont('helvetica', 'normal');
+    setFont(pdf, 'normal');
     pdf.setFontSize(8);
     pdf.setTextColor(...black);
     pdf.text(descLines, colX.desc, rowY);
@@ -236,9 +340,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
 
     pdf.setTextColor(...black);
-    pdf.setFont('helvetica', 'bold');
+    setFont(pdf, 'bold');
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
-    pdf.setFont('helvetica', 'normal');
+    setFont(pdf, 'normal');
 
     y += rowHeight + 3;
 
@@ -262,7 +366,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const totalsValueX = pageWidth - margin;
 
   pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'normal');
+  setFont(pdf, 'normal');
   pdf.setTextColor(...gray);
   pdf.text('Subtotal', totalsX, y);
   pdf.setTextColor(...black);
@@ -293,7 +397,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   y += 5;
 
   pdf.setFontSize(11);
-  pdf.setFont('helvetica', 'bold');
+  setFont(pdf, 'bold');
   pdf.setTextColor(...black);
   pdf.text('Total', totalsX, y);
   pdf.setTextColor(...cyan);
@@ -313,7 +417,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     y += 5;
 
     pdf.setFontSize(8);
-    pdf.setFont('helvetica', 'normal');
+    setFont(pdf, 'normal');
     pdf.setTextColor(...gray);
     pdf.text('NOTES', margin, y);
     y += 4;
@@ -336,11 +440,11 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   pdf.line(margin, fY - 3, pageWidth - margin, fY - 3);
 
   pdf.setFontSize(8);
-  pdf.setFont('helvetica', 'bold');
+  setFont(pdf, 'bold');
   pdf.setTextColor(...black);
   pdf.text('Noga Engineering & Technology Ltd.', pageWidth / 2, fY, { align: 'center' });
 
-  pdf.setFont('helvetica', 'normal');
+  setFont(pdf, 'normal');
   pdf.setFontSize(7);
   pdf.setTextColor(...gray);
   pdf.text('Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel', pageWidth / 2, fY + 4, { align: 'center' });

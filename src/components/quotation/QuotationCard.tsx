@@ -487,7 +487,6 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </Dialog>
     </Card>
   );
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
 import { searchProducts, ProductItem, PriceList, PRICE_LISTS, getPriceListBaseCurrency, convertPrice, getProductPrice } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemWithSku } from './LineItemWithSku';
-import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search } from 'lucide-react';
+import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search, Paperclip, Upload, ExternalLink, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +34,7 @@ import {
 
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
-  initialData?: Partial<QuotationFormData>;
+  initialData?: Partial<QuotationFormData> & { id?: string };
   isEditing?: boolean;
 }
 
@@ -175,6 +175,12 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [editAddress, setEditAddress] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
+  const emailFileInputRef = useRef<HTMLInputElement>(null);
+  const [isDraggingEmail, setIsDraggingEmail] = useState(false);
+  const emailDragCounterRef = useRef(0);
+  const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
+  const [uploadingEmail, setUploadingEmail] = useState(false);
+  const quotationId = initialData?.id;
 
   useEffect(() => {
     fetchCustomers().then(() => {
@@ -192,7 +198,76 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     });
   }, []);
 
-  // Handle price list change - update all existing items with prices from new list
+  // Email attachments
+  const refreshEmailAttachments = useCallback(async () => {
+    if (!quotationId) return;
+    const { data } = await supabase
+      .from('quotation_email_attachments')
+      .select('*')
+      .eq('quotation_id', quotationId)
+      .order('uploaded_at', { ascending: false });
+    if (data) setEmailAttachments(data);
+  }, [quotationId]);
+
+  useEffect(() => {
+    if (isEditing && quotationId) {
+      refreshEmailAttachments();
+    }
+  }, [isEditing, quotationId, refreshEmailAttachments]);
+
+  const handleUploadEmailFile = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !user || !quotationId) return;
+    setUploadingEmail(true);
+    try {
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (!['eml', 'msg'].includes(ext || '')) {
+          toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
+          continue;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
+          continue;
+        }
+        const filePath = `${quotationId}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage.from('email-attachments').upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const { error: dbError } = await supabase.from('quotation_email_attachments').insert({
+          quotation_id: quotationId,
+          user_id: user.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_size: file.size,
+        });
+        if (dbError) throw dbError;
+      }
+      toast({ title: 'Email(s) Attached', description: `Successfully attached ${files.length} file(s).` });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      toast({ title: 'Upload Failed', description: err.message || 'Failed to upload.', variant: 'destructive' });
+    } finally {
+      setUploadingEmail(false);
+      if (emailFileInputRef.current) emailFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteEmailAttachment = async (attachment: any) => {
+    try {
+      await supabase.storage.from('email-attachments').remove([attachment.file_path]);
+      await supabase.from('quotation_email_attachments').delete().eq('id', attachment.id);
+      toast({ title: 'Deleted', description: 'Email attachment removed.' });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDownloadEmailAttachment = async (attachment: any) => {
+    const { data } = await supabase.storage.from('email-attachments').createSignedUrl(attachment.file_path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  };
+
+
   const handlePriceListChange = (newPriceList: PriceList) => {
     const baseCurrency = getPriceListBaseCurrency(newPriceList);
     
@@ -893,6 +968,128 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         </CardContent>
       </Card>
 
+      {/* Email Attachments - only when editing */}
+      {isEditing && quotationId && (
+        <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
+          <CardHeader className="border-b border-primary/10">
+            <CardTitle className="heading-display text-lg flex items-center gap-3">
+              <span className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                <Paperclip className="w-5 h-5 text-primary" />
+              </span>
+              <span className="glow-text text-primary">Email Attachments</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent ml-4" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div
+              className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDraggingEmail
+                  ? 'border-primary bg-primary/10'
+                  : 'border-primary/20 hover:border-primary/40'
+              }`}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                emailDragCounterRef.current++;
+                setIsDraggingEmail(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                emailDragCounterRef.current--;
+                if (emailDragCounterRef.current === 0) setIsDraggingEmail(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                emailDragCounterRef.current = 0;
+                setIsDraggingEmail(false);
+                handleUploadEmailFile(e.dataTransfer.files);
+              }}
+            >
+              {isDraggingEmail && (
+                <div className="absolute inset-0 flex items-center justify-center bg-primary/10 rounded-lg z-10">
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="w-8 h-8 text-primary animate-bounce" />
+                    <span className="text-sm font-medium text-primary">Drop email files here</span>
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-col items-center gap-3">
+                <Upload className="w-6 h-6 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Drag & drop .eml or .msg files here, or
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingEmail}
+                  onClick={() => emailFileInputRef.current?.click()}
+                  className="border-primary/30 hover:border-primary/50"
+                >
+                  {uploadingEmail ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</>
+                  ) : (
+                    <><Paperclip className="w-4 h-4 mr-2" /> Browse Files</>
+                  )}
+                </Button>
+                <input
+                  ref={emailFileInputRef}
+                  type="file"
+                  accept=".eml,.msg"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUploadEmailFile(e.target.files)}
+                />
+              </div>
+            </div>
+
+            {emailAttachments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {emailAttachments.map((att) => (
+                  <div
+                    key={att.id}
+                    className="flex items-center justify-between gap-2 p-2 rounded-md bg-secondary/50 border border-primary/10"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <span className="text-sm truncate">{att.file_name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        ({(att.file_size / 1024).toFixed(0)} KB)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => handleDownloadEmailAttachment(att)}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteEmailAttachment(att)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
       <div className="flex gap-3 justify-end">
         <Button 
           type="submit" 

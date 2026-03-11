@@ -34,7 +34,7 @@ import {
 
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
-  initialData?: Partial<QuotationFormData>;
+  initialData?: Partial<QuotationFormData> & { id?: string };
   isEditing?: boolean;
 }
 

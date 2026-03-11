@@ -292,9 +292,13 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" onClick={handleEmailQuote}>
-            <Mail className="w-4 h-4 mr-2" />
-            Email
+          <Button variant="outline" onClick={handleEmailQuote} disabled={sendingQuote}>
+            {sendingQuote ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {sendingQuote ? 'Sending...' : 'Send Email'}
           </Button>
           <Button variant="accent" onClick={handleDownloadPdf}>
             <Download className="w-4 h-4 mr-2" />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
 import { searchProducts, ProductItem, PriceList, PRICE_LISTS, getPriceListBaseCurrency, convertPrice, getProductPrice } from '@/data/product-catalog';
 import { createEmptyLineItem, calculateSubtotal, calculateTax, calculateTotal, formatCurrency, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';

@@ -113,13 +113,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
         description: `Successfully resent to ${data?.sent || recipients.length} recipient(s).`,
       });
 
-      // Refresh sent emails list
-      const { data: updated } = await supabase
-        .from('sent_emails')
-        .select('*')
-        .eq('quotation_id', quotation.id)
-        .order('sent_at', { ascending: false });
-      if (updated) setSentEmails(updated);
+      await refreshSentEmails();
     } catch (err: any) {
       console.error('Resend failed:', err);
       toast({
@@ -130,7 +124,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     } finally {
       setResendingId(null);
     }
-  }, [quotation.id, quotation.clientName, toast]);
+  }, [quotation.id, quotation.clientName, toast, refreshSentEmails]);
 
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);

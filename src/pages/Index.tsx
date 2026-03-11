@@ -306,6 +306,35 @@ const Index = () => {
     });
   };
 
+  const handleEditCustomer = async (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => {
+    await updateQuotation(id, {
+      clientName: data.clientName,
+      clientEmail: data.clientEmail,
+      clientAddress: data.clientAddress,
+    });
+
+    // Also update the customer record if it exists
+    if (user) {
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', data.clientEmail)
+        .single();
+
+      if (existingCustomer) {
+        await supabase
+          .from('customers')
+          .update({ name: data.clientName, email: data.clientEmail, address: data.clientAddress || null })
+          .eq('id', existingCustomer.id);
+      }
+    }
+
+    toast({
+      title: 'Customer Updated',
+      description: 'Customer details have been updated on the quotation.',
+    });
+  };
+
   const handleCreatorChange = async (id: string, newUserId: string) => {
     try {
       const { error } = await supabase
@@ -522,9 +551,10 @@ const Index = () => {
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}
                       onDuplicate={handleDuplicateQuotation}
-                      onStatusChange={handleStatusChange}
-                      onCreatorChange={handleCreatorChange}
-                    />
+                       onStatusChange={handleStatusChange}
+                       onCreatorChange={handleCreatorChange}
+                       onEditCustomer={handleEditCustomer}
+                     />
                   ))}
                   {filteredQuotations.length === 0 && searchQuery && (
                     <p className="text-center text-sm text-muted-foreground py-8">

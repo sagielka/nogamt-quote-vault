@@ -25,7 +25,10 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
@@ -44,6 +47,7 @@ interface QuotationCardProps {
   onDuplicate: (id: string) => void;
   onStatusChange?: (id: string, status: Quotation['status']) => void;
   onCreatorChange?: (id: string, newUserId: string) => void;
+  onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }
 
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -74,10 +78,14 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange, onEditCustomer }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [editClientName, setEditClientName] = useState(quotation.clientName);
+  const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
+  const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   const handleDownloadPdf = async (e: React.MouseEvent) => {
@@ -182,9 +190,19 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 )}
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                <span className="flex items-center gap-1 truncate">
+                <span 
+                  className="flex items-center gap-1 truncate cursor-pointer hover:text-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditClientName(quotation.clientName);
+                    setEditClientEmail(quotation.clientEmail);
+                    setEditClientAddress(quotation.clientAddress);
+                    setEditCustomerOpen(true);
+                  }}
+                >
                   <User className="w-3 h-3 shrink-0" />
                   {quotation.clientName}
+                  <UserPen className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" />
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3 shrink-0" />
@@ -417,6 +435,40 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
           </div>
         </div>
       </CardContent>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={editCustomerOpen} onOpenChange={setEditCustomerOpen}>
+        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Edit Customer Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-client-name">Name</Label>
+              <Input id="edit-client-name" value={editClientName} onChange={(e) => setEditClientName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-client-email">Email</Label>
+              <Input id="edit-client-email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-client-address">Address</Label>
+              <Input id="edit-client-address" value={editClientAddress} onChange={(e) => setEditClientAddress(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCustomerOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              onEditCustomer?.(quotation.id, {
+                clientName: editClientName,
+                clientEmail: editClientEmail,
+                clientAddress: editClientAddress,
+              });
+              setEditCustomerOpen(false);
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

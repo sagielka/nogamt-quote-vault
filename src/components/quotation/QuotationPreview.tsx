@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
@@ -33,10 +37,15 @@ interface QuotationPreviewProps {
   emailTracking?: EmailTrackingRecord[];
   onBack: () => void;
   onEdit?: () => void;
+  onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }
 
-export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit }: QuotationPreviewProps) => {
+export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer }: QuotationPreviewProps) => {
   const { toast } = useToast();
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [editClientName, setEditClientName] = useState(quotation.clientName);
+  const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
+  const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;
@@ -204,8 +213,23 @@ Noga Engineering & Technology Ltd.`;
           </div>
 
           {/* Client Info */}
-          <div className="mb-8">
-            <h2 className="text-sm font-medium text-muted-foreground mb-2 print:text-gray-500">BILL TO</h2>
+          <div className="mb-8 group/client">
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-sm font-medium text-muted-foreground print:text-gray-500">BILL TO</h2>
+              {onEditCustomer && (
+                <button
+                  className="no-print opacity-0 group-hover/client:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setEditClientName(quotation.clientName);
+                    setEditClientEmail(quotation.clientEmail);
+                    setEditClientAddress(quotation.clientAddress);
+                    setEditCustomerOpen(true);
+                  }}
+                >
+                  <UserPen className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
             <p className="font-semibold text-foreground print:text-gray-900">{quotation.clientName}</p>
             <p className="text-muted-foreground print:text-gray-600">{quotation.clientEmail}</p>
             {quotation.clientAddress && (
@@ -348,6 +372,42 @@ Noga Engineering & Technology Ltd.`;
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Customer Dialog */}
+      {onEditCustomer && (
+        <Dialog open={editCustomerOpen} onOpenChange={setEditCustomerOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Customer Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="preview-edit-name">Name</Label>
+                <Input id="preview-edit-name" value={editClientName} onChange={(e) => setEditClientName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="preview-edit-email">Email</Label>
+                <Input id="preview-edit-email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="preview-edit-address">Address</Label>
+                <Input id="preview-edit-address" value={editClientAddress} onChange={(e) => setEditClientAddress(e.target.value)} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditCustomerOpen(false)}>Cancel</Button>
+              <Button onClick={() => {
+                onEditCustomer(quotation.id, {
+                  clientName: editClientName,
+                  clientEmail: editClientEmail,
+                  clientAddress: editClientAddress,
+                });
+                setEditCustomerOpen(false);
+              }}>Save</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

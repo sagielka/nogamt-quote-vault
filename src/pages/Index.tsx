@@ -615,6 +615,7 @@ const Index = () => {
             onEdit={() => {
               setCurrentView('edit');
             }}
+            onEditCustomer={handleEditCustomer}
           />
         )}
 

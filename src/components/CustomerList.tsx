@@ -796,9 +796,17 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                       <span className="line-clamp-2">{customer.address}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 pt-1">
+                  <div
+                    className={`flex items-center gap-2 pt-1 ${customer.quotation_count ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                    onClick={(e) => {
+                      if (customer.quotation_count) {
+                        e.stopPropagation();
+                        onSelectCustomer?.(customer.name);
+                      }
+                    }}
+                  >
                     <FileText className="w-3 h-3 shrink-0" />
-                    <span>
+                    <span className={customer.quotation_count ? 'underline underline-offset-2' : ''}>
                       {customer.quotation_count} quotation{customer.quotation_count !== 1 ? 's' : ''}
                     </span>
                   </div>

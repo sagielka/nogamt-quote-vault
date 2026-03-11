@@ -435,6 +435,40 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
           </div>
         </div>
       </CardContent>
+
+      {/* Edit Customer Dialog */}
+      <Dialog open={editCustomerOpen} onOpenChange={setEditCustomerOpen}>
+        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Edit Customer Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-client-name">Name</Label>
+              <Input id="edit-client-name" value={editClientName} onChange={(e) => setEditClientName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-client-email">Email</Label>
+              <Input id="edit-client-email" value={editClientEmail} onChange={(e) => setEditClientEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-client-address">Address</Label>
+              <Input id="edit-client-address" value={editClientAddress} onChange={(e) => setEditClientAddress(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCustomerOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              onEditCustomer?.(quotation.id, {
+                clientName: editClientName,
+                clientEmail: editClientEmail,
+                clientAddress: editClientAddress,
+              });
+              setEditCustomerOpen(false);
+            }}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

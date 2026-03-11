@@ -551,9 +551,10 @@ const Index = () => {
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}
                       onDuplicate={handleDuplicateQuotation}
-                      onStatusChange={handleStatusChange}
-                      onCreatorChange={handleCreatorChange}
-                    />
+                       onStatusChange={handleStatusChange}
+                       onCreatorChange={handleCreatorChange}
+                       onEditCustomer={handleEditCustomer}
+                     />
                   ))}
                   {filteredQuotations.length === 0 && searchQuery && (
                     <p className="text-center text-sm text-muted-foreground py-8">

@@ -40,8 +40,12 @@ interface QuotationPreviewProps {
   onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }
 
-export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit }: QuotationPreviewProps) => {
+export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer }: QuotationPreviewProps) => {
   const { toast } = useToast();
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [editClientName, setEditClientName] = useState(quotation.clientName);
+  const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
+  const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;

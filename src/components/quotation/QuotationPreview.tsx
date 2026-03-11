@@ -46,6 +46,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
@@ -646,7 +648,40 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           )}
 
           {/* Attached Outlook Emails - not printed */}
-          <div className="pt-6 border-t no-print">
+          <div
+            className={`pt-6 border-t no-print relative transition-colors ${isDragging ? 'bg-primary/5 border-primary/30 rounded-lg' : ''}`}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dragCounterRef.current++;
+              setIsDragging(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dragCounterRef.current--;
+              if (dragCounterRef.current === 0) setIsDragging(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dragCounterRef.current = 0;
+              setIsDragging(false);
+              handleUploadEmailFile(e.dataTransfer.files);
+            }}
+          >
+            {isDragging && (
+              <div className="absolute inset-0 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg z-10 pointer-events-none">
+                <div className="text-center">
+                  <Upload className="w-8 h-8 text-primary mx-auto mb-2" />
+                  <p className="text-sm font-medium text-primary">Drop .eml or .msg files here</p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Paperclip className="w-4 h-4" />
@@ -702,7 +737,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground italic">No Outlook emails attached. Click "Attach Email" to upload .eml or .msg files.</p>
+              <p className="text-xs text-muted-foreground italic">No Outlook emails attached. Drag & drop or click "Attach Email" to upload .eml or .msg files.</p>
             )}
           </div>
 

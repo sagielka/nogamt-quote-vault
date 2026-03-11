@@ -486,12 +486,12 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             </div>
           )}
 
-          {/* Sent Emails History - not printed */}
+          {/* Email Correspondence - not printed */}
           {sentEmails.length > 0 && (
             <div className="pt-6 border-t no-print">
               <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                SENT EMAILS ({sentEmails.length})
+                EMAIL CORRESPONDENCE ({sentEmails.length})
               </h2>
               <div className="space-y-2">
                 {sentEmails.map((email) => (

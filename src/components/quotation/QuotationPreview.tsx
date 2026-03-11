@@ -52,17 +52,39 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
 
+  const refreshSentEmails = useCallback(async () => {
+    // Get emails for this quotation AND emails sent to this customer's email addresses
+    const clientEmails = quotation.clientEmail.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    
+    const { data: byQuotation } = await supabase
+      .from('sent_emails')
+      .select('*')
+      .eq('quotation_id', quotation.id)
+      .order('sent_at', { ascending: false });
+
+    const { data: byRecipient } = await supabase
+      .from('sent_emails')
+      .select('*')
+      .order('sent_at', { ascending: false });
+
+    // Merge: emails linked to this quotation + emails sent to same client addresses
+    const quotationEmails = byQuotation || [];
+    const quotationIds = new Set(quotationEmails.map(e => e.id));
+    
+    const recipientEmails = (byRecipient || []).filter(e => {
+      if (quotationIds.has(e.id)) return false;
+      const recipients = (e.recipient_emails || []).map((r: string) => r.toLowerCase());
+      return clientEmails.some(ce => recipients.includes(ce));
+    });
+
+    setSentEmails([...quotationEmails, ...recipientEmails].sort(
+      (a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
+    ));
+  }, [quotation.id, quotation.clientEmail]);
+
   useEffect(() => {
-    const fetchSentEmails = async () => {
-      const { data } = await supabase
-        .from('sent_emails')
-        .select('*')
-        .eq('quotation_id', quotation.id)
-        .order('sent_at', { ascending: false });
-      if (data) setSentEmails(data);
-    };
-    fetchSentEmails();
-  }, [quotation.id]);
+    refreshSentEmails();
+  }, [refreshSentEmails]);
 
   const handleResendEmail = useCallback(async (email: any) => {
     setResendingId(email.id);

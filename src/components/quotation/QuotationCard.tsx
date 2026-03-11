@@ -47,6 +47,7 @@ interface QuotationCardProps {
   onDuplicate: (id: string) => void;
   onStatusChange?: (id: string, status: Quotation['status']) => void;
   onCreatorChange?: (id: string, newUserId: string) => void;
+  onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }
 
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 week

@@ -34,40 +34,28 @@ const loadImageAsBase64 = (src: string): Promise<{ data: string; width: number; 
 // Helper to detect if text contains Hebrew characters
 const containsHebrew = (text: string): boolean => /[\u0590-\u05FF]/.test(text);
 
-// Helper to reverse Hebrew text for RTL display in jsPDF
+// Process text for RTL rendering in jsPDF
+// jsPDF renders characters left-to-right, so Hebrew words need to be reversed at the character level,
+// and the overall word order for Hebrew text needs to be reversed.
 const processText = (text: string): string => {
   if (!containsHebrew(text)) return text;
-  // Reverse the string for RTL display since jsPDF doesn't natively support RTL
-  const segments: { text: string; isHebrew: boolean }[] = [];
-  let current = '';
-  let currentIsHebrew = false;
   
-  for (const char of text) {
-    const charIsHebrew = /[\u0590-\u05FF]/.test(char);
-    if (current === '') {
-      currentIsHebrew = charIsHebrew;
-      current = char;
-    } else if (charIsHebrew === currentIsHebrew || char === ' ' || char === '"' || char === "'" || char === '.' || char === ',') {
-      current += char;
-    } else {
-      segments.push({ text: current, isHebrew: currentIsHebrew });
-      current = char;
-      currentIsHebrew = charIsHebrew;
-    }
-  }
-  if (current) {
-    segments.push({ text: current, isHebrew: currentIsHebrew });
-  }
+  // Split into words
+  const words = text.split(' ');
   
-  // Reverse the order of segments and reverse Hebrew segments internally
-  const reversed = segments.reverse().map(seg => {
-    if (seg.isHebrew) {
-      return seg.text.split('').reverse().join('');
+  // Process each word: reverse Hebrew words character-by-character
+  const processedWords = words.map(word => {
+    if (containsHebrew(word)) {
+      // Reverse the characters in Hebrew words
+      return word.split('').reverse().join('');
     }
-    return seg.text;
+    return word;
   });
   
-  return reversed.join('');
+  // Reverse the overall word order for RTL layout
+  processedWords.reverse();
+  
+  return processedWords.join(' ');
 };
 
 // Load font as base64

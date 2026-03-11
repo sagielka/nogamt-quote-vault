@@ -78,10 +78,14 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange, onEditCustomer }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [editCustomerOpen, setEditCustomerOpen] = useState(false);
+  const [editClientName, setEditClientName] = useState(quotation.clientName);
+  const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
+  const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   const handleDownloadPdf = async (e: React.MouseEvent) => {

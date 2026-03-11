@@ -34,14 +34,48 @@ const loadImageAsBase64 = (src: string): Promise<{ data: string; width: number; 
 // Helper to detect if text contains Hebrew characters
 const containsHebrew = (text: string): boolean => /[\u0590-\u05FF]/.test(text);
 
+// Split text into directional runs (Hebrew vs non-Hebrew segments)
+const splitBidiRuns = (text: string): { text: string; isHebrew: boolean }[] => {
+  const runs: { text: string; isHebrew: boolean }[] = [];
+  const regex = /([\u0590-\u05FF\u0027\u0022]+(?:\s+[\u0590-\u05FF\u0027\u0022]+)*)|([^\u0590-\u05FF]+)/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match[1]) {
+      runs.push({ text: match[1], isHebrew: true });
+    } else if (match[2]) {
+      runs.push({ text: match[2], isHebrew: false });
+    }
+  }
+  return runs;
+};
+
 // Process text for RTL rendering in jsPDF
-// jsPDF renders characters left-to-right, so for Hebrew text we reverse the entire string
-// character by character. This makes the visual output appear correctly RTL.
+// jsPDF always renders LTR, so we need to manually reorder for correct visual display.
+// For mixed bidi text: reverse Hebrew runs internally, then reverse overall run order.
 const processText = (text: string): string => {
   if (!containsHebrew(text)) return text;
   
-  // Reverse the entire string character by character for correct RTL rendering
-  return text.split('').reverse().join('');
+  const runs = splitBidiRuns(text);
+  
+  // If pure Hebrew (single run), just reverse characters
+  if (runs.length === 1 && runs[0].isHebrew) {
+    return text.split('').reverse().join('');
+  }
+  
+  // For mixed content: reverse each Hebrew run's characters, keep LTR runs as-is,
+  // then reverse the order of all runs so RTL base direction is correct
+  const processedRuns = runs.map(run => {
+    if (run.isHebrew) {
+      // Reverse characters within Hebrew run
+      return run.text.split('').reverse().join('');
+    }
+    return run.text;
+  });
+  
+  // Reverse run order for RTL base direction
+  processedRuns.reverse();
+  
+  return processedRuns.join('');
 };
 
 // Load font as base64

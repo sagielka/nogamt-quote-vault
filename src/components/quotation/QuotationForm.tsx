@@ -152,6 +152,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [clientName, setClientName] = useState(initialData?.clientName || '');
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || '');
   const [clientAddress, setClientAddress] = useState(initialData?.clientAddress || '');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [quoteNumber, setQuoteNumber] = useState(initialData?.quoteNumber || '');
   const [items, setItems] = useState<LineItem[]>(
     initialData?.items || [createEmptyLineItem()]

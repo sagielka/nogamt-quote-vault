@@ -63,6 +63,52 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     fetchSentEmails();
   }, [quotation.id]);
 
+  const handleResendEmail = useCallback(async (email: any) => {
+    setResendingId(email.id);
+    try {
+      const recipients = (email.recipient_emails || []).map((e: string) => ({
+        email: e,
+        name: quotation.clientName,
+      }));
+
+      const { data, error } = await supabase.functions.invoke('send-customer-email', {
+        body: {
+          recipients,
+          subject: email.subject,
+          message: email.body_html,
+          messageHtml: email.body_html,
+          cc: email.cc_emails || [],
+          bcc: email.bcc_emails || [],
+          quotationId: quotation.id,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Email Resent',
+        description: `Successfully resent to ${data?.sent || recipients.length} recipient(s).`,
+      });
+
+      // Refresh sent emails list
+      const { data: updated } = await supabase
+        .from('sent_emails')
+        .select('*')
+        .eq('quotation_id', quotation.id)
+        .order('sent_at', { ascending: false });
+      if (updated) setSentEmails(updated);
+    } catch (err: any) {
+      console.error('Resend failed:', err);
+      toast({
+        title: 'Resend Failed',
+        description: err.message || 'Failed to resend email.',
+        variant: 'destructive',
+      });
+    } finally {
+      setResendingId(null);
+    }
+  }, [quotation.id, quotation.clientName, toast]);
+
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;

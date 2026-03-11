@@ -50,18 +50,41 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [sendingQuote, setSendingQuote] = useState(false);
+
+  const refreshSentEmails = useCallback(async () => {
+    // Get emails for this quotation AND emails sent to this customer's email addresses
+    const clientEmails = quotation.clientEmail.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    
+    const { data: byQuotation } = await supabase
+      .from('sent_emails')
+      .select('*')
+      .eq('quotation_id', quotation.id)
+      .order('sent_at', { ascending: false });
+
+    const { data: byRecipient } = await supabase
+      .from('sent_emails')
+      .select('*')
+      .order('sent_at', { ascending: false });
+
+    // Merge: emails linked to this quotation + emails sent to same client addresses
+    const quotationEmails = byQuotation || [];
+    const quotationIds = new Set(quotationEmails.map(e => e.id));
+    
+    const recipientEmails = (byRecipient || []).filter(e => {
+      if (quotationIds.has(e.id)) return false;
+      const recipients = (e.recipient_emails || []).map((r: string) => r.toLowerCase());
+      return clientEmails.some(ce => recipients.includes(ce));
+    });
+
+    setSentEmails([...quotationEmails, ...recipientEmails].sort(
+      (a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime()
+    ));
+  }, [quotation.id, quotation.clientEmail]);
 
   useEffect(() => {
-    const fetchSentEmails = async () => {
-      const { data } = await supabase
-        .from('sent_emails')
-        .select('*')
-        .eq('quotation_id', quotation.id)
-        .order('sent_at', { ascending: false });
-      if (data) setSentEmails(data);
-    };
-    fetchSentEmails();
-  }, [quotation.id]);
+    refreshSentEmails();
+  }, [refreshSentEmails]);
 
   const handleResendEmail = useCallback(async (email: any) => {
     setResendingId(email.id);
@@ -90,13 +113,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
         description: `Successfully resent to ${data?.sent || recipients.length} recipient(s).`,
       });
 
-      // Refresh sent emails list
-      const { data: updated } = await supabase
-        .from('sent_emails')
-        .select('*')
-        .eq('quotation_id', quotation.id)
-        .order('sent_at', { ascending: false });
-      if (updated) setSentEmails(updated);
+      await refreshSentEmails();
     } catch (err: any) {
       console.error('Resend failed:', err);
       toast({
@@ -107,7 +124,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     } finally {
       setResendingId(null);
     }
-  }, [quotation.id, quotation.clientName, toast]);
+  }, [quotation.id, quotation.clientName, toast, refreshSentEmails]);
 
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
@@ -142,78 +159,116 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   };
 
   const handleEmailQuote = async () => {
-    // Check if running in Electron
-    if (!window.electronAPI?.isElectron) {
+    // Electron path: open Outlook with attachment
+    if (window.electronAPI?.isElectron) {
       toast({
-        title: 'Email Feature',
-        description: 'Email with attachment is only available in the desktop app.',
-        variant: 'destructive',
+        title: 'Preparing Email...',
+        description: 'Generating PDF and opening Outlook.',
       });
+
+      try {
+        const { blob, fileName } = await generateQuotationPdf(quotation);
+        
+        const reader = new FileReader();
+        const base64Data = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(',')[1]);
+          };
+          reader.readAsDataURL(blob);
+        });
+
+        const subject = `NOGA MT - Quotation ${quotation.quoteNumber}`;
+        const body = `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nNoga Engineering & Technology Ltd.`;
+
+        const result = await window.electronAPI.emailWithAttachment(
+          base64Data,
+          fileName,
+          quotation.clientEmail,
+          subject,
+          body
+        );
+
+        if (result.success) {
+          toast({
+            title: result.fallback ? 'PDF Saved' : 'Email Ready',
+            description: result.fallback ? 'Outlook not available. PDF saved and folder opened.' : 'Outlook opened with the PDF attached.',
+          });
+        } else {
+          throw new Error(result.error || 'Failed to prepare email');
+        }
+      } catch (error) {
+        console.error('Error preparing email:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to prepare email. Please try downloading the PDF instead.',
+          variant: 'destructive',
+        });
+      }
       return;
     }
 
+    // Web path: send via Brevo with PDF attachment
+    setSendingQuote(true);
     toast({
-      title: 'Preparing Email...',
-      description: 'Generating PDF and opening Outlook.',
+      title: 'Sending Email...',
+      description: 'Generating PDF and sending quotation email.',
     });
 
     try {
       const { blob, fileName } = await generateQuotationPdf(quotation);
       
-      // Convert blob to base64
       const reader = new FileReader();
       const base64Data = await new Promise<string>((resolve) => {
         reader.onload = () => {
           const result = reader.result as string;
-          // Remove the data URL prefix
           resolve(result.split(',')[1]);
         };
         reader.readAsDataURL(blob);
       });
 
-      const subject = `Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`;
-      const body = `Dear ${quotation.clientName},
+      const subject = `NOGA MT - Quotation ${quotation.quoteNumber}`;
+      const messageHtml = `<p>Dear ${quotation.clientName},</p>
+<p>Please find attached our quotation <strong>${quotation.quoteNumber}</strong> for your review.</p>
+<p>Total: <strong>${formatCurrency(total, quotation.currency)}</strong><br/>Valid Until: ${formatDate(quotation.validUntil)}</p>
+<p>If you have any questions, please don't hesitate to contact us.</p>
+<p>Best regards,<br/><strong>Noga MT Team</strong></p>`;
 
-Please find attached our quotation ${quotation.quoteNumber} for your review.
+      const recipients = quotation.clientEmail
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean)
+        .map(email => ({ email, name: quotation.clientName }));
 
-Total: ${formatCurrency(total, quotation.currency)}
-Valid Until: ${formatDate(quotation.validUntil)}
+      const { data, error } = await supabase.functions.invoke('send-customer-email', {
+        body: {
+          recipients,
+          subject,
+          message: messageHtml,
+          messageHtml,
+          attachments: [{ name: fileName, content: base64Data }],
+          quotationId: quotation.id,
+        },
+      });
 
-If you have any questions, please don't hesitate to contact us.
+      if (error) throw error;
 
-Best regards,
-Noga Engineering & Technology Ltd.`;
+      const skippedMsg = data?.skipped > 0 ? ` (${data.skipped} unsubscribed, skipped)` : '';
+      toast({
+        title: 'Quotation Sent!',
+        description: `Successfully sent to ${data?.sent || recipients.length} recipient${(data?.sent || recipients.length) !== 1 ? 's' : ''}${skippedMsg}.`,
+      });
 
-      const result = await window.electronAPI.emailWithAttachment(
-        base64Data,
-        fileName,
-        quotation.clientEmail,
-        subject,
-        body
-      );
-
-      if (result.success) {
-        if (result.fallback) {
-          toast({
-            title: 'PDF Saved',
-            description: 'Outlook not available. PDF saved and folder opened.',
-          });
-        } else {
-          toast({
-            title: 'Email Ready',
-            description: 'Outlook opened with the PDF attached.',
-          });
-        }
-      } else {
-        throw new Error(result.error || 'Failed to prepare email');
-      }
-    } catch (error) {
-      console.error('Error preparing email:', error);
+      await refreshSentEmails();
+    } catch (error: any) {
+      console.error('Error sending email:', error);
       toast({
         title: 'Error',
-        description: 'Failed to prepare email. Please try downloading the PDF instead.',
+        description: error.message || 'Failed to send email. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setSendingQuote(false);
     }
   };
 
@@ -237,9 +292,13 @@ Noga Engineering & Technology Ltd.`;
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" onClick={handleEmailQuote}>
-            <Mail className="w-4 h-4 mr-2" />
-            Email
+          <Button variant="outline" onClick={handleEmailQuote} disabled={sendingQuote}>
+            {sendingQuote ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 mr-2" />
+            )}
+            {sendingQuote ? 'Sending...' : 'Send Email'}
           </Button>
           <Button variant="accent" onClick={handleDownloadPdf}>
             <Download className="w-4 h-4 mr-2" />
@@ -427,12 +486,12 @@ Noga Engineering & Technology Ltd.`;
             </div>
           )}
 
-          {/* Sent Emails History - not printed */}
+          {/* Email Correspondence - not printed */}
           {sentEmails.length > 0 && (
             <div className="pt-6 border-t no-print">
               <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                SENT EMAILS ({sentEmails.length})
+                EMAIL CORRESPONDENCE ({sentEmails.length})
               </h2>
               <div className="space-y-2">
                 {sentEmails.map((email) => (

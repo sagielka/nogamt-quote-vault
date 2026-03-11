@@ -175,6 +175,12 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [editAddress, setEditAddress] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
+  const emailFileInputRef = useRef<HTMLInputElement>(null);
+  const [isDraggingEmail, setIsDraggingEmail] = useState(false);
+  const emailDragCounterRef = useRef(0);
+  const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
+  const [uploadingEmail, setUploadingEmail] = useState(false);
+  const quotationId = initialData?.id;
 
   useEffect(() => {
     fetchCustomers().then(() => {

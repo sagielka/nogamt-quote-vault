@@ -177,7 +177,19 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchCustomers();
+    fetchCustomers().then(() => {
+      // If editing, try to match the initial customer
+      if (initialData?.clientEmail && initialData?.clientName) {
+        supabase
+          .from('customers')
+          .select('id')
+          .eq('email', initialData.clientEmail)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) setSelectedCustomerId(data.id);
+          });
+      }
+    });
   }, []);
 
   // Handle price list change - update all existing items with prices from new list

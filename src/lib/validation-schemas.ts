@@ -16,7 +16,10 @@ export const lineItemSchema = z.object({
 export const quotationSchema = z.object({
   clientName: z.string().trim().min(1, 'Client name is required').max(200, 'Client name must be 200 characters or less'),
   clientEmail: z.string().trim().min(1, 'Email is required').max(500, 'Email must be 500 characters or less').refine(
-    (val) => val.split(',').every(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim())),
+    (val) => {
+      const emails = val.split(',').map(e => e.trim()).filter(Boolean);
+      return emails.length > 0 && emails.every(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+    },
     'One or more email addresses are invalid'
   ),
   clientAddress: z.string().max(500, 'Address must be 500 characters or less').optional().or(z.literal('')),

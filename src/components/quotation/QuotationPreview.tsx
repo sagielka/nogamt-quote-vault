@@ -293,7 +293,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" onClick={handleEmailQuote} disabled={sendingQuote}>
+          <Button variant="outline" onClick={() => setConfirmSendOpen(true)} disabled={sendingQuote}>
             {sendingQuote ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (

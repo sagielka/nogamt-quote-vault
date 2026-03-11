@@ -51,6 +51,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses

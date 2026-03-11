@@ -190,9 +190,19 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 )}
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                <span className="flex items-center gap-1 truncate">
+                <span 
+                  className="flex items-center gap-1 truncate cursor-pointer hover:text-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditClientName(quotation.clientName);
+                    setEditClientEmail(quotation.clientEmail);
+                    setEditClientAddress(quotation.clientAddress);
+                    setEditCustomerOpen(true);
+                  }}
+                >
                   <User className="w-3 h-3 shrink-0" />
                   {quotation.clientName}
+                  <UserPen className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" />
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3 shrink-0" />

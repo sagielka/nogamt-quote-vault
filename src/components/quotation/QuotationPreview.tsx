@@ -625,6 +625,38 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Confirm Send Email Dialog */}
+      <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Quotation Email?</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-2 text-sm text-muted-foreground">
+            <p>This will send quotation <span className="font-medium text-foreground">{quotation.quoteNumber}</span> with PDF attachment to:</p>
+            <div className="bg-muted rounded-md p-3 space-y-1">
+              {quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
+                <p key={i} className="text-foreground font-medium flex items-center gap-2">
+                  <Mail className="w-3 h-3 text-primary" />
+                  {email}
+                </p>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmSendOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setConfirmSendOpen(false);
+                handleEmailQuote();
+              }}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

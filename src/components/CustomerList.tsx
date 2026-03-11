@@ -732,7 +732,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             <Card 
               key={customer.id} 
               className={`group hover:border-primary/30 transition-colors cursor-pointer ${selectedIds.has(customer.id) ? 'border-primary/50 bg-primary/5' : ''}`}
-              onClick={() => onSelectCustomer?.(customer.email)}
+              onClick={() => onSelectCustomer?.(customer.name)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">

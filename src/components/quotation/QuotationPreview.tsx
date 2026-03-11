@@ -46,6 +46,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);

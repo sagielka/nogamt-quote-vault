@@ -301,6 +301,56 @@ export type Database = {
         }
         Relationships: []
       }
+      sent_emails: {
+        Row: {
+          attachment_names: string[] | null
+          bcc_emails: string[] | null
+          body_html: string
+          cc_emails: string[] | null
+          email_type: string
+          id: string
+          quotation_id: string | null
+          recipient_emails: string[]
+          sent_at: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          attachment_names?: string[] | null
+          bcc_emails?: string[] | null
+          body_html: string
+          cc_emails?: string[] | null
+          email_type?: string
+          id?: string
+          quotation_id?: string | null
+          recipient_emails: string[]
+          sent_at?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          attachment_names?: string[] | null
+          bcc_emails?: string[] | null
+          body_html?: string
+          cc_emails?: string[] | null
+          email_type?: string
+          id?: string
+          quotation_id?: string | null
+          recipient_emails?: string[]
+          sent_at?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sent_emails_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unsubscribed_emails: {
         Row: {
           email: string

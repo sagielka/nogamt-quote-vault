@@ -215,6 +215,23 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully via Brevo:", brevoResult);
 
+    // Save sent email history
+    try {
+      await serviceSupabase
+        .from('sent_emails')
+        .insert({
+          quotation_id: quotation.id,
+          user_id: user.id,
+          recipient_emails: [to],
+          subject,
+          body_html: htmlContent,
+          email_type: isReminder ? 'reminder' : 'quotation',
+          attachment_names: [`Quotation_${quoteNumber}.pdf`],
+        });
+    } catch (e) {
+      console.error("Failed to save sent email record:", e);
+    }
+
     if (isReminder) {
       await supabase
         .from('quotations')

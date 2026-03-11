@@ -225,6 +225,28 @@ const handler = async (req: Request): Promise<Response> => {
     const sent = results.filter((r) => r.success).length;
     const skipped = recipients.length - validRecipients.length;
 
+    // Save sent email history
+    if (sent > 0) {
+      try {
+        const successEmails = results.filter(r => r.success).map(r => r.email);
+        await serviceSupabase
+          .from('sent_emails')
+          .insert({
+            quotation_id: quotationId || null,
+            user_id: user.id,
+            recipient_emails: successEmails,
+            cc_emails: (cc || []).filter(e => isValidEmail(e)),
+            bcc_emails: (bcc || []).filter(e => isValidEmail(e)),
+            subject,
+            body_html: messageHtml || message,
+            email_type: 'custom',
+            attachment_names: attachments.map(a => a.name),
+          });
+      } catch (e) {
+        console.error("Failed to save sent email record:", e);
+      }
+    }
+
     console.log(`Customer email sent: ${sent}/${validRecipients.length}, skipped ${skipped} unsubscribed`);
 
     return new Response(

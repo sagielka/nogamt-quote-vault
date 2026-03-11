@@ -37,6 +37,7 @@ interface QuotationPreviewProps {
   emailTracking?: EmailTrackingRecord[];
   onBack: () => void;
   onEdit?: () => void;
+  onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }
 
 export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit }: QuotationPreviewProps) => {

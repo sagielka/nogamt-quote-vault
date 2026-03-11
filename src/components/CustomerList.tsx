@@ -732,7 +732,7 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
             <Card 
               key={customer.id} 
               className={`group hover:border-primary/30 transition-colors cursor-pointer ${selectedIds.has(customer.id) ? 'border-primary/50 bg-primary/5' : ''}`}
-              onClick={() => onSelectCustomer?.(customer.email)}
+              onClick={() => onSelectCustomer?.(customer.name)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
@@ -796,9 +796,17 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                       <span className="line-clamp-2">{customer.address}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 pt-1">
+                  <div
+                    className={`flex items-center gap-2 pt-1 ${customer.quotation_count ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                    onClick={(e) => {
+                      if (customer.quotation_count) {
+                        e.stopPropagation();
+                        onSelectCustomer?.(customer.name);
+                      }
+                    }}
+                  >
                     <FileText className="w-3 h-3 shrink-0" />
-                    <span>
+                    <span className={customer.quotation_count ? 'underline underline-offset-2' : ''}>
                       {customer.quotation_count} quotation{customer.quotation_count !== 1 ? 's' : ''}
                     </span>
                   </div>

@@ -82,32 +82,31 @@ const loadFontAsBase64 = async (url: string): Promise<string> => {
   return btoa(binary);
 };
 
-// Register NotoSans fonts with jsPDF
-let fontsRegistered = false;
+// Register Hebrew-supporting fonts with jsPDF
+let hebrewFontRegistered = false;
 const registerFonts = async (pdf: jsPDF) => {
   try {
-    const [regularBase64, boldBase64] = await Promise.all([
-      loadFontAsBase64('/fonts/NotoSans-Regular.ttf'),
-      loadFontAsBase64('/fonts/NotoSans-Bold.ttf'),
-    ]);
+    // Heebo supports both Latin and Hebrew
+    const heeboBase64 = await loadFontAsBase64('/fonts/Heebo-Variable.ttf');
     
-    pdf.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
-    pdf.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    pdf.addFileToVFS('Heebo-Regular.ttf', heeboBase64);
+    pdf.addFont('Heebo-Regular.ttf', 'Heebo', 'normal');
     
-    pdf.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
-    pdf.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    // Use same font for bold (variable font handles weight internally)
+    pdf.addFileToVFS('Heebo-Bold.ttf', heeboBase64);
+    pdf.addFont('Heebo-Bold.ttf', 'Heebo', 'bold');
     
-    fontsRegistered = true;
+    hebrewFontRegistered = true;
   } catch (e) {
-    console.warn('Could not load NotoSans fonts, falling back to helvetica:', e);
-    fontsRegistered = false;
+    console.warn('Could not load Heebo font, falling back to helvetica:', e);
+    hebrewFontRegistered = false;
   }
 };
 
-// Helper to set font - uses NotoSans if available, falls back to helvetica
+// Helper to set font - uses Heebo for Hebrew text, helvetica otherwise
 const setFont = (pdf: jsPDF, style: 'normal' | 'bold' = 'normal') => {
-  if (fontsRegistered) {
-    pdf.setFont('NotoSans', style);
+  if (hebrewFontRegistered) {
+    pdf.setFont('Heebo', style);
   } else {
     pdf.setFont('helvetica', style);
   }

@@ -361,13 +361,38 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const saveCustomerToDatabase = async () => {
     if (!clientName || !clientEmail || !user) return;
 
-    // Check if customer already exists for this user
-    const { data: existingCustomer } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('email', clientEmail)
-      .eq('user_id', user.id)
-      .single();
+    // First try to find by tracked ID, then fall back to email match
+    let existingCustomer: { id: string } | null = null;
+    
+    if (selectedCustomerId) {
+      const { data } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('id', selectedCustomerId)
+        .single();
+      existingCustomer = data;
+    }
+    
+    if (!existingCustomer) {
+      // Fall back to matching by name (case-insensitive) for the same user
+      const { data } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .ilike('name', clientName);
+      existingCustomer = data && data.length > 0 ? data[0] : null;
+    }
+    
+    if (!existingCustomer) {
+      // Fall back to email match
+      const { data } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', clientEmail)
+        .eq('user_id', user.id)
+        .single();
+      existingCustomer = data;
+    }
 
     if (existingCustomer) {
       // Update existing customer

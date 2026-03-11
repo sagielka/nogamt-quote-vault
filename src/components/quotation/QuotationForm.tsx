@@ -250,6 +250,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       setClientName(customer.name);
       setClientEmail(customer.email);
       setClientAddress(customer.address || '');
+      setSelectedCustomerId(customer.id);
     }
   };
 

@@ -380,6 +380,67 @@ Noga Engineering & Technology Ltd.`;
             </div>
           )}
 
+          {/* Sent Emails History - not printed */}
+          {sentEmails.length > 0 && (
+            <div className="pt-6 border-t no-print">
+              <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                SENT EMAILS ({sentEmails.length})
+              </h2>
+              <div className="space-y-2">
+                {sentEmails.map((email) => (
+                  <div key={email.id} className="rounded-md bg-muted/50 overflow-hidden">
+                    <button
+                      className="w-full flex items-center justify-between text-sm py-2 px-3 hover:bg-muted/80 transition-colors"
+                      onClick={() => setExpandedEmailId(expandedEmailId === email.id ? null : email.id)}
+                    >
+                      <div className="flex items-center gap-3 text-left">
+                        <Mail className="w-4 h-4 text-primary shrink-0" />
+                        <div>
+                          <span className="text-foreground font-medium">{email.subject}</span>
+                          <div className="text-xs text-muted-foreground">
+                            To: {(email.recipient_emails || []).join(', ')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-xs">
+                          {email.email_type === 'reminder' ? 'Reminder' : email.email_type === 'quotation' ? 'Quotation' : 'Custom'}
+                        </Badge>
+                        {(email.attachment_names || []).length > 0 && (
+                          <Paperclip className="w-3 h-3 text-muted-foreground" />
+                        )}
+                        <span className="text-xs text-muted-foreground">{formatDate(new Date(email.sent_at))}</span>
+                        {expandedEmailId === email.id ? (
+                          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                    </button>
+                    {expandedEmailId === email.id && (
+                      <div className="px-3 pb-3 border-t border-border">
+                        {(email.cc_emails || []).length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-2">CC: {email.cc_emails.join(', ')}</p>
+                        )}
+                        {(email.attachment_names || []).length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                            <Paperclip className="w-3 h-3" />
+                            {email.attachment_names.join(', ')}
+                          </p>
+                        )}
+                        <div
+                          className="mt-2 text-sm text-foreground bg-background rounded p-3 max-h-60 overflow-y-auto border"
+                          dangerouslySetInnerHTML={{ __html: email.body_html }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Print Footer */}
           <div className="hidden print:block mt-8 pt-4 border-t border-gray-200 text-center">
             <p className="font-semibold text-gray-900 text-xs">Noga Engineering & Technology Ltd.</p>

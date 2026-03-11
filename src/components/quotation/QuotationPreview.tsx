@@ -44,6 +44,8 @@ interface QuotationPreviewProps {
 
 export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer }: QuotationPreviewProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
@@ -53,6 +55,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
+  const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
+  const [uploadingEmail, setUploadingEmail] = useState(false);
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses

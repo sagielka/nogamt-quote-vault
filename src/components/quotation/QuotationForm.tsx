@@ -198,7 +198,76 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     });
   }, []);
 
-  // Handle price list change - update all existing items with prices from new list
+  // Email attachments
+  const refreshEmailAttachments = useCallback(async () => {
+    if (!quotationId) return;
+    const { data } = await supabase
+      .from('quotation_email_attachments')
+      .select('*')
+      .eq('quotation_id', quotationId)
+      .order('uploaded_at', { ascending: false });
+    if (data) setEmailAttachments(data);
+  }, [quotationId]);
+
+  useEffect(() => {
+    if (isEditing && quotationId) {
+      refreshEmailAttachments();
+    }
+  }, [isEditing, quotationId, refreshEmailAttachments]);
+
+  const handleUploadEmailFile = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !user || !quotationId) return;
+    setUploadingEmail(true);
+    try {
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (!['eml', 'msg'].includes(ext || '')) {
+          toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
+          continue;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
+          continue;
+        }
+        const filePath = `${quotationId}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage.from('email-attachments').upload(filePath, file);
+        if (uploadError) throw uploadError;
+        const { error: dbError } = await supabase.from('quotation_email_attachments').insert({
+          quotation_id: quotationId,
+          user_id: user.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_size: file.size,
+        });
+        if (dbError) throw dbError;
+      }
+      toast({ title: 'Email(s) Attached', description: `Successfully attached ${files.length} file(s).` });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      toast({ title: 'Upload Failed', description: err.message || 'Failed to upload.', variant: 'destructive' });
+    } finally {
+      setUploadingEmail(false);
+      if (emailFileInputRef.current) emailFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteEmailAttachment = async (attachment: any) => {
+    try {
+      await supabase.storage.from('email-attachments').remove([attachment.file_path]);
+      await supabase.from('quotation_email_attachments').delete().eq('id', attachment.id);
+      toast({ title: 'Deleted', description: 'Email attachment removed.' });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDownloadEmailAttachment = async (attachment: any) => {
+    const { data } = await supabase.storage.from('email-attachments').createSignedUrl(attachment.file_path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  };
+
+
   const handlePriceListChange = (newPriceList: PriceList) => {
     const baseCurrency = getPriceListBaseCurrency(newPriceList);
     

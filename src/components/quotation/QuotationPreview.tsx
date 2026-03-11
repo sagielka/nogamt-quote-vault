@@ -88,9 +88,86 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     ));
   }, [quotation.id, quotation.clientEmail]);
 
+  const refreshEmailAttachments = useCallback(async () => {
+    const { data } = await supabase
+      .from('quotation_email_attachments')
+      .select('*')
+      .eq('quotation_id', quotation.id)
+      .order('uploaded_at', { ascending: false });
+    if (data) setEmailAttachments(data);
+  }, [quotation.id]);
+
   useEffect(() => {
     refreshSentEmails();
-  }, [refreshSentEmails]);
+    refreshEmailAttachments();
+  }, [refreshSentEmails, refreshEmailAttachments]);
+
+  const handleUploadEmailFile = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !user) return;
+    setUploadingEmail(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop()?.toLowerCase();
+        if (!['eml', 'msg'].includes(ext || '')) {
+          toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
+          continue;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
+          continue;
+        }
+
+        const filePath = `${quotation.id}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('email-attachments')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { error: dbError } = await supabase
+          .from('quotation_email_attachments')
+          .insert({
+            quotation_id: quotation.id,
+            user_id: user.id,
+            file_name: file.name,
+            file_path: filePath,
+            file_size: file.size,
+          });
+
+        if (dbError) throw dbError;
+      }
+
+      toast({ title: 'Email(s) Attached', description: `Successfully attached ${files.length} file(s).` });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      toast({ title: 'Upload Failed', description: err.message || 'Failed to upload email file.', variant: 'destructive' });
+    } finally {
+      setUploadingEmail(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteAttachment = async (attachment: any) => {
+    try {
+      await supabase.storage.from('email-attachments').remove([attachment.file_path]);
+      await supabase.from('quotation_email_attachments').delete().eq('id', attachment.id);
+      toast({ title: 'Deleted', description: 'Email attachment removed.' });
+      await refreshEmailAttachments();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDownloadAttachment = async (attachment: any) => {
+    const { data } = await supabase.storage
+      .from('email-attachments')
+      .createSignedUrl(attachment.file_path, 60);
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, '_blank');
+    }
+  };
 
   const handleResendEmail = useCallback(async (email: any) => {
     setResendingId(email.id);

@@ -313,7 +313,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     );
 
     // Check for page break
-    if (y + rowHeight > pageHeight - 40) {
+    if (y + rowHeight > pageHeight - 30) {
       pdf.addPage();
       y = margin;
     }

@@ -351,16 +351,16 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
     setFont(pdf, 'normal');
 
-    y += rowHeight + 3;
+    y += rowHeight + 1.5;
 
     // Row separator
     pdf.setDrawColor(229, 229, 229);
     pdf.setLineWidth(0.2);
     pdf.line(margin, y, pageWidth - margin, y);
-    y += 5; // space after line before next row
+    y += 3;
   }
 
-  y += 6;
+  y += 4;
 
   // Check for page break before totals
   if (y + 30 > pageHeight - 30) {

@@ -440,25 +440,36 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     y += noteLines.length * 3.2 + 4;
   }
 
-  // Footer
-  const fY = footerBaselineY;
+  // Draw footer on every page
+  const totalPages = pdf.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    pdf.setPage(p);
+    const fY = footerBaselineY;
 
-  pdf.setDrawColor(229, 229, 229);
-  pdf.setLineWidth(0.2);
-  pdf.line(margin, footerLineY, pageWidth - margin, footerLineY);
+    pdf.setDrawColor(229, 229, 229);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin, footerLineY, pageWidth - margin, footerLineY);
 
-  pdf.setFontSize(8);
-  setFont(pdf, 'bold');
-  pdf.setTextColor(...black);
-  pdf.text('Noga Engineering & Technology Ltd.', pageWidth / 2, fY, { align: 'center' });
+    pdf.setFontSize(8);
+    setFont(pdf, 'bold');
+    pdf.setTextColor(...black);
+    pdf.text('Noga Engineering & Technology Ltd.', pageWidth / 2, fY, { align: 'center' });
 
-  setFont(pdf, 'normal');
-  pdf.setFontSize(7);
-  pdf.setTextColor(...gray);
-  pdf.text('Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel', pageWidth / 2, fY + 4, { align: 'center' });
+    setFont(pdf, 'normal');
+    pdf.setFontSize(7);
+    pdf.setTextColor(...gray);
+    pdf.text('Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel', pageWidth / 2, fY + 4, { align: 'center' });
 
-  pdf.setTextColor(...cyan);
-  pdf.text('www.nogamt.com', pageWidth / 2, fY + 8, { align: 'center' });
+    pdf.setTextColor(...cyan);
+    pdf.text('www.nogamt.com', pageWidth / 2, fY + 8, { align: 'center' });
+
+    // Page numbering (only show when multi-page)
+    if (totalPages > 1) {
+      pdf.setFontSize(7);
+      pdf.setTextColor(...gray);
+      pdf.text(`Page ${p} of ${totalPages}`, pageWidth - margin, fY + 8, { align: 'right' });
+    }
+  }
 
   const fileName = `${quotation.quoteNumber.replace(/^QT/i, '')}.pdf`;
   return {

@@ -154,6 +154,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 15;
   const contentWidth = pageWidth - margin * 2;
+  const footerBaselineY = pageHeight - 15;
+  const footerLineY = footerBaselineY - 3;
+  const contentBottom = footerLineY - 4;
   let y = margin;
 
   // Colors

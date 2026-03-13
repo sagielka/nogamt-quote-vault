@@ -316,7 +316,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     );
 
     // Check for page break
-    if (y + rowHeight > pageHeight - 30) {
+    if (y + rowHeight > contentBottom) {
       pdf.addPage();
       y = margin;
     }
@@ -366,7 +366,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   y += 4;
 
   // Check for page break before totals
-  if (y + 30 > pageHeight - 30) {
+  if (y + 30 > contentBottom) {
     pdf.addPage();
     y = margin;
   }
@@ -416,7 +416,10 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
   // Notes
   if (quotation.notes) {
-    if (y + 20 > pageHeight - 30) {
+    const noteLines = wrapText(pdf, quotation.notes, contentWidth);
+    const notesSectionHeight = 5 + 4 + noteLines.length * 3.2 + 4;
+
+    if (y + notesSectionHeight > contentBottom) {
       pdf.addPage();
       y = margin;
     }
@@ -433,21 +436,16 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     y += 4;
 
     pdf.setFontSize(8);
-    const noteLines = wrapText(pdf, quotation.notes, contentWidth);
     pdf.text(noteLines, margin, y);
-    y += noteLines.length * 3.5 + 5;
+    y += noteLines.length * 3.2 + 4;
   }
 
   // Footer
-  const footerY = Math.max(y + 10, pageHeight - 25);
-  if (footerY > pageHeight - 10) {
-    pdf.addPage();
-  }
-  const fY = Math.min(footerY, pageHeight - 15);
+  const fY = footerBaselineY;
 
   pdf.setDrawColor(229, 229, 229);
   pdf.setLineWidth(0.2);
-  pdf.line(margin, fY - 3, pageWidth - margin, fY - 3);
+  pdf.line(margin, footerLineY, pageWidth - margin, footerLineY);
 
   pdf.setFontSize(8);
   setFont(pdf, 'bold');

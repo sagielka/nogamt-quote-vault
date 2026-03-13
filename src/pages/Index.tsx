@@ -24,6 +24,9 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
+import { generateQuotationPdf } from '@/lib/pdf-generator';
+import { Quotation } from '@/types/quotation';
+import { FileText } from 'lucide-react';
 
 type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers';
 
@@ -215,6 +218,53 @@ const Index = () => {
       });
       setSelectedQuotationId(null);
       setCurrentView('list');
+    }
+  };
+
+  // TEMPORARY: Test PDF with 20 line items for page numbering verification
+  const handleTestPdf = async () => {
+    const testItems = Array.from({ length: 20 }, (_, i) => ({
+      id: crypto.randomUUID(),
+      sku: `SKU-${String(i + 1).padStart(3, '0')}`,
+      description: `Sample Product Item #${i + 1} - Test Description`,
+      leadTime: `${Math.floor(Math.random() * 12) + 1} weeks`,
+      moq: Math.floor(Math.random() * 100) + 1,
+      unitPrice: Math.round(Math.random() * 500 * 100) / 100,
+      discountPercent: i % 5 === 0 ? 10 : 0,
+      notes: i % 3 === 0 ? 'Sample note for testing' : '',
+    }));
+    const testQuotation: Quotation = {
+      id: 'test-pdf',
+      userId: user?.id || '',
+      quoteNumber: 'TEST-20ITEMS-001',
+      clientName: 'Test Customer Ltd.',
+      clientEmail: 'test@example.com',
+      clientAddress: '123 Test Street, Test City, 12345',
+      items: testItems,
+      taxRate: 17,
+      discountType: 'percentage',
+      discountValue: 5,
+      notes: 'This is a test PDF with 20 line items to verify multi-page numbering.',
+      createdAt: new Date(),
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      status: 'draft',
+      currency: 'USD',
+      attachments: [],
+      reminderSentAt: null,
+      followUpNotifiedAt: null,
+    };
+    try {
+      const { blob, fileName } = await generateQuotationPdf(testQuotation);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: 'Test PDF Generated', description: '20-item PDF downloaded.' });
+    } catch (err) {
+      console.error('Test PDF error:', err);
+      toast({ title: 'Error', description: 'Failed to generate test PDF.', variant: 'destructive' });
     }
   };
 
@@ -473,6 +523,17 @@ const Index = () => {
                 >
                   <BookUser className="w-4 h-4 mr-2" />
                   Customers
+                </Button>
+              )}
+              {currentView === 'list' && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleTestPdf}
+                  className="border-dashed border-destructive text-destructive"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Test PDF (20 items)
                 </Button>
               )}
               {currentView === 'archive' && (

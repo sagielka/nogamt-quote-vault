@@ -494,17 +494,6 @@ const Index = () => {
                   Customers
                 </Button>
               )}
-              {currentView === 'list' && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleTestPdf}
-                  className="border-dashed border-destructive text-destructive"
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Test PDF (20 items)
-                </Button>
-              )}
               {currentView === 'archive' && (
                 <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />

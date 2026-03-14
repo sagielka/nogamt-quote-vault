@@ -25,7 +25,7 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen, Ban } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -234,13 +234,13 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     <span className="text-muted-foreground/70">by {creatorName}</span>
                   )
                 )}
-                {quotation.status !== 'accepted' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
+                {quotation.status !== 'accepted' && quotation.status !== 'finished' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
                   <span className="flex items-center gap-1 text-destructive font-medium">
                     <Mail className="w-3 h-3 shrink-0 animate-pulse" />
                     Needs Reminder
                   </span>
                 )}
-                {quotation.status !== 'accepted' && !quotation.reminderSentAt && (() => {
+                {quotation.status !== 'accepted' && quotation.status !== 'finished' && !quotation.reminderSentAt && (() => {
                   const age = Date.now() - new Date(quotation.createdAt).getTime();
                   if (age < MIN_AGE_MS) {
                     const daysLeft = Math.ceil((MIN_AGE_MS - age) / (24 * 60 * 60 * 1000));
@@ -321,7 +321,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                       variant="ghost" 
                       size="icon" 
                       className={`h-7 w-7 ${quotation.status === 'accepted' ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground hover:text-green-600'}`}
-                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'accepted' ? 'draft' : 'accepted')}
+                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'accepted' ? 'sent' : 'accepted')}
                     >
                       {quotation.status === 'accepted' ? (
                         <CheckCircle className="w-3.5 h-3.5" />
@@ -335,8 +335,26 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   {quotation.status === 'accepted' ? 'Order received — click to unmark' : 'Mark as order received'}
                 </TooltipContent>
               </Tooltip>
+              {/* Mark as finished (no order) */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={`h-7 w-7 ${quotation.status === 'finished' ? 'text-orange-500 hover:text-orange-600' : 'text-muted-foreground hover:text-orange-500'}`}
+                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'finished' ? 'sent' : 'finished')}
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {quotation.status === 'finished' ? 'Closed (no order) — click to reopen' : 'Mark as finished (no order)'}
+                </TooltipContent>
+              </Tooltip>
               {/* Reminder email */}
-              {quotation.status === 'accepted' ? (
+              {(quotation.status === 'accepted' || quotation.status === 'finished') ? (
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <span className="inline-flex cursor-not-allowed">
@@ -349,7 +367,9 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top">Order already received — no reminder needed</TooltipContent>
+                  <TooltipContent side="top">
+                    {quotation.status === 'accepted' ? 'Order already received — no reminder needed' : 'Quote finished — no reminder needed'}
+                  </TooltipContent>
                 </Tooltip>
               ) : !canSendReminder(quotation.createdAt, quotation.reminderSentAt) ? (
                 <Tooltip delayDuration={0}>

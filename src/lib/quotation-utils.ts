@@ -110,6 +110,8 @@ export const getStatusColor = (status: Quotation['status']): string => {
       return 'bg-success/10 text-success';
     case 'declined':
       return 'bg-destructive/10 text-destructive';
+    case 'finished':
+      return 'bg-muted text-muted-foreground';
     default:
       return 'bg-muted text-muted-foreground';
   }

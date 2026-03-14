@@ -737,7 +737,14 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground italic">No Outlook emails attached. Drag & drop or click "Attach Email" to upload .eml or .msg files.</p>
+              <div 
+                className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-6 h-6 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Drag & drop .eml or .msg files here</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">or click to browse</p>
+              </div>
             )}
           </div>
 

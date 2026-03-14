@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
           const daysSinceCreation = Math.floor(
             (now.getTime() - new Date(q.created_at).getTime()) / (1000 * 60 * 60 * 24)
           );
-          const quoteLink = `${appUrl}/?highlight=${q.id}`;
+          const quoteLink = `${appUrl}/#/?highlight=${q.id}`;
           return `
             <tr>
               <td style="padding: 10px 12px; border-bottom: 1px solid #e5e7eb;">

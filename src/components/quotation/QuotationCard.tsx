@@ -321,7 +321,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                       variant="ghost" 
                       size="icon" 
                       className={`h-7 w-7 ${quotation.status === 'accepted' ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground hover:text-green-600'}`}
-                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'accepted' ? 'draft' : 'accepted')}
+                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'accepted' ? 'sent' : 'accepted')}
                     >
                       {quotation.status === 'accepted' ? (
                         <CheckCircle className="w-3.5 h-3.5" />
@@ -333,6 +333,24 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   {quotation.status === 'accepted' ? 'Order received — click to unmark' : 'Mark as order received'}
+                </TooltipContent>
+              </Tooltip>
+              {/* Mark as finished (no order) */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={`h-7 w-7 ${quotation.status === 'finished' ? 'text-orange-500 hover:text-orange-600' : 'text-muted-foreground hover:text-orange-500'}`}
+                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'finished' ? 'sent' : 'finished')}
+                    >
+                      <Ban className="w-3.5 h-3.5" />
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {quotation.status === 'finished' ? 'Closed (no order) — click to reopen' : 'Mark as finished (no order)'}
                 </TooltipContent>
               </Tooltip>
               {/* Reminder email */}

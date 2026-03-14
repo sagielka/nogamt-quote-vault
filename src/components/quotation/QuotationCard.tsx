@@ -240,7 +240,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     Needs Reminder
                   </span>
                 )}
-                {quotation.status !== 'accepted' && !quotation.reminderSentAt && (() => {
+                {quotation.status !== 'accepted' && quotation.status !== 'finished' && !quotation.reminderSentAt && (() => {
                   const age = Date.now() - new Date(quotation.createdAt).getTime();
                   if (age < MIN_AGE_MS) {
                     const daysLeft = Math.ceil((MIN_AGE_MS - age) / (24 * 60 * 60 * 1000));

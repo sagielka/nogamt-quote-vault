@@ -24,9 +24,6 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
-import { generateQuotationPdf } from '@/lib/pdf-generator';
-import { Quotation } from '@/types/quotation';
-import { FileText } from 'lucide-react';
 
 type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers';
 

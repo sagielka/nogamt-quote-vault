@@ -354,7 +354,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 </TooltipContent>
               </Tooltip>
               {/* Reminder email */}
-              {quotation.status === 'accepted' ? (
+              {(quotation.status === 'accepted' || quotation.status === 'finished') ? (
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
                     <span className="inline-flex cursor-not-allowed">
@@ -367,7 +367,9 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                       </Button>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top">Order already received — no reminder needed</TooltipContent>
+                  <TooltipContent side="top">
+                    {quotation.status === 'accepted' ? 'Order already received — no reminder needed' : 'Quote finished — no reminder needed'}
+                  </TooltipContent>
                 </Tooltip>
               ) : !canSendReminder(quotation.createdAt, quotation.reminderSentAt) ? (
                 <Tooltip delayDuration={0}>

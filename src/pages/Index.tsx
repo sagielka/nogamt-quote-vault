@@ -366,8 +366,8 @@ const Index = () => {
   const handleStatusChange = async (id: string, status: string) => {
     await updateQuotation(id, { status: status as any });
     toast({
-      title: status === 'accepted' ? 'Order Marked as Received' : 'Status Reset',
-      description: status === 'accepted' ? 'Quotation marked as order received.' : 'Quotation status reset to draft.',
+      title: status === 'accepted' ? 'Order Marked as Received' : status === 'finished' ? 'Marked as Finished' : 'Status Reset',
+      description: status === 'accepted' ? 'Quotation marked as order received.' : status === 'finished' ? 'Quotation closed — no order.' : 'Quotation status reopened.',
     });
   };
 

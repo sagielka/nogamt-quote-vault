@@ -41,7 +41,7 @@ export interface Quotation {
   notes: string;
   createdAt: Date;
   validUntil: Date;
-  status: 'draft' | 'sent' | 'accepted' | 'declined';
+  status: 'draft' | 'sent' | 'accepted' | 'declined' | 'finished';
   currency: Currency;
   attachments: LineItemAttachment[];
   reminderSentAt: Date | null;

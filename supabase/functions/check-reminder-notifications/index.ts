@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
       .select("*")
       .gte("created_at", sixWeeksAgo.toISOString())
       .lte("created_at", oneWeekAgo.toISOString())
-      .or("status.is.null,status.neq.accepted");
+      .or("status.is.null,and(status.neq.accepted,status.neq.finished)");
 
     if (fetchError) {
       console.error("Error fetching quotations:", fetchError);

@@ -50,6 +50,21 @@ const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Handle ?highlight= param from email links (HashRouter reads from hash query)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
+    const highlightId = params.get('highlight');
+    if (highlightId && quotations.length > 0) {
+      const found = quotations.find(q => q.id === highlightId);
+      if (found) {
+        setSelectedQuotationId(highlightId);
+        setCurrentView('preview');
+        // Clean up the URL
+        window.history.replaceState(null, '', window.location.pathname + '#/');
+      }
+    }
+  }, [quotations]);
+
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');

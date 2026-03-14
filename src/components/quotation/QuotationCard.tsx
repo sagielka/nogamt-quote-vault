@@ -234,7 +234,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     <span className="text-muted-foreground/70">by {creatorName}</span>
                   )
                 )}
-                {quotation.status !== 'accepted' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
+                {quotation.status !== 'accepted' && quotation.status !== 'finished' && canSendReminder(quotation.createdAt, quotation.reminderSentAt) && (
                   <span className="flex items-center gap-1 text-destructive font-medium">
                     <Mail className="w-3 h-3 shrink-0 animate-pulse" />
                     Needs Reminder

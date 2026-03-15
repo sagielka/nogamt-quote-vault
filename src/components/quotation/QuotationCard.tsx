@@ -342,7 +342,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className={`h-7 w-7 ${quotation.status === 'finished' ? 'text-orange-500 hover:text-orange-600' : 'text-muted-foreground hover:text-orange-500'}`}
+                      className={`h-7 w-7 ${quotation.status === 'finished' ? 'bg-orange-500 text-white hover:bg-orange-600 rounded-md' : 'text-muted-foreground hover:text-orange-500'}`}
                       onClick={() => onStatusChange?.(quotation.id, quotation.status === 'finished' ? 'sent' : 'finished')}
                     >
                       <Ban className="w-3.5 h-3.5" />

@@ -1,0 +1,2 @@
+ALTER TABLE quotations DROP CONSTRAINT quotations_status_check;
+ALTER TABLE quotations ADD CONSTRAINT quotations_status_check CHECK (status = ANY (ARRAY['draft'::text, 'sent'::text, 'accepted'::text, 'declined'::text, 'finished'::text]));

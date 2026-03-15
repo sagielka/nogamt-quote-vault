@@ -335,24 +335,47 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   {quotation.status === 'accepted' ? 'Order received — click to unmark' : 'Mark as order received'}
                 </TooltipContent>
               </Tooltip>
-              {/* Mark as finished (no order) */}
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className={`h-7 w-7 ${quotation.status === 'finished' ? 'bg-orange-500 text-white hover:bg-orange-600 rounded-md' : 'text-muted-foreground hover:text-orange-500'}`}
-                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'finished' ? 'sent' : 'finished')}
-                    >
-                      <Ban className="w-3.5 h-3.5" />
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  {quotation.status === 'finished' ? 'Closed (no order) — click to reopen' : 'Mark as finished (no order)'}
-                </TooltipContent>
-              </Tooltip>
+               {/* Mark as finished (no order) */}
+               <AlertDialog>
+                 <Tooltip delayDuration={0}>
+                   <TooltipTrigger asChild>
+                     <AlertDialogTrigger asChild>
+                       <Button 
+                         variant="ghost" 
+                         size="icon" 
+                         className={`h-7 w-7 ${quotation.status === 'finished' ? 'bg-orange-500 text-white hover:bg-orange-600 rounded-md' : 'text-muted-foreground hover:text-orange-500'}`}
+                       >
+                         <Ban className="w-3.5 h-3.5" />
+                       </Button>
+                     </AlertDialogTrigger>
+                   </TooltipTrigger>
+                   <TooltipContent side="top">
+                     {quotation.status === 'finished' ? 'Closed (no order) — click to reopen' : 'Mark as finished (no order)'}
+                   </TooltipContent>
+                 </Tooltip>
+                 <AlertDialogContent>
+                   <AlertDialogHeader>
+                     <AlertDialogTitle>
+                       {quotation.status === 'finished' ? 'Reopen Quotation?' : 'Mark as Finished?'}
+                     </AlertDialogTitle>
+                     <AlertDialogDescription>
+                       {quotation.status === 'finished' 
+                         ? `This will reopen "${quotation.quoteNumber}" and set its status back to sent.`
+                         : `This will mark "${quotation.quoteNumber}" as finished (no order received). Automated reminders will be disabled.`
+                       }
+                     </AlertDialogDescription>
+                   </AlertDialogHeader>
+                   <AlertDialogFooter>
+                     <AlertDialogCancel>Cancel</AlertDialogCancel>
+                     <AlertDialogAction
+                       onClick={() => onStatusChange?.(quotation.id, quotation.status === 'finished' ? 'sent' : 'finished')}
+                       className={quotation.status === 'finished' ? '' : 'bg-orange-500 hover:bg-orange-600'}
+                     >
+                       {quotation.status === 'finished' ? 'Reopen' : 'Mark as Finished'}
+                     </AlertDialogAction>
+                   </AlertDialogFooter>
+                 </AlertDialogContent>
+               </AlertDialog>
               {/* Reminder email */}
               {(quotation.status === 'accepted' || quotation.status === 'finished') ? (
                 <Tooltip delayDuration={0}>

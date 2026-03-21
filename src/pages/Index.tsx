@@ -42,6 +42,7 @@ const Index = () => {
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const { toast } = useToast();
@@ -406,16 +407,31 @@ const Index = () => {
   );
 
   const filteredQuotations = useMemo(() => {
-    if (!searchQuery.trim()) return quotations;
-    const q = searchQuery.toLowerCase();
-    return quotations.filter(
-      (qt) =>
-        qt.quoteNumber.toLowerCase().includes(q) ||
-        qt.clientName.toLowerCase().includes(q) ||
-        qt.clientEmail.toLowerCase().includes(q) ||
-        qt.items.some((item) => item.sku.toLowerCase().includes(q) || item.description.toLowerCase().includes(q))
-    );
-  }, [quotations, searchQuery]);
+    let result = quotations;
+    
+    // Status filter
+    if (statusFilter === 'active') {
+      result = result.filter(qt => qt.status !== 'finished');
+    } else if (statusFilter === 'finished') {
+      result = result.filter(qt => qt.status === 'finished');
+    }
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (qt) =>
+          qt.quoteNumber.toLowerCase().includes(q) ||
+          qt.clientName.toLowerCase().includes(q) ||
+          qt.clientEmail.toLowerCase().includes(q) ||
+          qt.items.some((item) => item.sku.toLowerCase().includes(q) || item.description.toLowerCase().includes(q))
+      );
+    }
+    
+    return result;
+  }, [quotations, searchQuery, statusFilter]);
+
+  const finishedCount = useMemo(() => quotations.filter(q => q.status === 'finished').length, [quotations]);
 
   const selectedQuotation = selectedQuotationId ? getQuotation(selectedQuotationId) : null;
 
@@ -585,6 +601,38 @@ const Index = () => {
                       <X className="w-4 h-4" />
                     </button>
                   )}
+                </div>
+                <div className="flex gap-1 rounded-lg bg-secondary/50 p-1 w-fit">
+                  <button
+                    onClick={() => setStatusFilter('active')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      statusFilter === 'active'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Active ({quotations.length - finishedCount})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('finished')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      statusFilter === 'finished'
+                        ? 'bg-orange-500 text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Finished ({finishedCount})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      statusFilter === 'all'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    All ({quotations.length})
+                  </button>
                 </div>
                 <div className="flex flex-col gap-4">
                   {filteredQuotations.map((quotation, index) => (

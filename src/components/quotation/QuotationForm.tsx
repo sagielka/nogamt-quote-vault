@@ -592,6 +592,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       currency: currency,
       attachments: [],
       quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
+      pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
     });
   };
 
@@ -986,8 +987,8 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         </CardContent>
       </Card>
 
-      {/* Email Attachments - only when editing */}
-      {isEditing && quotationId && (
+      {/* Email Attachments */}
+      {(isEditing && quotationId) || !isEditing ? (
         <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
           <CardHeader className="border-b border-primary/10">
             <CardTitle className="heading-display text-lg flex items-center gap-3">

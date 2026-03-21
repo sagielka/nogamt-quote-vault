@@ -42,6 +42,7 @@ const Index = () => {
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const { toast } = useToast();
@@ -406,16 +407,31 @@ const Index = () => {
   );
 
   const filteredQuotations = useMemo(() => {
-    if (!searchQuery.trim()) return quotations;
-    const q = searchQuery.toLowerCase();
-    return quotations.filter(
-      (qt) =>
-        qt.quoteNumber.toLowerCase().includes(q) ||
-        qt.clientName.toLowerCase().includes(q) ||
-        qt.clientEmail.toLowerCase().includes(q) ||
-        qt.items.some((item) => item.sku.toLowerCase().includes(q) || item.description.toLowerCase().includes(q))
-    );
-  }, [quotations, searchQuery]);
+    let result = quotations;
+    
+    // Status filter
+    if (statusFilter === 'active') {
+      result = result.filter(qt => qt.status !== 'finished');
+    } else if (statusFilter === 'finished') {
+      result = result.filter(qt => qt.status === 'finished');
+    }
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (qt) =>
+          qt.quoteNumber.toLowerCase().includes(q) ||
+          qt.clientName.toLowerCase().includes(q) ||
+          qt.clientEmail.toLowerCase().includes(q) ||
+          qt.items.some((item) => item.sku.toLowerCase().includes(q) || item.description.toLowerCase().includes(q))
+      );
+    }
+    
+    return result;
+  }, [quotations, searchQuery, statusFilter]);
+
+  const finishedCount = useMemo(() => quotations.filter(q => q.status === 'finished').length, [quotations]);
 
   const selectedQuotation = selectedQuotationId ? getQuotation(selectedQuotationId) : null;
 

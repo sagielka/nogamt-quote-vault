@@ -179,6 +179,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [isDraggingEmail, setIsDraggingEmail] = useState(false);
   const emailDragCounterRef = useRef(0);
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
+  const [pendingEmailFiles, setPendingEmailFiles] = useState<File[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
   const quotationId = initialData?.id;
 

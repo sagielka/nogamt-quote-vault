@@ -205,12 +205,44 @@ const Index = () => {
   };
 
   const handleCreateQuotation = async (data: QuotationFormData) => {
+    const pendingFiles = data.pendingEmailFiles;
+    delete data.pendingEmailFiles;
+    
     const newQuotation = await addQuotation(data);
     if (newQuotation) {
-      toast({
-        title: 'Quotation Created',
-        description: `Quote ${newQuotation.quoteNumber} has been created successfully.`,
-      });
+      // Upload any pending email attachments
+      if (pendingFiles && pendingFiles.length > 0 && user) {
+        try {
+          for (const file of pendingFiles) {
+            const filePath = `${newQuotation.id}/${Date.now()}-${file.name}`;
+            const { error: uploadError } = await supabase.storage.from('email-attachments').upload(filePath, file);
+            if (uploadError) throw uploadError;
+            const { error: dbError } = await supabase.from('quotation_email_attachments').insert({
+              quotation_id: newQuotation.id,
+              user_id: user.id,
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+            });
+            if (dbError) throw dbError;
+          }
+          toast({
+            title: 'Quotation Created',
+            description: `Quote ${newQuotation.quoteNumber} created with ${pendingFiles.length} email attachment(s).`,
+          });
+        } catch (err: any) {
+          toast({
+            title: 'Quotation Created',
+            description: `Quote created but some email attachments failed to upload: ${err.message}`,
+            variant: 'destructive',
+          });
+        }
+      } else {
+        toast({
+          title: 'Quotation Created',
+          description: `Quote ${newQuotation.quoteNumber} has been created successfully.`,
+        });
+      }
     } else {
       toast({
         title: 'Error',

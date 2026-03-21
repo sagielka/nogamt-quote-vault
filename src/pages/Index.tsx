@@ -602,6 +602,38 @@ const Index = () => {
                     </button>
                   )}
                 </div>
+                <div className="flex gap-1 rounded-lg bg-secondary/50 p-1 w-fit">
+                  <button
+                    onClick={() => setStatusFilter('active')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      statusFilter === 'active'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Active ({quotations.length - finishedCount})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('finished')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      statusFilter === 'finished'
+                        ? 'bg-orange-500 text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Finished ({finishedCount})
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      statusFilter === 'all'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    All ({quotations.length})
+                  </button>
+                </div>
                 <div className="flex flex-col gap-4">
                   {filteredQuotations.map((quotation, index) => (
                     <QuotationCard

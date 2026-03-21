@@ -50,4 +50,5 @@ export interface Quotation {
 
 export type QuotationFormData = Omit<Quotation, 'id' | 'userId' | 'createdAt' | 'quoteNumber' | 'reminderSentAt' | 'followUpNotifiedAt'> & {
   quoteNumber?: string; // Optional: allows manual override when editing
+  pendingEmailFiles?: File[]; // Files queued during new quotation creation
 };

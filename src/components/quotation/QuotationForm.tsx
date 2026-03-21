@@ -179,6 +179,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [isDraggingEmail, setIsDraggingEmail] = useState(false);
   const emailDragCounterRef = useRef(0);
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
+  const [pendingEmailFiles, setPendingEmailFiles] = useState<File[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
   const quotationId = initialData?.id;
 
@@ -216,19 +217,36 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   }, [isEditing, quotationId, refreshEmailAttachments]);
 
   const handleUploadEmailFile = async (files: FileList | null) => {
-    if (!files || files.length === 0 || !user || !quotationId) return;
+    if (!files || files.length === 0 || !user) return;
+    
+    const validFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (!['eml', 'msg'].includes(ext || '')) {
+        toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
+        continue;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    // If no quotation ID yet (new quote), queue files locally
+    if (!quotationId) {
+      setPendingEmailFiles(prev => [...prev, ...validFiles]);
+      toast({ title: 'Files Queued', description: `${validFiles.length} file(s) will be uploaded when the quotation is saved.` });
+      if (emailFileInputRef.current) emailFileInputRef.current.value = '';
+      return;
+    }
+
+    // Existing quotation: upload immediately
     setUploadingEmail(true);
     try {
-      for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop()?.toLowerCase();
-        if (!['eml', 'msg'].includes(ext || '')) {
-          toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
-          continue;
-        }
-        if (file.size > 20 * 1024 * 1024) {
-          toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
-          continue;
-        }
+      for (const file of validFiles) {
         const filePath = `${quotationId}/${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage.from('email-attachments').upload(filePath, file);
         if (uploadError) throw uploadError;
@@ -241,7 +259,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         });
         if (dbError) throw dbError;
       }
-      toast({ title: 'Email(s) Attached', description: `Successfully attached ${files.length} file(s).` });
+      toast({ title: 'Email(s) Attached', description: `Successfully attached ${validFiles.length} file(s).` });
       await refreshEmailAttachments();
     } catch (err: any) {
       toast({ title: 'Upload Failed', description: err.message || 'Failed to upload.', variant: 'destructive' });
@@ -574,6 +592,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       currency: currency,
       attachments: [],
       quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
+      pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
     });
   };
 
@@ -968,8 +987,8 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         </CardContent>
       </Card>
 
-      {/* Email Attachments - only when editing */}
-      {isEditing && quotationId && (
+      {/* Email Attachments */}
+      {(isEditing && quotationId) || !isEditing ? (
         <Card className="card-elevated group hover:shadow-glow transition-shadow duration-500">
           <CardHeader className="border-b border-primary/10">
             <CardTitle className="heading-display text-lg flex items-center gap-3">
@@ -1049,6 +1068,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
               </div>
             </div>
 
+            {/* Show uploaded attachments (editing mode) */}
             {emailAttachments.length > 0 && (
               <div className="mt-4 space-y-2">
                 {emailAttachments.map((att) => (
@@ -1087,9 +1107,39 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
                 ))}
               </div>
             )}
+
+            {/* Show pending files (new quote mode) */}
+            {pendingEmailFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-muted-foreground">Pending upload (will be saved with quotation):</p>
+                {pendingEmailFiles.map((file, idx) => (
+                  <div
+                    key={`pending-${idx}`}
+                    className="flex items-center justify-between gap-2 p-2 rounded-md bg-orange-500/10 border border-orange-500/20"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-orange-500 shrink-0" />
+                      <span className="text-sm truncate">{file.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        ({(file.size / 1024).toFixed(0)} KB)
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => setPendingEmailFiles(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+      ) : null}
       <div className="flex gap-3 justify-end">
         <Button 
           type="submit" 

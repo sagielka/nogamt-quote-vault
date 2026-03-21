@@ -217,19 +217,36 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   }, [isEditing, quotationId, refreshEmailAttachments]);
 
   const handleUploadEmailFile = async (files: FileList | null) => {
-    if (!files || files.length === 0 || !user || !quotationId) return;
+    if (!files || files.length === 0 || !user) return;
+    
+    const validFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (!['eml', 'msg'].includes(ext || '')) {
+        toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
+        continue;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (validFiles.length === 0) return;
+
+    // If no quotation ID yet (new quote), queue files locally
+    if (!quotationId) {
+      setPendingEmailFiles(prev => [...prev, ...validFiles]);
+      toast({ title: 'Files Queued', description: `${validFiles.length} file(s) will be uploaded when the quotation is saved.` });
+      if (emailFileInputRef.current) emailFileInputRef.current.value = '';
+      return;
+    }
+
+    // Existing quotation: upload immediately
     setUploadingEmail(true);
     try {
-      for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop()?.toLowerCase();
-        if (!['eml', 'msg'].includes(ext || '')) {
-          toast({ title: 'Invalid file', description: 'Only .eml and .msg files are supported.', variant: 'destructive' });
-          continue;
-        }
-        if (file.size > 20 * 1024 * 1024) {
-          toast({ title: 'File too large', description: `${file.name} exceeds 20MB limit.`, variant: 'destructive' });
-          continue;
-        }
+      for (const file of validFiles) {
         const filePath = `${quotationId}/${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage.from('email-attachments').upload(filePath, file);
         if (uploadError) throw uploadError;
@@ -242,7 +259,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
         });
         if (dbError) throw dbError;
       }
-      toast({ title: 'Email(s) Attached', description: `Successfully attached ${files.length} file(s).` });
+      toast({ title: 'Email(s) Attached', description: `Successfully attached ${validFiles.length} file(s).` });
       await refreshEmailAttachments();
     } catch (err: any) {
       toast({ title: 'Upload Failed', description: err.message || 'Failed to upload.', variant: 'destructive' });

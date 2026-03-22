@@ -16,7 +16,18 @@ import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { TeamChat } from '@/components/TeamChat';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -678,9 +689,9 @@ const Index = () => {
           </div>
         )}
 
-        {currentView === 'edit' && selectedQuotation && (
+         {currentView === 'edit' && selectedQuotation && (
           <div className="max-w-3xl mx-auto">
-            <div className="mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <Button variant="ghost" onClick={() => {
                 setSelectedQuotationId(null);
                 setCurrentView('list');
@@ -688,6 +699,83 @@ const Index = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Quotations
               </Button>
+              <div className="flex gap-2">
+                {/* Mark as Accepted */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={selectedQuotation.status === 'accepted' ? 'border-green-500 bg-green-500 text-white hover:bg-green-600' : 'hover:border-green-500 hover:text-green-600'}
+                    >
+                      {selectedQuotation.status === 'accepted' ? (
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                      ) : (
+                        <Circle className="w-4 h-4 mr-1" />
+                      )}
+                      {selectedQuotation.status === 'accepted' ? 'Accepted' : 'Mark Accepted'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {selectedQuotation.status === 'accepted' ? 'Remove Accepted Status?' : 'Mark as Accepted?'}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {selectedQuotation.status === 'accepted'
+                          ? `This will reopen "${selectedQuotation.quoteNumber}" and set its status back to sent.`
+                          : `This will mark "${selectedQuotation.quoteNumber}" as accepted (order received).`
+                        }
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleStatusChange(selectedQuotation.id, selectedQuotation.status === 'accepted' ? 'sent' : 'accepted')}
+                        className={selectedQuotation.status === 'accepted' ? '' : 'bg-green-500 hover:bg-green-600'}
+                      >
+                        {selectedQuotation.status === 'accepted' ? 'Remove' : 'Mark as Accepted'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                {/* Mark as Finished */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={selectedQuotation.status === 'finished' ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600' : 'hover:border-orange-500 hover:text-orange-500'}
+                    >
+                      <Ban className="w-4 h-4 mr-1" />
+                      {selectedQuotation.status === 'finished' ? 'No Order' : 'Mark Finished'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {selectedQuotation.status === 'finished' ? 'Reopen Quotation?' : 'Mark as Finished?'}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {selectedQuotation.status === 'finished'
+                          ? `This will reopen "${selectedQuotation.quoteNumber}" and set its status back to sent.`
+                          : `This will mark "${selectedQuotation.quoteNumber}" as finished (no order received).`
+                        }
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleStatusChange(selectedQuotation.id, selectedQuotation.status === 'finished' ? 'sent' : 'finished')}
+                        className={selectedQuotation.status === 'finished' ? '' : 'bg-orange-500 hover:bg-orange-600'}
+                      >
+                        {selectedQuotation.status === 'finished' ? 'Reopen' : 'Mark as Finished'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
             <h2 className="heading-display text-2xl text-foreground mb-6">
               Edit Quotation - {selectedQuotation.quoteNumber}
@@ -712,6 +800,7 @@ const Index = () => {
               setCurrentView('edit');
             }}
             onEditCustomer={handleEditCustomer}
+            onStatusChange={handleStatusChange}
           />
         )}
 

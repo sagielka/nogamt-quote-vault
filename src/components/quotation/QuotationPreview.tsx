@@ -3,12 +3,23 @@ import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,9 +51,10 @@ interface QuotationPreviewProps {
   onBack: () => void;
   onEdit?: () => void;
   onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
-export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer }: QuotationPreviewProps) => {
+export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer, onStatusChange }: QuotationPreviewProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -366,7 +378,84 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Quotations
         </Button>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {onStatusChange && (
+            <>
+              {/* Mark as Accepted */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={quotation.status === 'accepted' ? 'border-green-500 bg-green-500 text-white hover:bg-green-600' : 'hover:border-green-500 hover:text-green-600'}
+                  >
+                    {quotation.status === 'accepted' ? (
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                    ) : (
+                      <Circle className="w-4 h-4 mr-2" />
+                    )}
+                    {quotation.status === 'accepted' ? 'Order Received' : 'Mark as Accepted'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {quotation.status === 'accepted' ? 'Remove Accepted Status?' : 'Mark as Accepted?'}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {quotation.status === 'accepted'
+                        ? `This will reopen "${quotation.quoteNumber}" and set its status back to sent.`
+                        : `This will mark "${quotation.quoteNumber}" as accepted (order received). Automated reminders will be disabled.`
+                      }
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onStatusChange(quotation.id, quotation.status === 'accepted' ? 'sent' : 'accepted')}
+                      className={quotation.status === 'accepted' ? '' : 'bg-green-500 hover:bg-green-600'}
+                    >
+                      {quotation.status === 'accepted' ? 'Remove' : 'Mark as Accepted'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Mark as Finished */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={quotation.status === 'finished' ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600' : 'hover:border-orange-500 hover:text-orange-500'}
+                  >
+                    <Ban className="w-4 h-4 mr-2" />
+                    {quotation.status === 'finished' ? 'Closed (No Order)' : 'Mark as Finished'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {quotation.status === 'finished' ? 'Reopen Quotation?' : 'Mark as Finished?'}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {quotation.status === 'finished'
+                        ? `This will reopen "${quotation.quoteNumber}" and set its status back to sent.`
+                        : `This will mark "${quotation.quoteNumber}" as finished (no order received). Automated reminders will be disabled.`
+                      }
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onStatusChange(quotation.id, quotation.status === 'finished' ? 'sent' : 'finished')}
+                      className={quotation.status === 'finished' ? '' : 'bg-orange-500 hover:bg-orange-600'}
+                    >
+                      {quotation.status === 'finished' ? 'Reopen' : 'Mark as Finished'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
           {onEdit && (
             <Button variant="outline" onClick={onEdit}>
               <Pencil className="w-4 h-4 mr-2" />

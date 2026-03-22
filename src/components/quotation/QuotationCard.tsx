@@ -286,7 +286,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
           </div>
 
           {/* Right: total + actions */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
             <span className="text-base font-semibold text-primary whitespace-nowrap">
               {formatCurrency(total, quotation.currency)}
             </span>

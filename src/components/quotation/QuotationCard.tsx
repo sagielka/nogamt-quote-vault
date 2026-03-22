@@ -170,7 +170,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   };
 
   return (
-    <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in">
+    <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in cursor-pointer" onClick={() => onView(quotation.id)}>
       <CardContent className="px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Left: quote info */}

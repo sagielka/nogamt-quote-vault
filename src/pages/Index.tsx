@@ -712,6 +712,7 @@ const Index = () => {
               setCurrentView('edit');
             }}
             onEditCustomer={handleEditCustomer}
+            onStatusChange={handleStatusChange}
           />
         )}
 

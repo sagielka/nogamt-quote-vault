@@ -82,6 +82,8 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [selectedReminderRecipients, setSelectedReminderRecipients] = useState<string[]>([]);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
@@ -119,9 +121,10 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
     e.stopPropagation();
     setIsSendingReminder(true);
 
+    const emailsToSend = selectedReminderRecipients.join(', ');
     toast({
       title: 'Sending reminder...',
-      description: `Generating PDF and emailing ${quotation.clientEmail}`,
+      description: `Generating PDF and emailing ${emailsToSend}`,
     });
 
     try {
@@ -131,7 +134,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
 
       const { data, error } = await supabase.functions.invoke('send-quotation-email', {
         body: {
-          to: quotation.clientEmail,
+          to: emailsToSend,
           clientName: quotation.clientName,
           quoteNumber: quotation.quoteNumber,
           total: totalFormatted,
@@ -147,7 +150,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
       if (data?.unsubscribed) {
         toast({
           title: 'Email Unsubscribed',
-          description: `${quotation.clientEmail} has unsubscribed from emails.`,
+          description: `${emailsToSend} has unsubscribed from emails.`,
           variant: 'destructive',
         });
         return;
@@ -155,7 +158,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
 
       toast({
         title: 'Reminder Sent',
-        description: `Follow-up email sent to ${quotation.clientEmail}.`,
+        description: `Follow-up email sent to ${emailsToSend}.`,
       });
     } catch (err) {
       console.error('Failed to send reminder:', err);
@@ -410,41 +413,31 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <TooltipContent side="top">{getReminderBlockReason(quotation.createdAt, quotation.reminderSentAt)}</TooltipContent>
                 </Tooltip>
               ) : (
-                <AlertDialog>
+                <>
                   <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7 text-muted-foreground hover:text-primary"
-                          disabled={isSendingReminder}
-                        >
-                          {isSendingReminder ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Mail className="w-3.5 h-3.5" />
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        disabled={isSendingReminder}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const allEmails = quotation.clientEmail.split(',').map(em => em.trim()).filter(Boolean);
+                          setSelectedReminderRecipients(allEmails);
+                          setReminderDialogOpen(true);
+                        }}
+                      >
+                        {isSendingReminder ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Mail className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Send reminder email</TooltipContent>
                   </Tooltip>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Send Reminder Email?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will send a follow-up email with the quotation PDF to <strong>{quotation.clientEmail}</strong>.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSendReminder}>
-                        Send Reminder
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                </>
               )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -527,6 +520,50 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 setEditCustomerOpen(false);
               }}
             >Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reminder Recipient Selection Dialog */}
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Send Reminder Email?</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-2 text-sm text-muted-foreground">
+            <p>This will send a follow-up email with the quotation PDF to:</p>
+            <div className="bg-muted rounded-md p-3 space-y-2">
+              {quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
+                <label key={i} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedReminderRecipients.includes(email)}
+                    onChange={(ev) => {
+                      if (ev.target.checked) {
+                        setSelectedReminderRecipients(prev => [...prev, email]);
+                      } else {
+                        setSelectedReminderRecipients(prev => prev.filter(r => r !== email));
+                      }
+                    }}
+                    className="rounded border-input"
+                  />
+                  <Mail className="w-3 h-3 text-primary" />
+                  <span className="text-foreground font-medium">{email}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReminderDialogOpen(false)}>Cancel</Button>
+            <Button
+              disabled={selectedReminderRecipients.length === 0}
+              onClick={(e) => {
+                setReminderDialogOpen(false);
+                handleSendReminder(e);
+              }}
+            >
+              Send Reminder ({selectedReminderRecipients.length})
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

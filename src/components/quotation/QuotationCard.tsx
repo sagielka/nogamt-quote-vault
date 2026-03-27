@@ -121,9 +121,10 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
     e.stopPropagation();
     setIsSendingReminder(true);
 
+    const emailsToSend = selectedReminderRecipients.join(', ');
     toast({
       title: 'Sending reminder...',
-      description: `Generating PDF and emailing ${quotation.clientEmail}`,
+      description: `Generating PDF and emailing ${emailsToSend}`,
     });
 
     try {
@@ -133,7 +134,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
 
       const { data, error } = await supabase.functions.invoke('send-quotation-email', {
         body: {
-          to: quotation.clientEmail,
+          to: emailsToSend,
           clientName: quotation.clientName,
           quoteNumber: quotation.quoteNumber,
           total: totalFormatted,
@@ -149,7 +150,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
       if (data?.unsubscribed) {
         toast({
           title: 'Email Unsubscribed',
-          description: `${quotation.clientEmail} has unsubscribed from emails.`,
+          description: `${emailsToSend} has unsubscribed from emails.`,
           variant: 'destructive',
         });
         return;
@@ -157,7 +158,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
 
       toast({
         title: 'Reminder Sent',
-        description: `Follow-up email sent to ${quotation.clientEmail}.`,
+        description: `Follow-up email sent to ${emailsToSend}.`,
       });
     } catch (err) {
       console.error('Failed to send reminder:', err);

@@ -523,6 +523,50 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reminder Recipient Selection Dialog */}
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <DialogContent className="sm:max-w-md" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle>Send Reminder Email?</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-2 text-sm text-muted-foreground">
+            <p>This will send a follow-up email with the quotation PDF to:</p>
+            <div className="bg-muted rounded-md p-3 space-y-2">
+              {quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
+                <label key={i} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedReminderRecipients.includes(email)}
+                    onChange={(ev) => {
+                      if (ev.target.checked) {
+                        setSelectedReminderRecipients(prev => [...prev, email]);
+                      } else {
+                        setSelectedReminderRecipients(prev => prev.filter(r => r !== email));
+                      }
+                    }}
+                    className="rounded border-input"
+                  />
+                  <Mail className="w-3 h-3 text-primary" />
+                  <span className="text-foreground font-medium">{email}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReminderDialogOpen(false)}>Cancel</Button>
+            <Button
+              disabled={selectedReminderRecipients.length === 0}
+              onClick={(e) => {
+                setReminderDialogOpen(false);
+                handleSendReminder(e);
+              }}
+            >
+              Send Reminder ({selectedReminderRecipients.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

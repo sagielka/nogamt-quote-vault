@@ -413,41 +413,31 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <TooltipContent side="top">{getReminderBlockReason(quotation.createdAt, quotation.reminderSentAt)}</TooltipContent>
                 </Tooltip>
               ) : (
-                <AlertDialog>
+                <>
                   <Tooltip delayDuration={0}>
                     <TooltipTrigger asChild>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-7 w-7 text-muted-foreground hover:text-primary"
-                          disabled={isSendingReminder}
-                        >
-                          {isSendingReminder ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Mail className="w-3.5 h-3.5" />
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        disabled={isSendingReminder}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const allEmails = quotation.clientEmail.split(',').map(em => em.trim()).filter(Boolean);
+                          setSelectedReminderRecipients(allEmails);
+                          setReminderDialogOpen(true);
+                        }}
+                      >
+                        {isSendingReminder ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Mail className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Send reminder email</TooltipContent>
                   </Tooltip>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Send Reminder Email?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will send a follow-up email with the quotation PDF to <strong>{quotation.clientEmail}</strong>.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleSendReminder}>
-                        Send Reminder
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                </>
               )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>

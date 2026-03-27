@@ -282,7 +282,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
         const result = await window.electronAPI.emailWithAttachment(
           base64Data,
           fileName,
-          quotation.clientEmail,
+          selectedRecipients.join(', '),
           subject,
           body
         );

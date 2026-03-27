@@ -332,10 +332,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
 <p>If you have any questions, please don't hesitate to contact us.</p>
 <p>Best regards,<br/><strong>Noga MT Team</strong></p>`;
 
-      const recipients = quotation.clientEmail
-        .split(',')
-        .map(e => e.trim())
-        .filter(Boolean)
+      const recipients = selectedRecipients
         .map(email => ({ email, name: quotation.clientName }));
 
       const { data, error } = await supabase.functions.invoke('send-customer-email', {

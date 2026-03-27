@@ -69,6 +69,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
+  const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
 
@@ -281,7 +282,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
         const result = await window.electronAPI.emailWithAttachment(
           base64Data,
           fileName,
-          quotation.clientEmail,
+          selectedRecipients.join(', '),
           subject,
           body
         );
@@ -331,10 +332,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
 <p>If you have any questions, please don't hesitate to contact us.</p>
 <p>Best regards,<br/><strong>Noga MT Team</strong></p>`;
 
-      const recipients = quotation.clientEmail
-        .split(',')
-        .map(e => e.trim())
-        .filter(Boolean)
+      const recipients = selectedRecipients
         .map(email => ({ email, name: quotation.clientName }));
 
       const { data, error } = await supabase.functions.invoke('send-customer-email', {
@@ -466,7 +464,11 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" onClick={() => setConfirmSendOpen(true)} disabled={sendingQuote}>
+          <Button variant="outline" onClick={() => {
+            const allEmails = quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+            setSelectedRecipients(allEmails);
+            setConfirmSendOpen(true);
+          }} disabled={sendingQuote}>
             {sendingQuote ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
@@ -908,25 +910,38 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           </DialogHeader>
           <div className="py-2 space-y-2 text-sm text-muted-foreground">
             <p>This will send quotation <span className="font-medium text-foreground">{quotation.quoteNumber}</span> with PDF attachment to:</p>
-            <div className="bg-muted rounded-md p-3 space-y-1">
+            <div className="bg-muted rounded-md p-3 space-y-2">
               {quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
-                <p key={i} className="text-foreground font-medium flex items-center gap-2">
+                <label key={i} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedRecipients.includes(email)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRecipients(prev => [...prev, email]);
+                      } else {
+                        setSelectedRecipients(prev => prev.filter(r => r !== email));
+                      }
+                    }}
+                    className="rounded border-input"
+                  />
                   <Mail className="w-3 h-3 text-primary" />
-                  {email}
-                </p>
+                  <span className="text-foreground font-medium">{email}</span>
+                </label>
               ))}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmSendOpen(false)}>Cancel</Button>
             <Button
+              disabled={selectedRecipients.length === 0}
               onClick={() => {
                 setConfirmSendOpen(false);
                 handleEmailQuote();
               }}
             >
               <Send className="w-4 h-4 mr-2" />
-              Send
+              Send ({selectedRecipients.length})
             </Button>
           </DialogFooter>
         </DialogContent>

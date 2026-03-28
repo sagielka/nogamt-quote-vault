@@ -161,6 +161,26 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
         title: 'Reminder Sent',
         description: `Follow-up email sent to ${emailsToSend}.`,
       });
+
+      // Persist any manually-added emails back to the customer record
+      try {
+        const { data: customers } = await supabase
+          .from('customers')
+          .select('id, email')
+          .ilike('name', quotation.clientName)
+          .limit(1);
+        if (customers && customers.length > 0) {
+          const customer = customers[0];
+          const existingEmails = customer.email.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+          const newEmails = selectedReminderRecipients.filter(e => !existingEmails.includes(e.toLowerCase()));
+          if (newEmails.length > 0) {
+            const updatedEmail = [...existingEmails, ...newEmails.map(e => e.toLowerCase())].join(', ');
+            await supabase.from('customers').update({ email: updatedEmail }).eq('id', customer.id);
+          }
+        }
+      } catch (persistErr) {
+        console.error('Failed to persist new emails to customer:', persistErr);
+      }
     } catch (err) {
       console.error('Failed to send reminder:', err);
       toast({

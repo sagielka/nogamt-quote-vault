@@ -576,6 +576,22 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <span className="text-foreground font-medium">{email}</span>
                 </label>
               ))}
+              {/* Show manually-added emails */}
+              {selectedReminderRecipients
+                .filter(r => !quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).includes(r))
+                .map((email, i) => (
+                  <label key={`added-${i}`} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked
+                      onChange={() => setSelectedReminderRecipients(prev => prev.filter(r => r !== email))}
+                      className="rounded border-input"
+                    />
+                    <Mail className="w-3 h-3 text-primary" />
+                    <span className="text-foreground font-medium">{email}</span>
+                    <Badge variant="outline" className="text-xs ml-1">added</Badge>
+                  </label>
+                ))}
             </div>
             <div className="flex gap-2 mt-2">
               <Input

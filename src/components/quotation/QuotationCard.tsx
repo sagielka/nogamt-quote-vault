@@ -84,6 +84,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   const [isSendingReminder, setIsSendingReminder] = useState(false);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [selectedReminderRecipients, setSelectedReminderRecipients] = useState<string[]>([]);
+  const [additionalReminderEmail, setAdditionalReminderEmail] = useState('');
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
@@ -551,6 +552,40 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <span className="text-foreground font-medium">{email}</span>
                 </label>
               ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                type="email"
+                placeholder="Add email address..."
+                value={additionalReminderEmail}
+                onChange={(e) => setAdditionalReminderEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const email = additionalReminderEmail.trim();
+                    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedReminderRecipients.includes(email)) {
+                      setSelectedReminderRecipients(prev => [...prev, email]);
+                      setAdditionalReminderEmail('');
+                    }
+                  }
+                }}
+                className="text-sm"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!additionalReminderEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(additionalReminderEmail.trim()) || selectedReminderRecipients.includes(additionalReminderEmail.trim())}
+                onClick={() => {
+                  const email = additionalReminderEmail.trim();
+                  if (email && !selectedReminderRecipients.includes(email)) {
+                    setSelectedReminderRecipients(prev => [...prev, email]);
+                    setAdditionalReminderEmail('');
+                  }
+                }}
+              >
+                Add
+              </Button>
             </div>
           </div>
           <DialogFooter>

@@ -70,6 +70,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [sendingQuote, setSendingQuote] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [additionalEmail, setAdditionalEmail] = useState('');
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
 
@@ -929,6 +930,40 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   <span className="text-foreground font-medium">{email}</span>
                 </label>
               ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                type="email"
+                placeholder="Add email address..."
+                value={additionalEmail}
+                onChange={(e) => setAdditionalEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const email = additionalEmail.trim();
+                    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedRecipients.includes(email)) {
+                      setSelectedRecipients(prev => [...prev, email]);
+                      setAdditionalEmail('');
+                    }
+                  }
+                }}
+                className="text-sm"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!additionalEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(additionalEmail.trim()) || selectedRecipients.includes(additionalEmail.trim())}
+                onClick={() => {
+                  const email = additionalEmail.trim();
+                  if (email && !selectedRecipients.includes(email)) {
+                    setSelectedRecipients(prev => [...prev, email]);
+                    setAdditionalEmail('');
+                  }
+                }}
+              >
+                Add
+              </Button>
             </div>
           </div>
           <DialogFooter>

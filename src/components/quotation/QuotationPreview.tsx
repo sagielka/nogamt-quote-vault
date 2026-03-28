@@ -371,6 +371,10 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           if (newEmails.length > 0) {
             const updatedEmail = [...existingEmails, ...newEmails.map(e => e.toLowerCase())].join(', ');
             await supabase.from('customers').update({ email: updatedEmail }).eq('id', customer.id);
+            toast({
+              title: 'Customer Updated',
+              description: `Added ${newEmails.join(', ')} to ${quotation.clientName}'s record.`,
+            });
           }
         }
       } catch (persistErr) {

@@ -25,7 +25,7 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen, Ban } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen, Ban, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -216,11 +216,9 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 <h3 className="font-display font-semibold text-foreground text-sm truncate">
                   {quotation.quoteNumber}
                 </h3>
-                {quotation.status !== 'draft' && (
-                  <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
-                    {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-                  </Badge>
-                )}
+                <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
+                  {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                </Badge>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <span 
@@ -346,6 +344,24 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <Download className="w-3.5 h-3.5" />
                 )}
               </Button>
+              {/* Mark as Sent for drafts */}
+              {quotation.status === 'draft' && (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => onStatusChange?.(quotation.id, 'sent')}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Mark as sent</TooltipContent>
+                </Tooltip>
+              )}
               {/* Order received toggle */}
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>

@@ -104,7 +104,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
 
     const now = new Date();
     const expiringSoon = filteredQuotations.filter(q => {
-      if (q.status === 'accepted' || q.status === 'declined') return false;
+      if (q.status === 'accepted' || q.status === 'declined' || q.status === 'finished') return false;
       const validUntil = new Date(q.validUntil);
       const daysLeft = (validUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
       return daysLeft >= 0 && daysLeft <= 7;

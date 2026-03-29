@@ -10,7 +10,7 @@ import { QuotationCard } from '@/components/quotation/QuotationCard';
 import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
-import { QuotationStats } from '@/components/quotation/QuotationStats';
+import { CustomerReport } from '@/components/CustomerReport';
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
@@ -36,7 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();

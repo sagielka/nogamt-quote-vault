@@ -162,6 +162,11 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
         description: `Follow-up email sent to ${emailsToSend}.`,
       });
 
+      // Auto-update status to 'sent' if currently 'draft'
+      if (quotation.status === 'draft' && onStatusChange) {
+        onStatusChange(quotation.id, 'sent');
+      }
+
       // Persist any manually-added emails back to the customer record
       try {
         const { data: customers } = await supabase

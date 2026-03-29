@@ -355,6 +355,11 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
         description: `Successfully sent to ${data?.sent || recipients.length} recipient${(data?.sent || recipients.length) !== 1 ? 's' : ''}${skippedMsg}.`,
       });
 
+      // Auto-update status to 'sent' if currently 'draft'
+      if (quotation.status === 'draft' && onStatusChange) {
+        onStatusChange(quotation.id, 'sent');
+      }
+
       await refreshSentEmails();
 
       // Persist any manually-added emails back to the customer record

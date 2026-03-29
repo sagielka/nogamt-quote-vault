@@ -17,6 +17,8 @@ interface QuotationStatsProps {
   quotations: Quotation[];
   isAdmin?: boolean;
   userNameMap?: Record<string, string>;
+  onFilterExpiring?: () => void;
+  expiringSoonActive?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -55,7 +57,7 @@ const getPresetDates = (preset: PresetRange): { from: Date | undefined; to: Date
   }
 };
 
-export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: QuotationStatsProps) => {
+export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilterExpiring, expiringSoonActive }: QuotationStatsProps) => {
   const [chartsOpen, setChartsOpen] = useState(false);
   const [rangePreset, setRangePreset] = useState<PresetRange>('all');
   const [customFrom, setCustomFrom] = useState<Date | undefined>();

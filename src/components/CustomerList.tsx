@@ -142,9 +142,10 @@ interface Customer {
 
 interface CustomerListProps {
   onSelectCustomer?: (email: string) => void;
+  onViewReport?: (customer: { name: string; email: string; address: string | null }) => void;
 }
 
-export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
+export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
@@ -749,6 +750,17 @@ export const CustomerList = ({ onSelectCustomer }: CustomerListProps) => {
                     </h3>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    {onViewReport && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={(e) => { e.stopPropagation(); onViewReport({ name: customer.name, email: customer.email, address: customer.address }); }}
+                        title="View report"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"

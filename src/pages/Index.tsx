@@ -11,6 +11,7 @@ import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
+import { CustomerReport } from '@/components/CustomerReport';
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
@@ -36,7 +37,7 @@ import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -55,6 +56,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
+  const [reportCustomer, setReportCustomer] = useState<{ name: string; email: string; address: string | null } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -568,6 +570,12 @@ const Index = () => {
                   Quotations
                 </Button>
               )}
+              {currentView === 'report' && (
+                <Button variant="outline" size="sm" onClick={() => { setReportCustomer(null); setCurrentView('customers'); }}>
+                  <BookUser className="w-4 h-4 mr-2" />
+                  Customers
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -851,10 +859,33 @@ const Index = () => {
         )}
 
         {currentView === 'customers' && (
-          <CustomerList onSelectCustomer={(email) => {
-            setSearchQuery(email);
-            setCurrentView('list');
-          }} />
+          <CustomerList
+            onSelectCustomer={(email) => {
+              setSearchQuery(email);
+              setCurrentView('list');
+            }}
+            onViewReport={(customer) => {
+              setReportCustomer(customer);
+              setCurrentView('report');
+            }}
+          />
+        )}
+
+        {currentView === 'report' && reportCustomer && (
+          <CustomerReport
+            customerName={reportCustomer.name}
+            customerEmail={reportCustomer.email}
+            customerAddress={reportCustomer.address}
+            quotations={quotations}
+            onBack={() => {
+              setReportCustomer(null);
+              setCurrentView('customers');
+            }}
+            onViewQuotation={(id) => {
+              setSelectedQuotationId(id);
+              setCurrentView('preview');
+            }}
+          />
         )}
       </main>
 

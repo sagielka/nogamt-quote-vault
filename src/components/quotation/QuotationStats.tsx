@@ -449,7 +449,11 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {cards.map((card) => (
-          <Card key={card.label} className="overflow-hidden">
+          <Card
+            key={card.label}
+            className="overflow-hidden cursor-pointer transition-colors hover:bg-accent/50"
+            onClick={() => setChartsOpen(!chartsOpen)}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${card.bgColor}`}>

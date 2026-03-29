@@ -10,6 +10,7 @@ import { QuotationCard } from '@/components/quotation/QuotationCard';
 import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
+import { QuotationStats } from '@/components/quotation/QuotationStats';
 import { CustomerReport } from '@/components/CustomerReport';
 
 import { UserManagement } from '@/components/UserManagement';

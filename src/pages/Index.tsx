@@ -55,6 +55,7 @@ const Index = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
+  const [expiringSoonFilter, setExpiringSoonFilter] = useState(false);
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
   const [reportCustomer, setReportCustomer] = useState<{ name: string; email: string; address: string | null } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
@@ -434,6 +435,17 @@ const Index = () => {
     } else if (statusFilter === 'finished') {
       result = result.filter(qt => qt.status === 'finished');
     }
+
+    // Expiring soon filter
+    if (expiringSoonFilter) {
+      const now = new Date();
+      result = result.filter(qt => {
+        if (qt.status === 'accepted' || qt.status === 'declined' || qt.status === 'finished') return false;
+        const validUntil = new Date(qt.validUntil);
+        const daysLeft = (validUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+        return daysLeft >= 0 && daysLeft <= 7;
+      });
+    }
     
     // Search filter
     if (searchQuery.trim()) {
@@ -448,7 +460,7 @@ const Index = () => {
     }
     
     return result;
-  }, [quotations, searchQuery, statusFilter]);
+  }, [quotations, searchQuery, statusFilter, expiringSoonFilter]);
 
   const finishedCount = useMemo(() => quotations.filter(q => q.status === 'finished').length, [quotations]);
 
@@ -601,7 +613,16 @@ const Index = () => {
               <EmptyState onCreateNew={() => setCurrentView('create')} />
             ) : (
               <div className="space-y-6">
-                <QuotationStats quotations={quotations} isAdmin={isAdmin} userNameMap={userNameMap} />
+                <QuotationStats
+                  quotations={quotations}
+                  isAdmin={isAdmin}
+                  userNameMap={userNameMap}
+                  onFilterExpiring={() => {
+                    setExpiringSoonFilter(prev => !prev);
+                    setStatusFilter('all');
+                  }}
+                  expiringSoonActive={expiringSoonFilter}
+                />
                 <div className="flex items-center justify-between">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations

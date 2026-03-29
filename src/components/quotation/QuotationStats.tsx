@@ -17,6 +17,8 @@ interface QuotationStatsProps {
   quotations: Quotation[];
   isAdmin?: boolean;
   userNameMap?: Record<string, string>;
+  onFilterExpiring?: () => void;
+  expiringSoonActive?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -55,7 +57,7 @@ const getPresetDates = (preset: PresetRange): { from: Date | undefined; to: Date
   }
 };
 
-export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: QuotationStatsProps) => {
+export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilterExpiring, expiringSoonActive }: QuotationStatsProps) => {
   const [chartsOpen, setChartsOpen] = useState(false);
   const [rangePreset, setRangePreset] = useState<PresetRange>('all');
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
@@ -448,30 +450,43 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {} }: Quotat
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {cards.map((card) => (
-          <Card
-            key={card.label}
-            className="overflow-hidden cursor-pointer transition-colors hover:bg-accent/50"
-            onClick={() => setChartsOpen(!chartsOpen)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                  <card.icon className={`w-4 h-4 ${card.color}`} />
+        {cards.map((card) => {
+          const isExpiring = card.label === 'Expiring Soon';
+          const isActive = isExpiring && expiringSoonActive;
+          return (
+            <Card
+              key={card.label}
+              className={cn(
+                "overflow-hidden cursor-pointer transition-colors hover:bg-accent/50",
+                isActive && "ring-2 ring-destructive bg-destructive/5"
+              )}
+              onClick={() => {
+                if (isExpiring && onFilterExpiring) {
+                  onFilterExpiring();
+                } else {
+                  setChartsOpen(!chartsOpen);
+                }
+              }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${card.bgColor}`}>
+                    <card.icon className={`w-4 h-4 ${card.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{card.label}</p>
+                    <p className={`text-lg font-bold ${card.color} truncate`}>
+                      {card.value}
+                    </p>
+                    {card.subtitle && (
+                      <p className="text-[10px] text-muted-foreground truncate">{card.subtitle}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground truncate">{card.label}</p>
-                  <p className={`text-lg font-bold ${card.color} truncate`}>
-                    {card.value}
-                  </p>
-                  {card.subtitle && (
-                    <p className="text-[10px] text-muted-foreground truncate">{card.subtitle}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Toggle charts */}

@@ -346,21 +346,36 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
               </Button>
               {/* Mark as Sent for drafts */}
               {quotation.status === 'draft' && (
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7 text-muted-foreground hover:text-primary"
-                        onClick={() => onStatusChange?.(quotation.id, 'sent')}
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Mark as sent</TooltipContent>
-                </Tooltip>
+                <AlertDialog>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                        </Button>
+                      </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Mark as sent</TooltipContent>
+                  </Tooltip>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Mark as Sent?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will update "{quotation.quoteNumber}" status from Draft to Sent.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onStatusChange?.(quotation.id, 'sent')}>
+                        Mark as Sent
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
               {/* Order received toggle */}
               <Tooltip delayDuration={0}>

@@ -575,6 +575,7 @@ const Index = () => {
                   <BookUser className="w-4 h-4 mr-2" />
                   Customers
                 </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout

@@ -56,6 +56,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
+  const [reportCustomer, setReportCustomer] = useState<{ name: string; email: string; address: string | null } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -852,10 +853,33 @@ const Index = () => {
         )}
 
         {currentView === 'customers' && (
-          <CustomerList onSelectCustomer={(email) => {
-            setSearchQuery(email);
-            setCurrentView('list');
-          }} />
+          <CustomerList
+            onSelectCustomer={(email) => {
+              setSearchQuery(email);
+              setCurrentView('list');
+            }}
+            onViewReport={(customer) => {
+              setReportCustomer(customer);
+              setCurrentView('report');
+            }}
+          />
+        )}
+
+        {currentView === 'report' && reportCustomer && (
+          <CustomerReport
+            customerName={reportCustomer.name}
+            customerEmail={reportCustomer.email}
+            customerAddress={reportCustomer.address}
+            quotations={quotations}
+            onBack={() => {
+              setReportCustomer(null);
+              setCurrentView('customers');
+            }}
+            onViewQuotation={(id) => {
+              setSelectedQuotationId(id);
+              setCurrentView('preview');
+            }}
+          />
         )}
       </main>
 

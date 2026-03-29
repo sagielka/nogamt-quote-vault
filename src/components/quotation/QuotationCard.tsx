@@ -216,11 +216,9 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 <h3 className="font-display font-semibold text-foreground text-sm truncate">
                   {quotation.quoteNumber}
                 </h3>
-                {quotation.status !== 'draft' && (
-                  <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
-                    {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
-                  </Badge>
-                )}
+                <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
+                  {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                </Badge>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 <span 
@@ -346,6 +344,24 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <Download className="w-3.5 h-3.5" />
                 )}
               </Button>
+              {/* Mark as Sent for drafts */}
+              {quotation.status === 'draft' && (
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => onStatusChange?.(quotation.id, 'sent')}
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Mark as sent</TooltipContent>
+                </Tooltip>
+              )}
               {/* Order received toggle */}
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>

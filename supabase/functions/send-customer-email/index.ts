@@ -95,15 +95,6 @@ const handler = async (req: Request): Promise<Response> => {
             }
           }
         }
-        // Also CC the sending user if different
-        if (user.email) {
-          const senderLower = user.email.toLowerCase();
-          const recipientEmails = recipients.map(r => r.email.toLowerCase());
-          const alreadyInCc = ccList.some(c => c.email.toLowerCase() === senderLower);
-          if (!recipientEmails.includes(senderLower) && !alreadyInCc) {
-            ccList.push({ email: user.email });
-          }
-        }
       } catch (e) {
         console.error("Failed to resolve handler email for CC:", e);
       }

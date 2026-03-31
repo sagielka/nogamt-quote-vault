@@ -122,10 +122,10 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
     e.stopPropagation();
     setIsSendingReminder(true);
 
-    const emailsToSend = selectedReminderRecipients.join(', ');
+    const emailsToSend = selectedReminderRecipients;
     toast({
       title: 'Sending reminder...',
-      description: `Generating PDF and emailing ${emailsToSend}`,
+      description: `Generating PDF and emailing ${emailsToSend.join(', ')}`,
     });
 
     try {
@@ -133,34 +133,45 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
       const totalFormatted = formatCurrency(total, quotation.currency);
       const validUntil = formatDateUtil(quotation.validUntil);
 
-      const { data, error } = await supabase.functions.invoke('send-quotation-email', {
-        body: {
-          to: emailsToSend,
-          clientName: quotation.clientName,
-          quoteNumber: quotation.quoteNumber,
-          total: totalFormatted,
-          validUntil,
-          pdfBase64: base64,
-          isReminder: true,
-        },
-      });
+      // Send individual emails per recipient for privacy and validation
+      const results = await Promise.allSettled(
+        emailsToSend.map(email =>
+          supabase.functions.invoke('send-quotation-email', {
+            body: {
+              to: email.trim(),
+              clientName: quotation.clientName,
+              quoteNumber: quotation.quoteNumber,
+              total: totalFormatted,
+              validUntil,
+              pdfBase64: base64,
+              isReminder: true,
+            },
+          })
+        )
+      );
 
-      if (error) throw error;
+      const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error));
+      const unsubscribed = results.filter(r => r.status === 'fulfilled' && r.value.data?.unsubscribed);
 
-      // Check if the response indicates unsubscribed
-      if (data?.unsubscribed) {
+      if (unsubscribed.length > 0) {
         toast({
           title: 'Email Unsubscribed',
-          description: `${emailsToSend} has unsubscribed from emails.`,
+          description: `Some recipients have unsubscribed from emails.`,
           variant: 'destructive',
         });
-        return;
       }
 
-      toast({
-        title: 'Reminder Sent',
-        description: `Follow-up email sent to ${emailsToSend}.`,
-      });
+      if (failed.length === emailsToSend.length) {
+        throw new Error('All emails failed to send');
+      }
+
+      const successCount = emailsToSend.length - failed.length - unsubscribed.length;
+      if (successCount > 0) {
+        toast({
+          title: 'Reminder Sent',
+          description: `Follow-up email sent to ${successCount} recipient(s).`,
+        });
+      }
 
       // Auto-update status to 'sent' if currently 'draft'
       if (quotation.status === 'draft' && onStatusChange) {

@@ -440,28 +440,14 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <>
               {/* Mark as Accepted */}
               {quotation.status === 'accepted' ? (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="border-green-500 bg-green-500 text-white hover:bg-green-600">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Order Received
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Remove Accepted Status?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will reopen "{quotation.quoteNumber}" and set its status back to sent.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onStatusChange(quotation.id, 'sent')}>
-                        Remove
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="outline"
+                  className="border-green-500 bg-green-500 text-white hover:bg-green-600"
+                  onClick={() => setOrderPickerOpen(true)}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Order Received — Edit Order
+                </Button>
               ) : (
                 <Button
                   variant="outline"
@@ -478,6 +464,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 items={quotation.items}
                 quoteNumber={quotation.quoteNumber}
                 currency={quotation.currency}
+                initialSelectedIds={quotation.orderedItems}
                 onConfirm={(selectedIds) => onStatusChange(quotation.id, 'accepted', selectedIds)}
               />
 

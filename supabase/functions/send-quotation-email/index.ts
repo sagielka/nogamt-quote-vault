@@ -103,10 +103,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Verify quotation exists
+    // Verify quotation exists and get handler user_id
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
-      .select('id')
+      .select('id, user_id')
       .eq('quote_number', quoteNumber)
       .single();
 
@@ -115,6 +115,21 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: 'Quotation not found' }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Resolve handler email for CC
+    const ccList: { email: string }[] = [];
+    try {
+      const { data: { user: handlerUser } } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
+      if (handlerUser?.email && handlerUser.email.toLowerCase() !== to.toLowerCase() && handlerUser.email.toLowerCase() !== user.email?.toLowerCase()) {
+        ccList.push({ email: handlerUser.email });
+      }
+      // Also CC the sending user if different from handler and recipient
+      if (user.email && user.email.toLowerCase() !== to.toLowerCase() && !ccList.some(c => c.email.toLowerCase() === user.email!.toLowerCase())) {
+        ccList.push({ email: user.email });
+      }
+    } catch (e) {
+      console.error("Failed to resolve handler email for CC:", e);
     }
 
     // Create email tracking record
@@ -183,6 +198,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: "quotes@noga-mt.com",
       },
       to: [{ email: to, name: clientName }],
+      ...(ccList.length > 0 ? { cc: ccList } : {}),
       subject,
       htmlContent,
       attachment: [

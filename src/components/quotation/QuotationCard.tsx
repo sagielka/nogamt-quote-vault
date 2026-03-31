@@ -419,7 +419,14 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                       variant="ghost" 
                       size="icon" 
                       className={`h-7 w-7 ${quotation.status === 'accepted' ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground hover:text-green-600'}`}
-                      onClick={() => onStatusChange?.(quotation.id, quotation.status === 'accepted' ? 'sent' : 'accepted')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (quotation.status === 'accepted') {
+                          setOrderPickerOpen(true);
+                        } else {
+                          setOrderPickerOpen(true);
+                        }
+                      }}
                     >
                       {quotation.status === 'accepted' ? (
                         <CheckCircle className="w-3.5 h-3.5" />
@@ -430,9 +437,18 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {quotation.status === 'accepted' ? 'Order received — click to unmark' : 'Mark as order received'}
+                  {quotation.status === 'accepted' ? 'Edit ordered items' : 'Mark as order received'}
                 </TooltipContent>
               </Tooltip>
+              <OrderLinePickerDialog
+                open={orderPickerOpen}
+                onOpenChange={setOrderPickerOpen}
+                items={quotation.items}
+                quoteNumber={quotation.quoteNumber}
+                currency={quotation.currency}
+                onConfirm={(selectedIds) => onStatusChange?.(quotation.id, 'accepted', selectedIds)}
+                initialSelectedIds={quotation.orderedItems ?? undefined}
+              />
                {/* Mark as finished (no order) */}
                <AlertDialog>
                  <Tooltip delayDuration={0}>

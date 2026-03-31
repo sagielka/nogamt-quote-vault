@@ -90,6 +90,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
   const [editClientAddress, setEditClientAddress] = useState(quotation.clientAddress);
+  const [orderPickerOpen, setOrderPickerOpen] = useState(false);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
   const handleDownloadPdf = async (e: React.MouseEvent) => {

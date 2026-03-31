@@ -349,22 +349,17 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
               </div>
               {quotation.status === 'accepted' && quotation.orderedItems && (
                 <div className="flex flex-wrap gap-1.5 mt-1">
-                  {quotation.items.map((item) => {
-                    const isOrdered = quotation.orderedItems?.includes(item.id);
-                    return (
+                  {quotation.items
+                    .filter((item) => quotation.orderedItems?.includes(item.id))
+                    .map((item) => (
                       <span
                         key={item.id}
-                        className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md border ${
-                          isOrdered
-                            ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
-                            : 'border-border bg-muted/50 text-muted-foreground line-through opacity-60'
-                        }`}
+                        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md border border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
                       >
-                        {isOrdered ? <CheckCircle className="w-3 h-3" /> : <Circle className="w-3 h-3" />}
+                        <CheckCircle className="w-3 h-3" />
                         {item.sku || 'No SKU'}
                       </span>
-                    );
-                  })}
+                    ))}
                 </div>
               )}
             </div>

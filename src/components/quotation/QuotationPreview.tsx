@@ -74,6 +74,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [additionalEmail, setAdditionalEmail] = useState('');
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
+  const [orderPickerOpen, setOrderPickerOpen] = useState(false);
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses

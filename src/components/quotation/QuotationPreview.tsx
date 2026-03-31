@@ -349,11 +349,38 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
 
       if (error) throw error;
 
-      const skippedMsg = data?.skipped > 0 ? ` (${data.skipped} unsubscribed, skipped)` : '';
-      toast({
-        title: 'Quotation Sent!',
-        description: `Successfully sent to ${data?.sent || recipients.length} recipient${(data?.sent || recipients.length) !== 1 ? 's' : ''}${skippedMsg}.`,
-      });
+      const resultsArr: { email: string; success: boolean }[] = data?.results || [];
+      const successEmails = resultsArr.filter(r => r.success).map(r => r.email);
+      const failedEmails = resultsArr.filter(r => !r.success).map(r => r.email);
+      const skippedCount = data?.skipped || 0;
+      const unsubscribedEmails = selectedRecipients.filter(e => 
+        !resultsArr.some(r => r.email.toLowerCase() === e.toLowerCase())
+      );
+
+      if (unsubscribedEmails.length > 0) {
+        toast({
+          title: 'Unsubscribed',
+          description: `${unsubscribedEmails.join(', ')} has unsubscribed from emails.`,
+          variant: 'destructive',
+        });
+      }
+
+      if (failedEmails.length > 0) {
+        toast({
+          title: 'Partial Failure',
+          description: `Failed to send to: ${failedEmails.join(', ')}`,
+          variant: 'destructive',
+        });
+      }
+
+      if (successEmails.length > 0) {
+        toast({
+          title: 'Quotation Sent!',
+          description: `Successfully sent to ${successEmails.join(', ')}.`,
+        });
+      } else if (failedEmails.length === selectedRecipients.length) {
+        throw new Error('All emails failed to send');
+      }
 
       // Auto-update status to 'sent' if currently 'draft'
       if (quotation.status === 'draft' && onStatusChange) {

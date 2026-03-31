@@ -601,9 +601,18 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 </tr>
               </thead>
               <tbody>
-                {quotation.items.map((item, index) => (
-                  <tr key={item.id} className="border-b border-border print:border-gray-200">
-                    <td className="py-4 text-muted-foreground print:text-gray-600 align-top">{index + 1}</td>
+                {quotation.items.map((item, index) => {
+                  const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
+                  const isNotOrdered = quotation.status === 'accepted' && quotation.orderedItems && !quotation.orderedItems.includes(item.id);
+                  return (
+                  <tr key={item.id} className={`border-b border-border print:border-gray-200 ${isNotOrdered ? 'opacity-40' : ''}`}>
+                    <td className="py-4 text-muted-foreground print:text-gray-600 align-top">
+                      <div className="flex items-center gap-1.5">
+                        {index + 1}
+                        {isOrdered && <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                        {isNotOrdered && <Circle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                      </div>
+                    </td>
                     <td className="py-4 text-foreground font-mono text-sm print:text-gray-900 align-top">{item.sku || '—'}</td>
                     <td className="py-4 text-foreground font-normal print:text-gray-900 align-top">
                       <div>{item.description || '—'}</div>
@@ -623,7 +632,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

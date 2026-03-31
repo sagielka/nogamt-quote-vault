@@ -273,7 +273,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <Calendar className="w-3 h-3 shrink-0" />
                   {formatDate(quotation.createdAt)}
                 </span>
-                <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}</span>
+                <span>{quotation.items.length} item{quotation.items.length !== 1 ? 's' : ''}{quotation.status === 'accepted' && quotation.orderedItems ? ` (${quotation.orderedItems.length} ordered)` : ''}</span>
                 {creatorName && (
                   onCreatorChange && userList && userList.length > 1 ? (
                     <DropdownMenu>

@@ -121,12 +121,8 @@ const handler = async (req: Request): Promise<Response> => {
     const ccList: { email: string }[] = [];
     try {
       const { data: { user: handlerUser } } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
-      if (handlerUser?.email && handlerUser.email.toLowerCase() !== to.toLowerCase() && handlerUser.email.toLowerCase() !== user.email?.toLowerCase()) {
+      if (handlerUser?.email && handlerUser.email.toLowerCase() !== to.toLowerCase()) {
         ccList.push({ email: handlerUser.email });
-      }
-      // Also CC the sending user if different from handler and recipient
-      if (user.email && user.email.toLowerCase() !== to.toLowerCase() && !ccList.some(c => c.email.toLowerCase() === user.email!.toLowerCase())) {
-        ccList.push({ email: user.email });
       }
     } catch (e) {
       console.error("Failed to resolve handler email for CC:", e);

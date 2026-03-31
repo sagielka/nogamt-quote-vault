@@ -168,7 +168,6 @@ const handler = async (req: Request): Promise<Response> => {
         </div>
         <h2 style="color: #ff9004;">${subject}</h2>
         <div style="line-height: 1.6; color: #333;">${messageBody}</div>
-        <p style="margin-top: 30px; color: #ff9004;">Best regards,<br><strong>Noga MT Team</strong></p>
         <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
         <p style="font-size: 12px; color: #999;">
           Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel<br>

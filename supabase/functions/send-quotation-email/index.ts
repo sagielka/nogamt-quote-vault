@@ -198,6 +198,7 @@ const handler = async (req: Request): Promise<Response> => {
         email: "quotes@noga-mt.com",
       },
       to: [{ email: to, name: clientName }],
+      ...(ccList.length > 0 ? { cc: ccList } : {}),
       subject,
       htmlContent,
       attachment: [

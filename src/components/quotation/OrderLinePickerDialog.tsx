@@ -12,7 +12,7 @@ interface OrderLinePickerDialogProps {
   onOpenChange: (open: boolean) => void;
   items: LineItem[];
   quoteNumber: string;
-  currency: string;
+  currency: Currency;
   onConfirm: (selectedItemIds: string[]) => void;
 }
 

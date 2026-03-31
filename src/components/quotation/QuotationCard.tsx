@@ -150,26 +150,47 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
         )
       );
 
-      const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error));
-      const unsubscribed = results.filter(r => r.status === 'fulfilled' && r.value.data?.unsubscribed);
+      const successEmails: string[] = [];
+      const failedEmails: string[] = [];
+      const unsubscribedEmails: string[] = [];
 
-      if (unsubscribed.length > 0) {
+      results.forEach((r, i) => {
+        const email = emailsToSend[i];
+        if (r.status === 'rejected') {
+          failedEmails.push(email);
+        } else if (r.value.error) {
+          failedEmails.push(email);
+        } else if (r.value.data?.unsubscribed) {
+          unsubscribedEmails.push(email);
+        } else {
+          successEmails.push(email);
+        }
+      });
+
+      if (unsubscribedEmails.length > 0) {
         toast({
-          title: 'Email Unsubscribed',
-          description: `Some recipients have unsubscribed from emails.`,
+          title: 'Unsubscribed',
+          description: `${unsubscribedEmails.join(', ')} has unsubscribed from emails.`,
           variant: 'destructive',
         });
       }
 
-      if (failed.length === emailsToSend.length) {
+      if (failedEmails.length > 0 && failedEmails.length < emailsToSend.length) {
+        toast({
+          title: 'Partial Failure',
+          description: `Failed to send to: ${failedEmails.join(', ')}`,
+          variant: 'destructive',
+        });
+      }
+
+      if (failedEmails.length === emailsToSend.length) {
         throw new Error('All emails failed to send');
       }
 
-      const successCount = emailsToSend.length - failed.length - unsubscribed.length;
-      if (successCount > 0) {
+      if (successEmails.length > 0) {
         toast({
           title: 'Reminder Sent',
-          description: `Follow-up email sent to ${successCount} recipient(s).`,
+          description: `Follow-up email sent to ${successEmails.join(', ')}.`,
         });
       }
 

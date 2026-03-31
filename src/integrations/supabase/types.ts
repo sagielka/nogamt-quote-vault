@@ -287,6 +287,7 @@ export type Database = {
           id: string
           items: Json
           notes: string | null
+          ordered_items: Json | null
           quote_number: string
           reminder_sent_at: string | null
           status: string | null
@@ -308,6 +309,7 @@ export type Database = {
           id?: string
           items: Json
           notes?: string | null
+          ordered_items?: Json | null
           quote_number: string
           reminder_sent_at?: string | null
           status?: string | null
@@ -329,6 +331,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          ordered_items?: Json | null
           quote_number?: string
           reminder_sent_at?: string | null
           status?: string | null

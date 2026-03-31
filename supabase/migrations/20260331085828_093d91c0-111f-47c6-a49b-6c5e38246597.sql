@@ -1,0 +1,1 @@
+ALTER TABLE public.quotations ADD COLUMN ordered_items jsonb DEFAULT NULL;

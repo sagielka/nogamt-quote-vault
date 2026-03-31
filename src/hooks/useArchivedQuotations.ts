@@ -26,6 +26,7 @@ const dbRowToArchivedQuotation = (row: any): ArchivedQuotation => ({
   currency: row.currency || 'USD',
   status: row.status || 'draft',
   attachments: row.attachments || [],
+  orderedItems: null,
   createdAt: new Date(row.created_at),
   validUntil: new Date(row.valid_until),
   reminderSentAt: null,

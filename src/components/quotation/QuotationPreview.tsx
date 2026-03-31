@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
+import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 
 // Declare electron API types
 declare global {
@@ -51,7 +52,7 @@ interface QuotationPreviewProps {
   onBack: () => void;
   onEdit?: () => void;
   onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
-  onStatusChange?: (id: string, status: string) => void;
+  onStatusChange?: (id: string, status: string, orderedItems?: string[]) => void;
 }
 
 export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer, onStatusChange }: QuotationPreviewProps) => {
@@ -73,6 +74,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [additionalEmail, setAdditionalEmail] = useState('');
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
+  const [orderPickerOpen, setOrderPickerOpen] = useState(false);
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses
@@ -437,43 +439,47 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           {onStatusChange && (
             <>
               {/* Mark as Accepted */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={quotation.status === 'accepted' ? 'border-green-500 bg-green-500 text-white hover:bg-green-600' : 'hover:border-green-500 hover:text-green-600'}
-                  >
-                    {quotation.status === 'accepted' ? (
+              {quotation.status === 'accepted' ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="border-green-500 bg-green-500 text-white hover:bg-green-600">
                       <CheckCircle className="w-4 h-4 mr-2" />
-                    ) : (
-                      <Circle className="w-4 h-4 mr-2" />
-                    )}
-                    {quotation.status === 'accepted' ? 'Order Received' : 'Mark as Accepted'}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {quotation.status === 'accepted' ? 'Remove Accepted Status?' : 'Mark as Accepted?'}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {quotation.status === 'accepted'
-                        ? `This will reopen "${quotation.quoteNumber}" and set its status back to sent.`
-                        : `This will mark "${quotation.quoteNumber}" as accepted (order received). Automated reminders will be disabled.`
-                      }
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onStatusChange(quotation.id, quotation.status === 'accepted' ? 'sent' : 'accepted')}
-                      className={quotation.status === 'accepted' ? '' : 'bg-green-500 hover:bg-green-600'}
-                    >
-                      {quotation.status === 'accepted' ? 'Remove' : 'Mark as Accepted'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      Order Received
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Accepted Status?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will reopen "{quotation.quoteNumber}" and set its status back to sent.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onStatusChange(quotation.id, 'sent')}>
+                        Remove
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="hover:border-green-500 hover:text-green-600"
+                  onClick={() => setOrderPickerOpen(true)}
+                >
+                  <Circle className="w-4 h-4 mr-2" />
+                  Mark as Accepted
+                </Button>
+              )}
+              <OrderLinePickerDialog
+                open={orderPickerOpen}
+                onOpenChange={setOrderPickerOpen}
+                items={quotation.items}
+                quoteNumber={quotation.quoteNumber}
+                currency={quotation.currency}
+                onConfirm={(selectedIds) => onStatusChange(quotation.id, 'accepted', selectedIds)}
+              />
 
               {/* Mark as Finished */}
               <AlertDialog>

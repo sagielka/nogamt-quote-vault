@@ -22,6 +22,7 @@ const dbRowToQuotation = (row: any): Quotation => ({
   currency: row.currency || 'USD',
   status: row.status || 'draft',
   attachments: row.attachments || [],
+  orderedItems: row.ordered_items || null,
   createdAt: new Date(row.created_at),
   validUntil: new Date(row.valid_until),
   reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,
@@ -264,6 +265,7 @@ export const useQuotations = () => {
     if (data.currency !== undefined) updateData.currency = data.currency;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.attachments !== undefined) updateData.attachments = data.attachments;
+    if ((data as any).orderedItems !== undefined) updateData.ordered_items = (data as any).orderedItems;
     if (data.validUntil !== undefined) updateData.valid_until = data.validUntil.toISOString();
 
     try {

@@ -44,6 +44,7 @@ export interface Quotation {
   status: 'draft' | 'sent' | 'accepted' | 'declined' | 'finished';
   currency: Currency;
   attachments: LineItemAttachment[];
+  orderedItems: string[] | null;
   reminderSentAt: Date | null;
   followUpNotifiedAt: Date | null;
 }

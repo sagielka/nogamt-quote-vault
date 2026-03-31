@@ -265,6 +265,7 @@ export const useQuotations = () => {
     if (data.currency !== undefined) updateData.currency = data.currency;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.attachments !== undefined) updateData.attachments = data.attachments;
+    if ((data as any).orderedItems !== undefined) updateData.ordered_items = (data as any).orderedItems;
     if (data.validUntil !== undefined) updateData.valid_until = data.validUntil.toISOString();
 
     try {

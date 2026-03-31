@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle } from 'lucide-react';
-import { LineItem } from '@/types/quotation';
+import { LineItem, Currency } from '@/types/quotation';
 import { formatCurrency } from '@/lib/quotation-utils';
 
 interface OrderLinePickerDialogProps {

@@ -588,13 +588,26 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
         if (newEmails.length > 0) {
           const updatedEmail = [...existingEmails, ...newEmails.map(e => e.toLowerCase())].join(', ');
           await supabase.from('customers').update({ email: updatedEmail }).eq('id', customer.id);
-          // Refresh customer list
           fetchCustomers();
         }
       }
 
-      const skippedMsg = result.skipped > 0 ? ` (${result.skipped} unsubscribed, skipped)` : '';
-      toast({ title: 'Email Sent', description: `Successfully sent to ${result.sent} recipient${result.sent !== 1 ? 's' : ''}${skippedMsg}.` });
+      const resultsArr: { email: string; success: boolean }[] = result.results || [];
+      const successEmails = resultsArr.filter((r: any) => r.success).map((r: any) => r.email);
+      const failedEmails = resultsArr.filter((r: any) => !r.success).map((r: any) => r.email);
+      const unsubscribedEmails = toEmails.filter(e => 
+        !resultsArr.some((r: any) => r.email.toLowerCase() === e.toLowerCase())
+      );
+
+      if (unsubscribedEmails.length > 0) {
+        toast({ title: 'Unsubscribed', description: `${unsubscribedEmails.join(', ')} has unsubscribed from emails.`, variant: 'destructive' });
+      }
+      if (failedEmails.length > 0) {
+        toast({ title: 'Partial Failure', description: `Failed to send to: ${failedEmails.join(', ')}`, variant: 'destructive' });
+      }
+      if (successEmails.length > 0) {
+        toast({ title: 'Email Sent', description: `Successfully sent to ${successEmails.join(', ')}.` });
+      }
       setEmailDialogOpen(false);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to send email.', variant: 'destructive' });

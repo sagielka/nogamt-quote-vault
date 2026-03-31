@@ -746,44 +746,48 @@ const Index = () => {
               </Button>
               <div className="flex gap-2">
                 {/* Mark as Accepted */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={selectedQuotation.status === 'accepted' ? 'border-green-500 bg-green-500 text-white hover:bg-green-600' : 'hover:border-green-500 hover:text-green-600'}
-                    >
-                      {selectedQuotation.status === 'accepted' ? (
+                {selectedQuotation.status === 'accepted' ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="border-green-500 bg-green-500 text-white hover:bg-green-600">
                         <CheckCircle className="w-4 h-4 mr-1" />
-                      ) : (
-                        <Circle className="w-4 h-4 mr-1" />
-                      )}
-                      {selectedQuotation.status === 'accepted' ? 'Accepted' : 'Mark Accepted'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {selectedQuotation.status === 'accepted' ? 'Remove Accepted Status?' : 'Mark as Accepted?'}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {selectedQuotation.status === 'accepted'
-                          ? `This will reopen "${selectedQuotation.quoteNumber}" and set its status back to sent.`
-                          : `This will mark "${selectedQuotation.quoteNumber}" as accepted (order received).`
-                        }
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleStatusChange(selectedQuotation.id, selectedQuotation.status === 'accepted' ? 'sent' : 'accepted')}
-                        className={selectedQuotation.status === 'accepted' ? '' : 'bg-green-500 hover:bg-green-600'}
-                      >
-                        {selectedQuotation.status === 'accepted' ? 'Remove' : 'Mark as Accepted'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                        Accepted
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remove Accepted Status?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will reopen "{selectedQuotation.quoteNumber}" and set its status back to sent.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleStatusChange(selectedQuotation.id, 'sent')}>
+                          Remove
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hover:border-green-500 hover:text-green-600"
+                    onClick={() => setEditOrderPickerOpen(true)}
+                  >
+                    <Circle className="w-4 h-4 mr-1" />
+                    Mark Accepted
+                  </Button>
+                )}
+                <OrderLinePickerDialog
+                  open={editOrderPickerOpen}
+                  onOpenChange={setEditOrderPickerOpen}
+                  items={selectedQuotation.items}
+                  quoteNumber={selectedQuotation.quoteNumber}
+                  currency={selectedQuotation.currency}
+                  onConfirm={(selectedIds) => handleStatusChange(selectedQuotation.id, 'accepted', selectedIds)}
+                />
 
                 {/* Mark as Finished */}
                 <AlertDialog>

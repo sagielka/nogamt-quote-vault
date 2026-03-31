@@ -51,7 +51,7 @@ interface QuotationPreviewProps {
   onBack: () => void;
   onEdit?: () => void;
   onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
-  onStatusChange?: (id: string, status: string) => void;
+  onStatusChange?: (id: string, status: string, orderedItems?: string[]) => void;
 }
 
 export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer, onStatusChange }: QuotationPreviewProps) => {

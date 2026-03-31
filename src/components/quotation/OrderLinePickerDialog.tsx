@@ -14,6 +14,7 @@ interface OrderLinePickerDialogProps {
   quoteNumber: string;
   currency: Currency;
   onConfirm: (selectedItemIds: string[]) => void;
+  initialSelectedIds?: string[];
 }
 
 const OrderLinePickerDialog = ({
@@ -23,8 +24,18 @@ const OrderLinePickerDialog = ({
   quoteNumber,
   currency,
   onConfirm,
+  initialSelectedIds,
 }: OrderLinePickerDialogProps) => {
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(items.map(i => i.id)));
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    new Set(initialSelectedIds ?? items.map(i => i.id))
+  );
+
+  // Reset selection when dialog opens
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (open && !prevOpen) {
+    setSelectedIds(new Set(initialSelectedIds ?? items.map(i => i.id)));
+  }
+  if (open !== prevOpen) setPrevOpen(open);
 
   const toggleItem = (id: string) => {
     setSelectedIds(prev => {

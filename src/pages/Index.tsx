@@ -747,28 +747,17 @@ const Index = () => {
               <div className="flex gap-2">
                 {/* Mark as Accepted */}
                 {selectedQuotation.status === 'accepted' ? (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-green-500 bg-green-500 text-white hover:bg-green-600">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Accepted
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remove Accepted Status?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will reopen "{selectedQuotation.quoteNumber}" and set its status back to sent.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleStatusChange(selectedQuotation.id, 'sent')}>
-                          Remove
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-green-500 bg-green-500 text-white hover:bg-green-600"
+                      onClick={() => setEditOrderPickerOpen(true)}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Accepted — Edit Order
+                    </Button>
+                  </>
                 ) : (
                   <Button
                     variant="outline"
@@ -786,6 +775,7 @@ const Index = () => {
                   items={selectedQuotation.items}
                   quoteNumber={selectedQuotation.quoteNumber}
                   currency={selectedQuotation.currency}
+                  initialSelectedIds={selectedQuotation.orderedItems}
                   onConfirm={(selectedIds) => handleStatusChange(selectedQuotation.id, 'accepted', selectedIds)}
                 />
 

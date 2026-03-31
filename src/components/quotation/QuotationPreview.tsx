@@ -26,6 +26,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
+import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 
 // Declare electron API types
 declare global {

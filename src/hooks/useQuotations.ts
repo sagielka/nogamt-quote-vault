@@ -22,6 +22,7 @@ const dbRowToQuotation = (row: any): Quotation => ({
   currency: row.currency || 'USD',
   status: row.status || 'draft',
   attachments: row.attachments || [],
+  orderedItems: row.ordered_items || null,
   createdAt: new Date(row.created_at),
   validUntil: new Date(row.valid_until),
   reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,

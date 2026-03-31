@@ -591,6 +591,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       status: 'draft',
       currency: currency,
       attachments: [],
+      orderedItems: null,
       quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
       pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
     });

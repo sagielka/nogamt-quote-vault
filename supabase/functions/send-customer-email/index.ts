@@ -75,6 +75,40 @@ const handler = async (req: Request): Promise<Response> => {
     const bccList = (Array.isArray(bcc) ? bcc : []).filter(e => isValidEmail(e)).map(e => ({ email: e }));
     if (senderEmail) ccList.unshift({ email: senderEmail });
 
+    // Auto-CC the quotation handler if quotationId is provided
+    if (quotationId) {
+      try {
+        const { data: quotation } = await serviceSupabase
+          .from('quotations')
+          .select('user_id')
+          .eq('id', quotationId)
+          .single();
+
+        if (quotation?.user_id) {
+          const { data: { user: handlerUser } } = await serviceSupabase.auth.admin.getUserById(quotation.user_id);
+          if (handlerUser?.email) {
+            const handlerEmail = handlerUser.email.toLowerCase();
+            const recipientEmails = recipients.map(r => r.email.toLowerCase());
+            const alreadyInCc = ccList.some(c => c.email.toLowerCase() === handlerEmail);
+            if (!recipientEmails.includes(handlerEmail) && !alreadyInCc) {
+              ccList.push({ email: handlerUser.email });
+            }
+          }
+        }
+        // Also CC the sending user if different
+        if (user.email) {
+          const senderLower = user.email.toLowerCase();
+          const recipientEmails = recipients.map(r => r.email.toLowerCase());
+          const alreadyInCc = ccList.some(c => c.email.toLowerCase() === senderLower);
+          if (!recipientEmails.includes(senderLower) && !alreadyInCc) {
+            ccList.push({ email: user.email });
+          }
+        }
+      } catch (e) {
+        console.error("Failed to resolve handler email for CC:", e);
+      }
+    }
+
     // Validate
     if (!subject || typeof subject !== "string" || subject.trim().length === 0 || subject.length > 200) {
       return new Response(

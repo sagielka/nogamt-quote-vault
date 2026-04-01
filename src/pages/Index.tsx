@@ -458,6 +458,11 @@ const Index = () => {
       });
     }
     
+    // Handler filter
+    if (handlerFilter !== 'all') {
+      result = result.filter(qt => qt.userId === handlerFilter);
+    }
+
     // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -471,7 +476,7 @@ const Index = () => {
     }
     
     return result;
-  }, [quotations, searchQuery, statusFilter, expiringSoonFilter]);
+  }, [quotations, searchQuery, statusFilter, expiringSoonFilter, handlerFilter]);
 
   const finishedCount = useMemo(() => quotations.filter(q => q.status === 'finished').length, [quotations]);
 

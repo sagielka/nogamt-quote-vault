@@ -57,6 +57,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
   const [expiringSoonFilter, setExpiringSoonFilter] = useState(false);
+  const [handlerFilter, setHandlerFilter] = useState<string>('all');
   const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
   const [reportCustomer, setReportCustomer] = useState<{ name: string; email: string; address: string | null } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);

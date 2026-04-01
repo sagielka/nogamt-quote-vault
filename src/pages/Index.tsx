@@ -664,37 +664,54 @@ const Index = () => {
                     </button>
                   )}
                 </div>
-                <div className="flex gap-1 rounded-lg bg-secondary/50 p-1 w-fit">
-                  <button
-                    onClick={() => setStatusFilter('active')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      statusFilter === 'active'
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Active ({quotations.length - finishedCount})
-                  </button>
-                  <button
-                    onClick={() => setStatusFilter('finished')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      statusFilter === 'finished'
-                        ? 'bg-orange-500 text-white shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Finished ({finishedCount})
-                  </button>
-                  <button
-                    onClick={() => setStatusFilter('all')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      statusFilter === 'all'
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    All ({quotations.length})
-                  </button>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex gap-1 rounded-lg bg-secondary/50 p-1 w-fit">
+                    <button
+                      onClick={() => setStatusFilter('active')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        statusFilter === 'active'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Active ({quotations.length - finishedCount})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('finished')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        statusFilter === 'finished'
+                          ? 'bg-orange-500 text-white shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Finished ({finishedCount})
+                    </button>
+                    <button
+                      onClick={() => setStatusFilter('all')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                        statusFilter === 'all'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      All ({quotations.length})
+                    </button>
+                  </div>
+                  {Object.keys(userNameMap).length > 1 && (
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-muted-foreground" />
+                      <select
+                        value={handlerFilter}
+                        onChange={(e) => setHandlerFilter(e.target.value)}
+                        className="text-xs font-medium rounded-md border border-input bg-background px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        <option value="all">All handlers</option>
+                        {Object.entries(userNameMap).map(([id, name]) => (
+                          <option key={id} value={id}>{name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-4">
                   {filteredQuotations.map((quotation, index) => (

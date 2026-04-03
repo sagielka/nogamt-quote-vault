@@ -54,6 +54,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
+  const pendingScrollRestore = useRef(false);
 
   const navigateToView = useCallback((view: View) => {
     if (currentView === 'list') {
@@ -61,13 +62,22 @@ const Index = () => {
     }
     setCurrentView(view);
     if (view === 'list') {
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollPositionRef.current);
-      });
+      pendingScrollRestore.current = true;
     } else {
       window.scrollTo(0, 0);
     }
   }, [currentView]);
+
+  useEffect(() => {
+    if (currentView === 'list' && pendingScrollRestore.current && quotations.length > 0) {
+      pendingScrollRestore.current = false;
+      const savedPos = scrollPositionRef.current;
+      // Use setTimeout to allow DOM to fully render after data is available
+      setTimeout(() => {
+        window.scrollTo(0, savedPos);
+      }, 100);
+    }
+  }, [currentView, quotations]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');

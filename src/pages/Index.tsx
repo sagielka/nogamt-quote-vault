@@ -823,8 +823,7 @@ const Index = () => {
           <div className="max-w-3xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
               <Button variant="ghost" onClick={() => {
-                setSelectedQuotationId(null);
-                navigateToView('list');
+                navigateToView('list', null);
               }}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Quotations

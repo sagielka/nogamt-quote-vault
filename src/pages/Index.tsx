@@ -69,16 +69,15 @@ const Index = () => {
   }, [currentView]);
 
   useEffect(() => {
-    if (currentView === 'list' && pendingScrollRestore.current) {
+    if (currentView === 'list' && pendingScrollRestore.current && quotations.length > 0) {
       pendingScrollRestore.current = false;
-      // Use double rAF to ensure DOM is fully painted
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          window.scrollTo(0, scrollPositionRef.current);
-        });
-      });
+      const savedPos = scrollPositionRef.current;
+      // Use setTimeout to allow DOM to fully render after data is available
+      setTimeout(() => {
+        window.scrollTo(0, savedPos);
+      }, 100);
     }
-  }, [currentView]);
+  }, [currentView, quotations]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');

@@ -553,6 +553,52 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     }
   };
 
+  const findSimilarQuotations = useCallback((submittedClientName: string, submittedItems: LineItem[]): SimilarQuotation[] => {
+    if (isEditing || existingQuotations.length === 0) return [];
+    
+    const normalizedName = submittedClientName.trim().toLowerCase();
+    const submittedSkus = submittedItems.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
+    
+    return existingQuotations
+      .filter(q => {
+        const qName = q.clientName.trim().toLowerCase();
+        // Same client (by name or email match)
+        if (qName !== normalizedName) return false;
+        // Check for overlapping SKUs
+        const qSkus = q.items.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
+        const overlap = submittedSkus.filter(s => qSkus.includes(s));
+        return overlap.length > 0;
+      })
+      .map(q => {
+        const qSkus = q.items.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
+        const matchingSkus = submittedSkus.filter(s => qSkus.includes(s));
+        return {
+          quoteNumber: q.quoteNumber,
+          clientName: q.clientName,
+          createdAt: q.createdAt,
+          matchingSkus,
+        };
+      });
+  }, [isEditing, existingQuotations]);
+
+  const buildSubmitData = useCallback((validationResult: any): QuotationFormData => ({
+    clientName: validationResult.data.clientName,
+    clientEmail: validationResult.data.clientEmail,
+    clientAddress: validationResult.data.clientAddress || '',
+    items,
+    taxRate: validationResult.data.taxRate,
+    discountType: validationResult.data.discountType,
+    discountValue: validationResult.data.discountValue,
+    notes: validationResult.data.notes || '',
+    validUntil: validationResult.data.validUntil,
+    status: 'draft',
+    currency: currency,
+    attachments: [],
+    orderedItems: null,
+    quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
+    pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
+  }), [items, currency, isEditing, quoteNumber, pendingEmailFiles]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -589,23 +635,35 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
       await saveCustomerToDatabase();
     }
 
-    onSubmit({
-      clientName: validationResult.data.clientName,
-      clientEmail: validationResult.data.clientEmail,
-      clientAddress: validationResult.data.clientAddress || '',
-      items,
-      taxRate: validationResult.data.taxRate,
-      discountType: validationResult.data.discountType,
-      discountValue: validationResult.data.discountValue,
-      notes: validationResult.data.notes || '',
-      validUntil: validationResult.data.validUntil,
-      status: 'draft',
-      currency: currency,
-      attachments: [],
-      orderedItems: null,
-      quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
-      pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
-    });
+    const submitData = buildSubmitData(validationResult);
+
+    // Check for similar quotations (only on create, not edit)
+    if (!isEditing) {
+      const similar = findSimilarQuotations(clientName, items);
+      if (similar.length > 0) {
+        setSimilarQuotes(similar);
+        setPendingSubmitData(submitData);
+        setShowDuplicateDialog(true);
+        return;
+      }
+    }
+
+    onSubmit(submitData);
+  };
+
+  const handleConfirmDuplicate = () => {
+    if (pendingSubmitData) {
+      onSubmit(pendingSubmitData);
+      setShowDuplicateDialog(false);
+      setPendingSubmitData(null);
+      setSimilarQuotes([]);
+    }
+  };
+
+  const handleCancelDuplicate = () => {
+    setShowDuplicateDialog(false);
+    setPendingSubmitData(null);
+    setSimilarQuotes([]);
   };
 
   const subtotal = calculateSubtotal(items);

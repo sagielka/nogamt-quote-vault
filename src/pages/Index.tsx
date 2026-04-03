@@ -784,7 +784,45 @@ const Index = () => {
                     </div>
                   )}
                 </div>
+                <BulkActionsBar
+                  selectedIds={selectedIds}
+                  quotations={quotations}
+                  onClearSelection={() => setSelectedIds([])}
+                  onStatusChange={async (ids, status) => {
+                    for (const id of ids) {
+                      await updateQuotation(id, { status: status as any });
+                    }
+                    toast({ title: 'Status Updated', description: `${ids.length} quotation(s) updated to "${status}".` });
+                  }}
+                  onArchive={async (ids) => {
+                    for (const id of ids) {
+                      const q = getQuotation(id);
+                      if (q) await archiveQuotation(q);
+                    }
+                    await refreshQuotations();
+                    toast({ title: 'Archived', description: `${ids.length} quotation(s) archived.` });
+                  }}
+                />
                 <div className="flex flex-col gap-4">
+                  {filteredQuotations.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (selectedIds.length === filteredQuotations.length) {
+                            setSelectedIds([]);
+                          } else {
+                            setSelectedIds(filteredQuotations.map(q => q.id));
+                          }
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {selectedIds.length === filteredQuotations.length && selectedIds.length > 0 ? 'Deselect All' : 'Select All'}
+                      </button>
+                      {selectedIds.length > 0 && (
+                        <span className="text-xs text-muted-foreground">({selectedIds.length} selected)</span>
+                      )}
+                    </div>
+                  )}
                   {filteredQuotations.map((quotation, index) => (
                     <QuotationCard
                       key={quotation.id}
@@ -793,6 +831,8 @@ const Index = () => {
                       creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
                       userList={userList}
                       emailReadAt={getLatestRead(quotation.id)?.read_at ?? null}
+                      isSelected={selectedIds.includes(quotation.id)}
+                      onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
                       onView={handleViewQuotation}
                       onEdit={handleEditQuotation}
                       onDelete={handleDeleteQuotation}

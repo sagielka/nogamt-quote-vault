@@ -655,19 +655,19 @@ const Index = () => {
                   Customers
                 </Button>
               )}
-              {currentView === 'archive' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Quotations
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('activity')}>
+                  <Activity className="w-4 h-4 mr-2" />
+                  Activity
                 </Button>
               )}
-              {currentView === 'users' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Quotations
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
+                  <RepeatIcon className="w-4 h-4 mr-2" />
+                  Recurring
                 </Button>
               )}
-              {currentView === 'customers' && (
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations

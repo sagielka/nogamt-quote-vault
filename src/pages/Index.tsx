@@ -55,18 +55,59 @@ const Index = () => {
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
   const pendingScrollRestore = useRef(false);
+  const isPopState = useRef(false);
 
-  const navigateToView = useCallback((view: View) => {
+  // Handle browser back/forward button
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state?.view) {
+        isPopState.current = true;
+        if (state.view === 'list') {
+          scrollPositionRef.current = state.scrollY ?? 0;
+          pendingScrollRestore.current = true;
+        }
+        setCurrentView(state.view);
+        setSelectedQuotationId(state.quotationId ?? null);
+        if (state.view !== 'list') {
+          window.scrollTo(0, 0);
+        }
+      } else {
+        isPopState.current = true;
+        pendingScrollRestore.current = true;
+        setCurrentView('list');
+        setSelectedQuotationId(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    // Replace initial history state
+    window.history.replaceState({ view: 'list' }, '');
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateToView = useCallback((view: View, quotationId?: string | null) => {
+    if (isPopState.current) {
+      isPopState.current = false;
+      return;
+    }
     if (currentView === 'list') {
       scrollPositionRef.current = window.scrollY;
+      // Update current history entry with scroll position
+      window.history.replaceState({ view: 'list', scrollY: scrollPositionRef.current }, '');
     }
     setCurrentView(view);
+    if (quotationId !== undefined) {
+      setSelectedQuotationId(quotationId ?? null);
+    }
     if (view === 'list') {
       pendingScrollRestore.current = true;
+      window.history.pushState({ view: 'list' }, '');
     } else {
+      window.history.pushState({ view, quotationId: quotationId ?? selectedQuotationId }, '');
       window.scrollTo(0, 0);
     }
-  }, [currentView]);
+  }, [currentView, selectedQuotationId]);
 
   useEffect(() => {
     if (currentView === 'list' && pendingScrollRestore.current && quotations.length > 0) {
@@ -97,8 +138,7 @@ const Index = () => {
     if (highlightId && quotations.length > 0) {
       const found = quotations.find(q => q.id === highlightId);
       if (found) {
-        setSelectedQuotationId(highlightId);
-        navigateToView('preview');
+        navigateToView('preview', highlightId);
         // Clean up the URL
         window.history.replaceState(null, '', window.location.pathname + '#/');
       }
@@ -303,20 +343,17 @@ const Index = () => {
         title: 'Quotation Updated',
         description: 'The quotation has been updated successfully.',
       });
-      setSelectedQuotationId(null);
-      navigateToView('list');
+      navigateToView('list', null);
     }
   };
 
 
   const handleViewQuotation = (id: string) => {
-    setSelectedQuotationId(id);
-    navigateToView('preview');
+    navigateToView('preview', id);
   };
 
   const handleEditQuotation = (id: string) => {
-    setSelectedQuotationId(id);
-    navigateToView('edit');
+    navigateToView('edit', id);
   };
 
   const handleDeleteQuotation = async (id: string) => {
@@ -786,8 +823,7 @@ const Index = () => {
           <div className="max-w-3xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
               <Button variant="ghost" onClick={() => {
-                setSelectedQuotationId(null);
-                navigateToView('list');
+                navigateToView('list', null);
               }}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Quotations
@@ -880,8 +916,7 @@ const Index = () => {
             quotation={selectedQuotation}
             emailTracking={getTrackingForQuotation(selectedQuotation.id)}
             onBack={() => {
-              setSelectedQuotationId(null);
-              navigateToView('list');
+              navigateToView('list', null);
             }}
             onEdit={() => {
               navigateToView('edit');
@@ -961,8 +996,7 @@ const Index = () => {
               navigateToView('customers');
             }}
             onViewQuotation={(id) => {
-              setSelectedQuotationId(id);
-              navigateToView('preview');
+              navigateToView('preview', id);
             }}
           />
         )}

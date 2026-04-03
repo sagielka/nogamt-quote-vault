@@ -349,13 +349,11 @@ const Index = () => {
 
 
   const handleViewQuotation = (id: string) => {
-    setSelectedQuotationId(id);
-    navigateToView('preview');
+    navigateToView('preview', id);
   };
 
   const handleEditQuotation = (id: string) => {
-    setSelectedQuotationId(id);
-    navigateToView('edit');
+    navigateToView('edit', id);
   };
 
   const handleDeleteQuotation = async (id: string) => {

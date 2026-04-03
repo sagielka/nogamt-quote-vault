@@ -42,6 +42,8 @@ interface QuotationCardProps {
   creatorName?: string;
   userList?: { id: string; name: string }[];
   emailReadAt?: string | null;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;

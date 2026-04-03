@@ -239,11 +239,23 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   };
 
   return (
-    <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in cursor-pointer" onClick={() => onView(quotation.id)}>
+    <Card className={`card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in cursor-pointer ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''}`} onClick={() => onView(quotation.id)}>
       <CardContent className="px-4 py-3">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: quote info */}
+          {/* Left: checkbox + quote info */}
           <div className="flex items-center gap-4 min-w-0">
+            {onToggleSelect && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(quotation.id); }}
+                className="shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+              >
+                {isSelected ? (
+                  <CheckSquare className="w-4 h-4 text-primary" />
+                ) : (
+                  <Square className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+            )}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 {index !== undefined && (

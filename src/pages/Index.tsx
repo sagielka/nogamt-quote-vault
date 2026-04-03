@@ -4,6 +4,7 @@ import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
 import { useAuth } from '@/hooks/useAuth';
 import { useEmailTracking } from '@/hooks/useEmailTracking';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { QuotationFormData } from '@/types/quotation';
 import { QuotationForm } from '@/components/quotation/QuotationForm';
 import { QuotationCard } from '@/components/quotation/QuotationCard';
@@ -12,12 +13,16 @@ import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationC
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
 import { CustomerReport } from '@/components/CustomerReport';
+import { ActivityFeed } from '@/components/ActivityFeed';
+import { BulkActionsBar } from '@/components/BulkActionsBar';
+import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +43,7 @@ import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'recurring';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();

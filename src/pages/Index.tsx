@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { TeamChat } from '@/components/TeamChat';
+import { HelpSection } from '@/components/HelpSection';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';

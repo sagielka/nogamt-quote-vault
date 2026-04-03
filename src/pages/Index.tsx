@@ -53,6 +53,21 @@ const Index = () => {
   const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
+  const scrollPositionRef = useRef(0);
+
+  const navigateToView = useCallback((view: View) => {
+    if (currentView === 'list') {
+      scrollPositionRef.current = window.scrollY;
+    }
+    setCurrentView(view);
+    if (view === 'list') {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current);
+      });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [currentView]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');

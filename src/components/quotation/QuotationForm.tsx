@@ -554,17 +554,19 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     }
   };
 
-  const findSimilarQuotations = useCallback((submittedClientName: string, submittedItems: LineItem[]): SimilarQuotation[] => {
+  const findSimilarQuotations = useCallback((submittedClientName: string, submittedClientEmail: string, submittedItems: LineItem[]): SimilarQuotation[] => {
     if (isEditing || existingQuotations.length === 0) return [];
     
     const normalizedName = submittedClientName.trim().toLowerCase();
+    const normalizedEmail = submittedClientEmail.trim().toLowerCase();
     const submittedSkus = submittedItems.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
     
     return existingQuotations
       .filter(q => {
         const qName = q.clientName.trim().toLowerCase();
-        // Same client (by name or email match)
-        if (qName !== normalizedName) return false;
+        const qEmail = q.clientEmail.trim().toLowerCase();
+        // Same client by name OR email
+        if (qName !== normalizedName && qEmail !== normalizedEmail) return false;
         // Check for overlapping SKUs
         const qSkus = q.items.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
         const overlap = submittedSkus.filter(s => qSkus.includes(s));

@@ -1264,6 +1264,43 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Duplicate Quotation Warning Dialog */}
+      <AlertDialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <AlertDialogContent className="bg-card border-primary/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-primary flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Similar Quotation{similarQuotes.length > 1 ? 's' : ''} Found
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  We found {similarQuotes.length} existing quotation{similarQuotes.length > 1 ? 's' : ''} for the same customer with matching items:
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {similarQuotes.map((sq, idx) => (
+                    <div key={idx} className="p-3 rounded-md bg-secondary/50 border border-primary/10">
+                      <div className="font-medium text-foreground">{sq.quoteNumber}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Created: {sq.createdAt.toLocaleDateString()}
+                      </div>
+                      <div className="text-xs mt-1">
+                        Matching SKUs: <span className="text-primary font-medium">{sq.matchingSkus.join(', ')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm font-medium">Do you still want to create this quotation?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDuplicate}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDuplicate}>Create Anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 };

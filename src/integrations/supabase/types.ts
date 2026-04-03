@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_label: string | null
+          entity_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       archived_quotations: {
         Row: {
           archived_at: string
@@ -82,6 +115,53 @@ export type Database = {
           valid_until?: string
         }
         Relationships: []
+      }
+      customer_portal_tokens: {
+        Row: {
+          client_comment: string | null
+          client_response: string | null
+          client_response_at: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          quotation_id: string
+          token: string
+        }
+        Insert: {
+          client_comment?: string | null
+          client_response?: string | null
+          client_response_at?: string | null
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          quotation_id: string
+          token?: string
+        }
+        Update: {
+          client_comment?: string | null
+          client_response?: string | null
+          client_response_at?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          quotation_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_tokens_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -273,6 +353,74 @@ export type Database = {
           },
         ]
       }
+      quotation_versions: {
+        Row: {
+          attachments: Json | null
+          change_summary: string | null
+          changed_by: string
+          client_address: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          currency: string
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          items: Json
+          notes: string | null
+          quotation_id: string
+          tax_rate: number
+          valid_until: string
+          version_number: number
+        }
+        Insert: {
+          attachments?: Json | null
+          change_summary?: string | null
+          changed_by: string
+          client_address?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          currency?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items: Json
+          notes?: string | null
+          quotation_id: string
+          tax_rate?: number
+          valid_until: string
+          version_number?: number
+        }
+        Update: {
+          attachments?: Json | null
+          change_summary?: string | null
+          changed_by?: string
+          client_address?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          currency?: string
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          quotation_id?: string
+          tax_rate?: number
+          valid_until?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_versions_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotations: {
         Row: {
           attachments: Json | null
@@ -341,6 +489,77 @@ export type Database = {
           valid_until?: string
         }
         Relationships: []
+      }
+      recurring_quotations: {
+        Row: {
+          client_address: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          currency: string
+          customer_id: string | null
+          discount_type: string | null
+          discount_value: number | null
+          frequency: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          next_run_at: string
+          notes: string | null
+          tax_rate: number
+          template_items: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_address?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at: string
+          notes?: string | null
+          tax_rate?: number
+          template_items: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_address?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string
+          notes?: string | null
+          tax_rate?: number
+          template_items?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_quotations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sent_emails: {
         Row: {

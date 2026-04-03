@@ -4,6 +4,7 @@ import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
 import { useAuth } from '@/hooks/useAuth';
 import { useEmailTracking } from '@/hooks/useEmailTracking';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { QuotationFormData } from '@/types/quotation';
 import { QuotationForm } from '@/components/quotation/QuotationForm';
 import { QuotationCard } from '@/components/quotation/QuotationCard';
@@ -12,12 +13,16 @@ import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationC
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
 import { CustomerReport } from '@/components/CustomerReport';
+import { ActivityFeed } from '@/components/ActivityFeed';
+import { BulkActionsBar } from '@/components/BulkActionsBar';
+import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +43,7 @@ import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'recurring';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -128,6 +133,8 @@ const Index = () => {
   const [reportCustomer, setReportCustomer] = useState<{ name: string; email: string; address: string | null } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const [editOrderPickerOpen, setEditOrderPickerOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -293,7 +300,7 @@ const Index = () => {
     
     const newQuotation = await addQuotation(data);
     if (newQuotation) {
-      // Upload any pending email attachments
+      await logActivity('created', 'quotation', newQuotation.id, newQuotation.quoteNumber);
       if (pendingFiles && pendingFiles.length > 0 && user) {
         try {
           for (const file of pendingFiles) {
@@ -648,19 +655,19 @@ const Index = () => {
                   Customers
                 </Button>
               )}
-              {currentView === 'archive' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Quotations
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('activity')}>
+                  <Activity className="w-4 h-4 mr-2" />
+                  Activity
                 </Button>
               )}
-              {currentView === 'users' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Quotations
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
+                  <RepeatIcon className="w-4 h-4 mr-2" />
+                  Recurring
                 </Button>
               )}
-              {currentView === 'customers' && (
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -983,6 +990,14 @@ const Index = () => {
               navigateToView('report');
             }}
           />
+        )}
+
+        {currentView === 'activity' && (
+          <ActivityFeed userNameMap={userNameMap} limit={50} />
+        )}
+
+        {currentView === 'recurring' && (
+          <RecurringQuotationsView onBack={() => navigateToView('list')} />
         )}
 
         {currentView === 'report' && reportCustomer && (

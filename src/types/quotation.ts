@@ -23,6 +23,7 @@ export interface LineItem {
   leadTime: string;
   moq: number;
   unitPrice: number;
+  costPrice?: number;
   discountPercent: number;
   notes?: string;
 }

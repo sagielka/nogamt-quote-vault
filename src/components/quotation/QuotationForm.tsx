@@ -594,7 +594,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     discountValue: validationResult.data.discountValue,
     notes: validationResult.data.notes || '',
     validUntil: validationResult.data.validUntil,
-    status: 'draft',
+    status: isEditing ? ('draft' as const) : ('sent' as const),
     currency: currency,
     attachments: [],
     orderedItems: null,

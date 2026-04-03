@@ -156,7 +156,7 @@ const CustomerSearchSelect = ({
   );
 };
 
-export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFormProps) => {
+export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotations = [] }: QuotationFormProps) => {
   const [clientName, setClientName] = useState(initialData?.clientName || '');
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || '');
   const [clientAddress, setClientAddress] = useState(initialData?.clientAddress || '');

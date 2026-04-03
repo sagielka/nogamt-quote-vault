@@ -32,10 +32,18 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+interface SimilarQuotation {
+  quoteNumber: string;
+  clientName: string;
+  createdAt: Date;
+  matchingSkus: string[];
+}
+
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
   initialData?: Partial<QuotationFormData> & { id?: string };
   isEditing?: boolean;
+  existingQuotations?: Array<{ id: string; clientName: string; clientEmail: string; quoteNumber: string; items: LineItem[]; createdAt: Date }>;
 }
 
 interface Customer {

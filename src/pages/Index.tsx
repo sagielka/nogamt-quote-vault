@@ -55,18 +55,59 @@ const Index = () => {
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
   const pendingScrollRestore = useRef(false);
+  const isPopState = useRef(false);
 
-  const navigateToView = useCallback((view: View) => {
+  // Handle browser back/forward button
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state;
+      if (state?.view) {
+        isPopState.current = true;
+        if (state.view === 'list') {
+          scrollPositionRef.current = state.scrollY ?? 0;
+          pendingScrollRestore.current = true;
+        }
+        setCurrentView(state.view);
+        setSelectedQuotationId(state.quotationId ?? null);
+        if (state.view !== 'list') {
+          window.scrollTo(0, 0);
+        }
+      } else {
+        isPopState.current = true;
+        pendingScrollRestore.current = true;
+        setCurrentView('list');
+        setSelectedQuotationId(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    // Replace initial history state
+    window.history.replaceState({ view: 'list' }, '');
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateToView = useCallback((view: View, quotationId?: string | null) => {
+    if (isPopState.current) {
+      isPopState.current = false;
+      return;
+    }
     if (currentView === 'list') {
       scrollPositionRef.current = window.scrollY;
+      // Update current history entry with scroll position
+      window.history.replaceState({ view: 'list', scrollY: scrollPositionRef.current }, '');
     }
     setCurrentView(view);
+    if (quotationId !== undefined) {
+      setSelectedQuotationId(quotationId ?? null);
+    }
     if (view === 'list') {
       pendingScrollRestore.current = true;
+      window.history.pushState({ view: 'list' }, '');
     } else {
+      window.history.pushState({ view, quotationId: quotationId ?? selectedQuotationId }, '');
       window.scrollTo(0, 0);
     }
-  }, [currentView]);
+  }, [currentView, selectedQuotationId]);
 
   useEffect(() => {
     if (currentView === 'list' && pendingScrollRestore.current && quotations.length > 0) {

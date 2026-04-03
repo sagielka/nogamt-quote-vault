@@ -13,6 +13,7 @@ import { LineItemWithSku } from './LineItemWithSku';
 import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search, Paperclip, Upload, ExternalLink, Loader2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,10 +33,18 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
+interface SimilarQuotation {
+  quoteNumber: string;
+  clientName: string;
+  createdAt: Date;
+  matchingSkus: string[];
+}
+
 interface QuotationFormProps {
   onSubmit: (data: QuotationFormData) => void;
   initialData?: Partial<QuotationFormData> & { id?: string };
   isEditing?: boolean;
+  existingQuotations?: Array<{ id: string; clientName: string; clientEmail: string; quoteNumber: string; items: LineItem[]; createdAt: Date }>;
 }
 
 interface Customer {
@@ -148,7 +157,7 @@ const CustomerSearchSelect = ({
   );
 };
 
-export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFormProps) => {
+export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotations = [] }: QuotationFormProps) => {
   const [clientName, setClientName] = useState(initialData?.clientName || '');
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || '');
   const [clientAddress, setClientAddress] = useState(initialData?.clientAddress || '');
@@ -181,6 +190,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [pendingEmailFiles, setPendingEmailFiles] = useState<File[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
+  const [similarQuotes, setSimilarQuotes] = useState<SimilarQuotation[]>([]);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<QuotationFormData | null>(null);
   const quotationId = initialData?.id;
 
   useEffect(() => {
@@ -542,6 +554,52 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
     }
   };
 
+  const findSimilarQuotations = useCallback((submittedClientName: string, submittedItems: LineItem[]): SimilarQuotation[] => {
+    if (isEditing || existingQuotations.length === 0) return [];
+    
+    const normalizedName = submittedClientName.trim().toLowerCase();
+    const submittedSkus = submittedItems.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
+    
+    return existingQuotations
+      .filter(q => {
+        const qName = q.clientName.trim().toLowerCase();
+        // Same client (by name or email match)
+        if (qName !== normalizedName) return false;
+        // Check for overlapping SKUs
+        const qSkus = q.items.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
+        const overlap = submittedSkus.filter(s => qSkus.includes(s));
+        return overlap.length > 0;
+      })
+      .map(q => {
+        const qSkus = q.items.map(i => i.sku.trim().toLowerCase()).filter(Boolean);
+        const matchingSkus = submittedSkus.filter(s => qSkus.includes(s));
+        return {
+          quoteNumber: q.quoteNumber,
+          clientName: q.clientName,
+          createdAt: q.createdAt,
+          matchingSkus,
+        };
+      });
+  }, [isEditing, existingQuotations]);
+
+  const buildSubmitData = useCallback((validationResult: any): QuotationFormData => ({
+    clientName: validationResult.data.clientName,
+    clientEmail: validationResult.data.clientEmail,
+    clientAddress: validationResult.data.clientAddress || '',
+    items,
+    taxRate: validationResult.data.taxRate,
+    discountType: validationResult.data.discountType,
+    discountValue: validationResult.data.discountValue,
+    notes: validationResult.data.notes || '',
+    validUntil: validationResult.data.validUntil,
+    status: 'draft',
+    currency: currency,
+    attachments: [],
+    orderedItems: null,
+    quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
+    pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
+  }), [items, currency, isEditing, quoteNumber, pendingEmailFiles]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -578,23 +636,35 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
       await saveCustomerToDatabase();
     }
 
-    onSubmit({
-      clientName: validationResult.data.clientName,
-      clientEmail: validationResult.data.clientEmail,
-      clientAddress: validationResult.data.clientAddress || '',
-      items,
-      taxRate: validationResult.data.taxRate,
-      discountType: validationResult.data.discountType,
-      discountValue: validationResult.data.discountValue,
-      notes: validationResult.data.notes || '',
-      validUntil: validationResult.data.validUntil,
-      status: 'draft',
-      currency: currency,
-      attachments: [],
-      orderedItems: null,
-      quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
-      pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
-    });
+    const submitData = buildSubmitData(validationResult);
+
+    // Check for similar quotations (only on create, not edit)
+    if (!isEditing) {
+      const similar = findSimilarQuotations(clientName, items);
+      if (similar.length > 0) {
+        setSimilarQuotes(similar);
+        setPendingSubmitData(submitData);
+        setShowDuplicateDialog(true);
+        return;
+      }
+    }
+
+    onSubmit(submitData);
+  };
+
+  const handleConfirmDuplicate = () => {
+    if (pendingSubmitData) {
+      onSubmit(pendingSubmitData);
+      setShowDuplicateDialog(false);
+      setPendingSubmitData(null);
+      setSimilarQuotes([]);
+    }
+  };
+
+  const handleCancelDuplicate = () => {
+    setShowDuplicateDialog(false);
+    setPendingSubmitData(null);
+    setSimilarQuotes([]);
   };
 
   const subtotal = calculateSubtotal(items);
@@ -1195,6 +1265,43 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing }: QuotationFor
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Duplicate Quotation Warning Dialog */}
+      <AlertDialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <AlertDialogContent className="bg-card border-primary/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-primary flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Similar Quotation{similarQuotes.length > 1 ? 's' : ''} Found
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  We found {similarQuotes.length} existing quotation{similarQuotes.length > 1 ? 's' : ''} for the same customer with matching items:
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {similarQuotes.map((sq, idx) => (
+                    <div key={idx} className="p-3 rounded-md bg-secondary/50 border border-primary/10">
+                      <div className="font-medium text-foreground">{sq.quoteNumber}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Created: {sq.createdAt.toLocaleDateString()}
+                      </div>
+                      <div className="text-xs mt-1">
+                        Matching SKUs: <span className="text-primary font-medium">{sq.matchingSkus.join(', ')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm font-medium">Do you still want to create this quotation?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDuplicate}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDuplicate}>Create Anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   );
 };

@@ -815,7 +815,7 @@ const Index = () => {
             <h2 className="heading-display text-2xl text-foreground mb-6">
               Create New Quotation
             </h2>
-            <QuotationForm onSubmit={handleCreateQuotation} />
+            <QuotationForm onSubmit={handleCreateQuotation} existingQuotations={quotations} />
           </div>
         )}
 

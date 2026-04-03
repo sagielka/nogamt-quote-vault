@@ -998,8 +998,7 @@ const Index = () => {
 
         {currentView === 'recurring' && (
           <RecurringQuotationsView onBack={() => navigateToView('list')} />
-
-        {currentView === 'report' && reportCustomer && (
+        )}
           <CustomerReport
             customerName={reportCustomer.name}
             customerEmail={reportCustomer.email}

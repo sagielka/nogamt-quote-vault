@@ -26,7 +26,7 @@ import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen, Ban, Send } from 'lucide-react';
+import { Eye, Trash2, Calendar, User, Pencil, Copy, Download, Loader2, Mail, CheckCircle, Circle, BellRing, MailOpen, UserPen, Ban, Send, Square, CheckSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +42,8 @@ interface QuotationCardProps {
   creatorName?: string;
   userList?: { id: string; name: string }[];
   emailReadAt?: string | null;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -79,7 +81,7 @@ const getReminderBlockReason = (createdAt: Date | string, reminderSentAt?: strin
   return null;
 };
 
-export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange, onEditCustomer }: QuotationCardProps) => {
+export const QuotationCard = ({ quotation, index, creatorName, userList, emailReadAt, isSelected, onToggleSelect, onView, onEdit, onDelete, onDuplicate, onStatusChange, onCreatorChange, onEditCustomer }: QuotationCardProps) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSendingReminder, setIsSendingReminder] = useState(false);
@@ -237,11 +239,23 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   };
 
   return (
-    <Card className="card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in cursor-pointer" onClick={() => onView(quotation.id)}>
+    <Card className={`card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in cursor-pointer ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''}`} onClick={() => onView(quotation.id)}>
       <CardContent className="px-4 py-3">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: quote info */}
+          {/* Left: checkbox + quote info */}
           <div className="flex items-center gap-4 min-w-0">
+            {onToggleSelect && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(quotation.id); }}
+                className="shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+              >
+                {isSelected ? (
+                  <CheckSquare className="w-4 h-4 text-primary" />
+                ) : (
+                  <Square className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
+            )}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 {index !== undefined && (

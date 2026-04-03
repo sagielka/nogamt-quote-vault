@@ -54,6 +54,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
+  const pendingScrollRestore = useRef(false);
 
   const navigateToView = useCallback((view: View) => {
     if (currentView === 'list') {
@@ -61,11 +62,21 @@ const Index = () => {
     }
     setCurrentView(view);
     if (view === 'list') {
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollPositionRef.current);
-      });
+      pendingScrollRestore.current = true;
     } else {
       window.scrollTo(0, 0);
+    }
+  }, [currentView]);
+
+  useEffect(() => {
+    if (currentView === 'list' && pendingScrollRestore.current) {
+      pendingScrollRestore.current = false;
+      // Use double rAF to ensure DOM is fully painted
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollPositionRef.current);
+        });
+      });
     }
   }, [currentView]);
   

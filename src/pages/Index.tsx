@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';

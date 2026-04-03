@@ -189,6 +189,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [pendingEmailFiles, setPendingEmailFiles] = useState<File[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
+  const [similarQuotes, setSimilarQuotes] = useState<SimilarQuotation[]>([]);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<QuotationFormData | null>(null);
   const quotationId = initialData?.id;
 
   useEffect(() => {

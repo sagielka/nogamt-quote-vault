@@ -642,7 +642,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
 
     // Check for similar quotations (only on create, not edit)
     if (!isEditing) {
-      const similar = findSimilarQuotations(clientName, items);
+      const similar = findSimilarQuotations(clientName, clientEmail, items);
       if (similar.length > 0) {
         setSimilarQuotes(similar);
         setPendingSubmitData(submitData);

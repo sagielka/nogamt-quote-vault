@@ -996,8 +996,7 @@ const Index = () => {
               navigateToView('customers');
             }}
             onViewQuotation={(id) => {
-              setSelectedQuotationId(id);
-              navigateToView('preview');
+              navigateToView('preview', id);
             }}
           />
         )}

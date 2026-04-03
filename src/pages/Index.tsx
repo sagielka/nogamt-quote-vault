@@ -138,8 +138,7 @@ const Index = () => {
     if (highlightId && quotations.length > 0) {
       const found = quotations.find(q => q.id === highlightId);
       if (found) {
-        setSelectedQuotationId(highlightId);
-        navigateToView('preview');
+        navigateToView('preview', highlightId);
         // Clean up the URL
         window.history.replaceState(null, '', window.location.pathname + '#/');
       }

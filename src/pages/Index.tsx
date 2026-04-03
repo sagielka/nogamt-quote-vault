@@ -300,7 +300,7 @@ const Index = () => {
     
     const newQuotation = await addQuotation(data);
     if (newQuotation) {
-      // Upload any pending email attachments
+      await logActivity('created', 'quotation', newQuotation.id, newQuotation.quoteNumber);
       if (pendingFiles && pendingFiles.length > 0 && user) {
         try {
           for (const file of pendingFiles) {

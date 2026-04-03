@@ -343,8 +343,7 @@ const Index = () => {
         title: 'Quotation Updated',
         description: 'The quotation has been updated successfully.',
       });
-      setSelectedQuotationId(null);
-      navigateToView('list');
+      navigateToView('list', null);
     }
   };
 

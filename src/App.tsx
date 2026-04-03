@@ -7,6 +7,7 @@ import { GitHubCatalogProvider } from "@/components/GitHubCatalogProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
+import CustomerPortal from "./pages/CustomerPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -916,8 +916,7 @@ const Index = () => {
             quotation={selectedQuotation}
             emailTracking={getTrackingForQuotation(selectedQuotation.id)}
             onBack={() => {
-              setSelectedQuotationId(null);
-              navigateToView('list');
+              navigateToView('list', null);
             }}
             onEdit={() => {
               navigateToView('edit');

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuotations } from '@/hooks/useQuotations';
 import { useArchivedQuotations, ArchivedQuotation } from '@/hooks/useArchivedQuotations';
@@ -53,6 +53,21 @@ const Index = () => {
   const { user, loading, signOut } = useAuth();
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
+  const scrollPositionRef = useRef(0);
+
+  const navigateToView = useCallback((view: View) => {
+    if (currentView === 'list') {
+      scrollPositionRef.current = window.scrollY;
+    }
+    setCurrentView(view);
+    if (view === 'list') {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current);
+      });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [currentView]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'active' | 'finished' | 'all'>('active');
@@ -73,7 +88,7 @@ const Index = () => {
       const found = quotations.find(q => q.id === highlightId);
       if (found) {
         setSelectedQuotationId(highlightId);
-        setCurrentView('preview');
+        navigateToView('preview');
         // Clean up the URL
         window.history.replaceState(null, '', window.location.pathname + '#/');
       }
@@ -268,7 +283,7 @@ const Index = () => {
         variant: 'destructive',
       });
     }
-    setCurrentView('list');
+    navigateToView('list');
   };
 
   const handleUpdateQuotation = (data: QuotationFormData) => {
@@ -279,19 +294,19 @@ const Index = () => {
         description: 'The quotation has been updated successfully.',
       });
       setSelectedQuotationId(null);
-      setCurrentView('list');
+      navigateToView('list');
     }
   };
 
 
   const handleViewQuotation = (id: string) => {
     setSelectedQuotationId(id);
-    setCurrentView('preview');
+    navigateToView('preview');
   };
 
   const handleEditQuotation = (id: string) => {
     setSelectedQuotationId(id);
-    setCurrentView('edit');
+    navigateToView('edit');
   };
 
   const handleDeleteQuotation = async (id: string) => {
@@ -545,7 +560,7 @@ const Index = () => {
             <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {currentView === 'list' && quotations.length > 0 && (
-                <Button onClick={() => setCurrentView('create')}>
+                <Button onClick={() => navigateToView('create')}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Quote
                 </Button>
@@ -554,7 +569,7 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => setCurrentView('archive')}
+                  onClick={() => navigateToView('archive')}
                   className="relative"
                 >
                   <Archive className="w-4 h-4 mr-2" />
@@ -570,7 +585,7 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => setCurrentView('users')}
+                  onClick={() => navigateToView('users')}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Users
@@ -580,32 +595,32 @@ const Index = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => setCurrentView('customers')}
+                  onClick={() => navigateToView('customers')}
                 >
                   <BookUser className="w-4 h-4 mr-2" />
                   Customers
                 </Button>
               )}
               {currentView === 'archive' && (
-                <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
+                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
                 </Button>
               )}
               {currentView === 'users' && (
-                <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
+                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
                 </Button>
               )}
               {currentView === 'customers' && (
-                <Button variant="outline" size="sm" onClick={() => setCurrentView('list')}>
+                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
                 </Button>
               )}
               {currentView === 'report' && (
-                <Button variant="outline" size="sm" onClick={() => { setReportCustomer(null); setCurrentView('customers'); }}>
+                <Button variant="outline" size="sm" onClick={() => { setReportCustomer(null); navigateToView('customers'); }}>
                   <BookUser className="w-4 h-4 mr-2" />
                   Customers
                 </Button>
@@ -626,7 +641,7 @@ const Index = () => {
         {currentView === 'list' && (
           <>
             {quotations.length === 0 ? (
-              <EmptyState onCreateNew={() => setCurrentView('create')} />
+              <EmptyState onCreateNew={() => navigateToView('create')} />
             ) : (
               <div className="space-y-6">
                 <QuotationStats
@@ -745,7 +760,7 @@ const Index = () => {
         {currentView === 'create' && (
           <div className="max-w-3xl mx-auto">
             <div className="mb-6">
-              <Button variant="ghost" onClick={() => setCurrentView('list')}>
+              <Button variant="ghost" onClick={() => navigateToView('list')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Quotations
               </Button>
@@ -762,7 +777,7 @@ const Index = () => {
             <div className="mb-6 flex items-center justify-between">
               <Button variant="ghost" onClick={() => {
                 setSelectedQuotationId(null);
-                setCurrentView('list');
+                navigateToView('list');
               }}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Quotations
@@ -856,10 +871,10 @@ const Index = () => {
             emailTracking={getTrackingForQuotation(selectedQuotation.id)}
             onBack={() => {
               setSelectedQuotationId(null);
-              setCurrentView('list');
+              navigateToView('list');
             }}
             onEdit={() => {
-              setCurrentView('edit');
+              navigateToView('edit');
             }}
             onEditCustomer={handleEditCustomer}
             onStatusChange={handleStatusChange}
@@ -916,11 +931,11 @@ const Index = () => {
           <CustomerList
             onSelectCustomer={(email) => {
               setSearchQuery(email);
-              setCurrentView('list');
+              navigateToView('list');
             }}
             onViewReport={(customer) => {
               setReportCustomer(customer);
-              setCurrentView('report');
+              navigateToView('report');
             }}
           />
         )}
@@ -933,11 +948,11 @@ const Index = () => {
             quotations={quotations}
             onBack={() => {
               setReportCustomer(null);
-              setCurrentView('customers');
+              navigateToView('customers');
             }}
             onViewQuotation={(id) => {
               setSelectedQuotationId(id);
-              setCurrentView('preview');
+              navigateToView('preview');
             }}
           />
         )}

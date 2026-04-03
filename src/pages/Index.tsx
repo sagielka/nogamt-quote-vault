@@ -133,6 +133,8 @@ const Index = () => {
   const [reportCustomer, setReportCustomer] = useState<{ name: string; email: string; address: string | null } | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const [editOrderPickerOpen, setEditOrderPickerOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const navigate = useNavigate();
 

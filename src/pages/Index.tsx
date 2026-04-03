@@ -992,6 +992,13 @@ const Index = () => {
           />
         )}
 
+        {currentView === 'activity' && (
+          <ActivityFeed userNameMap={userNameMap} limit={50} />
+        )}
+
+        {currentView === 'recurring' && (
+          <RecurringQuotationsView onBack={() => navigateToView('list')} />
+
         {currentView === 'report' && reportCustomer && (
           <CustomerReport
             customerName={reportCustomer.name}

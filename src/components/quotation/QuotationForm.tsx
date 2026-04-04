@@ -847,16 +847,18 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
           {/* Header */}
-          <div className="hidden md:grid md:grid-cols-14 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-3">
-            <div className="col-span-1"></div>
-            <div className="col-span-2 text-center">SKU</div>
-            <div className="col-span-3 text-center">Description</div>
-            <div className="col-span-1 text-center">LT (wks)</div>
-            <div className="col-span-1 text-center">MOQ</div>
-            <div className="col-span-2 text-center">Unit Price ({currency})</div>
-            <div className="col-span-1 text-center">Disc %</div>
-            <div className="col-span-1 text-center">Total</div>
-            <div className="col-span-2"></div>
+          <div className="hidden md:grid md:grid-cols-[auto_2fr_3fr_1fr_1fr_1fr_2fr_1fr_1fr_1fr_auto] gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-3">
+            <div></div>
+            <div className="text-center">SKU</div>
+            <div className="text-center">Description</div>
+            <div className="text-center">LT (wks)</div>
+            <div className="text-center">MOQ</div>
+            <div className="text-center">Cost</div>
+            <div className="text-center">Unit Price ({currency})</div>
+            <div className="text-center">Disc %</div>
+            <div className="text-center">Margin</div>
+            <div className="text-center">Total</div>
+            <div></div>
           </div>
 
           {/* Items */}

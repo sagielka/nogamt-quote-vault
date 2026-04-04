@@ -37,7 +37,7 @@ const ACTION_COLORS: Record<string, string> = {
   archived: 'text-muted-foreground',
 };
 
-export const ActivityFeed = ({ entityType, entityId, userNameMap = {}, limit = 30, compact = false }: ActivityFeedProps) => {
+export const ActivityFeed = ({ entityType, entityId, userNameMap = {}, limit = 100, compact = false }: ActivityFeedProps) => {
   const { getActivities } = useActivityLog();
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);

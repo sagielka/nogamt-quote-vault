@@ -327,7 +327,7 @@ export const LineItemWithSku = ({
         </div>
 
         {/* Unit Price - supports expressions like 56.75*2 */}
-        <div className="col-span-2">
+        <div>
           <Input
             type="text"
             inputMode="decimal"

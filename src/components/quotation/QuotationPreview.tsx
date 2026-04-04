@@ -76,6 +76,10 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
   const [orderPickerOpen, setOrderPickerOpen] = useState(false);
+  const [portalLink, setPortalLink] = useState<string | null>(null);
+  const [portalTokens, setPortalTokens] = useState<PortalToken[]>([]);
+  const [showPortalSection, setShowPortalSection] = useState(false);
+  const { loading: portalLoading, generatePortalLink, getPortalTokens, deactivateToken } = useCustomerPortal();
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses

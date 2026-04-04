@@ -565,8 +565,74 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Download className="w-4 h-4 mr-2" />
             Download PDF
           </Button>
+          <Button variant="outline" onClick={handleGeneratePortalLink} disabled={portalLoading}>
+            {portalLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
+            Portal Link
+          </Button>
+          {portalTokens.length === 0 && !showPortalSection && (
+            <Button variant="ghost" size="sm" onClick={handleLoadPortalTokens}>
+              <Eye className="w-4 h-4 mr-2" />
+              View Links
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Portal Links Section */}
+      {showPortalSection && (
+        <Card className="mb-6 no-print card-elevated max-w-4xl mx-auto">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-primary uppercase tracking-wider flex items-center gap-2">
+                <Link className="w-4 h-4" /> Customer Portal Links
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowPortalSection(false)}>
+                <XCircle className="w-4 h-4" />
+              </Button>
+            </div>
+            {portalLink && (
+              <div className="flex items-center gap-2 p-2 rounded-md bg-secondary/50 border border-primary/10">
+                <Input value={portalLink} readOnly className="font-mono text-xs flex-1" />
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(portalLink); toast({ title: 'Copied!' }); }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            {portalTokens.length > 0 && (
+              <div className="space-y-2">
+                {portalTokens.map((t) => {
+                  const link = `${window.location.origin}${window.location.pathname}#/portal?token=${t.token}`;
+                  const isExpired = new Date(t.expires_at) < new Date();
+                  return (
+                    <div key={t.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/30 border border-primary/5 text-sm">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-xs truncate">{link}</div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>Expires: {new Date(t.expires_at).toLocaleDateString()}</span>
+                          {t.client_response && <Badge variant="outline">{t.client_response}</Badge>}
+                          {!t.is_active && <Badge variant="destructive">Inactive</Badge>}
+                          {isExpired && t.is_active && <Badge variant="secondary">Expired</Badge>}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(link); toast({ title: 'Copied!' }); }}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      {t.is_active && !isExpired && (
+                        <Button variant="ghost" size="sm" onClick={() => handleDeactivateToken(t.id)} className="text-destructive hover:text-destructive">
+                          <Ban className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {portalTokens.length === 0 && !portalLink && (
+              <p className="text-sm text-muted-foreground">No portal links generated yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quotation Document */}
       <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none">

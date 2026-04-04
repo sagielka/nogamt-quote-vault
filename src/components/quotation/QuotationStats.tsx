@@ -916,6 +916,9 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                     <TabsTrigger value="trend" className="text-xs gap-1">
                       <TrendingUp className="w-3 h-3" /> Monthly Trend
                     </TabsTrigger>
+                    <TabsTrigger value="customers" className="text-xs gap-1">
+                      <Users className="w-3 h-3" /> Per Customer
+                    </TabsTrigger>
                     <TabsTrigger value="quotes" className="text-xs gap-1">
                       <FileText className="w-3 h-3" /> Per Quote
                     </TabsTrigger>

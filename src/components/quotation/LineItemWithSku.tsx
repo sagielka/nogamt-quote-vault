@@ -366,7 +366,7 @@ export const LineItemWithSku = ({
         </div>
 
         {/* Total */}
-        <div className="col-span-1 text-right font-mono font-medium text-primary glow-text whitespace-nowrap">
+        <div className="text-right font-mono font-medium text-primary glow-text whitespace-nowrap text-sm">
           {formatCurrency(calculateLineTotal(item), currency)}
         </div>
         

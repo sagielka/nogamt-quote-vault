@@ -685,8 +685,7 @@ const Index = () => {
                 Logout
               </Button>
             </div>
-              <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
-            </div>
+            <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto shrink-0" />
           </div>
         </div>
       </header>

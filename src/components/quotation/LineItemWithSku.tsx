@@ -193,21 +193,20 @@ export const LineItemWithSku = ({
       style={style}
       className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
     >
-      <div className="grid grid-cols-[auto_2fr_3fr_1fr_1fr_1fr_2fr_1fr_1fr_1fr_auto] gap-2 items-center p-3">
-        {/* Drag Handle */}
-        <div className="col-span-1 flex justify-center">
+      <div className="grid grid-cols-[28px_minmax(0,2fr)_minmax(0,3fr)_60px_60px_80px_100px_60px_70px_90px_auto] gap-1.5 items-center p-3">
+        <div className="flex justify-center">
           <button
             type="button"
             {...attributes}
             {...listeners}
             className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors touch-none"
           >
-            <GripVertical className="h-5 w-5" />
+            <GripVertical className="h-4 w-4" />
           </button>
         </div>
         
         {/* SKU with autocomplete */}
-        <div className="col-span-2 relative">
+        <div className="relative">
           <Input
             ref={skuInputRef}
             placeholder="Type SKU..."
@@ -249,7 +248,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Description with autocomplete */}
-        <div className="col-span-3 relative">
+        <div className="relative">
           <Input
             ref={descInputRef}
             placeholder="Description"
@@ -291,7 +290,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* LT (weeks) */}
-        <div className="col-span-1">
+        <div>
           <Input
             type="number"
             min="0"
@@ -303,7 +302,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* MOQ */}
-        <div className="col-span-1">
+        <div>
           <Input
             type="number"
             min="1"
@@ -315,7 +314,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Cost Price */}
-        <div className="col-span-1">
+        <div>
           <Input
             type="number"
             min="0"
@@ -328,7 +327,7 @@ export const LineItemWithSku = ({
         </div>
 
         {/* Unit Price - supports expressions like 56.75*2 */}
-        <div className="col-span-2">
+        <div>
           <Input
             type="text"
             inputMode="decimal"
@@ -342,7 +341,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Discount */}
-        <div className="col-span-1">
+        <div>
           <Input
             type="number"
             min="0"
@@ -356,7 +355,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Margin % */}
-        <div className="col-span-1 text-center font-mono text-sm whitespace-nowrap">
+        <div className="text-center font-mono text-sm whitespace-nowrap">
           {item.costPrice && item.unitPrice > 0 ? (
             <span className={((item.unitPrice - item.costPrice) / item.unitPrice * 100) >= 0 ? 'text-emerald-500' : 'text-destructive'}>
               {((item.unitPrice - item.costPrice) / item.unitPrice * 100).toFixed(1)}%
@@ -367,12 +366,12 @@ export const LineItemWithSku = ({
         </div>
 
         {/* Total */}
-        <div className="col-span-1 text-right font-mono font-medium text-primary glow-text whitespace-nowrap">
+        <div className="text-right font-mono font-medium text-primary glow-text whitespace-nowrap text-sm">
           {formatCurrency(calculateLineTotal(item), currency)}
         </div>
         
         {/* Actions - moved to separate column with no overlap */}
-        <div className="col-span-2 flex justify-end gap-0.5 pl-4">
+        <div className="flex justify-end gap-0.5">
           <Button
             type="button"
             variant="ghost"

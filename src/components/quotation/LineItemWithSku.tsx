@@ -194,20 +194,19 @@ export const LineItemWithSku = ({
       className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
     >
       <div className="grid grid-cols-[28px_minmax(0,2fr)_minmax(0,3fr)_60px_60px_80px_100px_60px_70px_90px_auto] gap-1.5 items-center p-3">
-        {/* Drag Handle */}
-        <div className="col-span-1 flex justify-center">
+        <div className="flex justify-center">
           <button
             type="button"
             {...attributes}
             {...listeners}
             className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors touch-none"
           >
-            <GripVertical className="h-5 w-5" />
+            <GripVertical className="h-4 w-4" />
           </button>
         </div>
         
         {/* SKU with autocomplete */}
-        <div className="col-span-2 relative">
+        <div className="relative">
           <Input
             ref={skuInputRef}
             placeholder="Type SKU..."

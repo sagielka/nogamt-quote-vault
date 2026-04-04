@@ -41,7 +41,7 @@ export const useActivityLog = () => {
   const getActivities = useCallback(async (
     entityType?: string,
     entityId?: string,
-    limit = 50
+    limit = 200
   ): Promise<ActivityLogEntry[]> => {
     let query = (supabase.from('activity_log' as any).select('*') as any)
       .order('created_at', { ascending: false })

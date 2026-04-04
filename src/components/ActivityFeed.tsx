@@ -37,7 +37,7 @@ const ACTION_COLORS: Record<string, string> = {
   archived: 'text-muted-foreground',
 };
 
-export const ActivityFeed = ({ entityType, entityId, userNameMap = {}, limit = 30, compact = false }: ActivityFeedProps) => {
+export const ActivityFeed = ({ entityType, entityId, userNameMap = {}, limit = 100, compact = false }: ActivityFeedProps) => {
   const { getActivities } = useActivityLog();
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,7 +138,7 @@ export const ActivityFeed = ({ entityType, entityId, userNameMap = {}, limit = 3
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="max-h-96">
+        <ScrollArea className="h-[calc(100vh-280px)]">
           <div className="p-2">{content}</div>
         </ScrollArea>
       </CardContent>

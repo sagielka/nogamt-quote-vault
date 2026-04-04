@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
-import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban } from 'lucide-react';
+import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,6 +27,7 @@ import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
+import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
 
 // Declare electron API types
 declare global {
@@ -75,6 +76,10 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [emailAttachments, setEmailAttachments] = useState<any[]>([]);
   const [uploadingEmail, setUploadingEmail] = useState(false);
   const [orderPickerOpen, setOrderPickerOpen] = useState(false);
+  const [portalLink, setPortalLink] = useState<string | null>(null);
+  const [portalTokens, setPortalTokens] = useState<PortalToken[]>([]);
+  const [showPortalSection, setShowPortalSection] = useState(false);
+  const { loading: portalLoading, generatePortalLink, getPortalTokens, deactivateToken } = useCustomerPortal();
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses
@@ -232,6 +237,36 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const afterDiscount = subtotal - discount;
   const tax = calculateTax(afterDiscount, quotation.taxRate);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
+
+  const handleGeneratePortalLink = async () => {
+    const token = await generatePortalLink(quotation.id);
+    if (token) {
+      const baseUrl = window.location.origin + window.location.pathname;
+      const link = `${baseUrl}#/portal?token=${token.token}`;
+      setPortalLink(link);
+      setShowPortalSection(true);
+      await navigator.clipboard.writeText(link);
+      toast({ title: 'Portal link generated & copied!', description: 'Share this link with your client.' });
+      // Refresh tokens list
+      const tokens = await getPortalTokens(quotation.id);
+      setPortalTokens(tokens);
+    } else {
+      toast({ title: 'Error', description: 'Failed to generate portal link.', variant: 'destructive' });
+    }
+  };
+
+  const handleLoadPortalTokens = async () => {
+    const tokens = await getPortalTokens(quotation.id);
+    setPortalTokens(tokens);
+    setShowPortalSection(true);
+  };
+
+  const handleDeactivateToken = async (tokenId: string) => {
+    await deactivateToken(tokenId);
+    const tokens = await getPortalTokens(quotation.id);
+    setPortalTokens(tokens);
+    toast({ title: 'Token deactivated' });
+  };
 
   const handlePrint = () => {
     window.print();
@@ -530,8 +565,74 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Download className="w-4 h-4 mr-2" />
             Download PDF
           </Button>
+          <Button variant="outline" onClick={handleGeneratePortalLink} disabled={portalLoading}>
+            {portalLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
+            Portal Link
+          </Button>
+          {portalTokens.length === 0 && !showPortalSection && (
+            <Button variant="ghost" size="sm" onClick={handleLoadPortalTokens}>
+              <Eye className="w-4 h-4 mr-2" />
+              View Links
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Portal Links Section */}
+      {showPortalSection && (
+        <Card className="mb-6 no-print card-elevated max-w-4xl mx-auto">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-primary uppercase tracking-wider flex items-center gap-2">
+                <Link className="w-4 h-4" /> Customer Portal Links
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowPortalSection(false)}>
+                <XCircle className="w-4 h-4" />
+              </Button>
+            </div>
+            {portalLink && (
+              <div className="flex items-center gap-2 p-2 rounded-md bg-secondary/50 border border-primary/10">
+                <Input value={portalLink} readOnly className="font-mono text-xs flex-1" />
+                <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(portalLink); toast({ title: 'Copied!' }); }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            {portalTokens.length > 0 && (
+              <div className="space-y-2">
+                {portalTokens.map((t) => {
+                  const link = `${window.location.origin}${window.location.pathname}#/portal?token=${t.token}`;
+                  const isExpired = new Date(t.expires_at) < new Date();
+                  return (
+                    <div key={t.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/30 border border-primary/5 text-sm">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-xs truncate">{link}</div>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>Expires: {new Date(t.expires_at).toLocaleDateString()}</span>
+                          {t.client_response && <Badge variant="outline">{t.client_response}</Badge>}
+                          {!t.is_active && <Badge variant="destructive">Inactive</Badge>}
+                          {isExpired && t.is_active && <Badge variant="secondary">Expired</Badge>}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(link); toast({ title: 'Copied!' }); }}>
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                      {t.is_active && !isExpired && (
+                        <Button variant="ghost" size="sm" onClick={() => handleDeactivateToken(t.id)} className="text-destructive hover:text-destructive">
+                          <Ban className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {portalTokens.length === 0 && !portalLink && (
+              <p className="text-sm text-muted-foreground">No portal links generated yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quotation Document */}
       <Card className="card-elevated max-w-4xl mx-auto print:shadow-none print:border-none">

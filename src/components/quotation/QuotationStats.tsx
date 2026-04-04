@@ -293,6 +293,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     let quotesWithCost = 0;
 
     const perQuote: { quoteNumber: string; clientName: string; revenue: number; cost: number; profit: number; margin: number; status: string }[] = [];
+    const byCustomer: Record<string, { clientName: string; revenue: number; cost: number; quoteCount: number }> = {};
 
     filteredQuotations.forEach(q => {
       const revenue = calculateSubtotal(q.items);
@@ -314,13 +315,29 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
           margin,
           status: q.status,
         });
+
+        const custKey = q.clientName.trim().toLowerCase();
+        if (!byCustomer[custKey]) {
+          byCustomer[custKey] = { clientName: q.clientName, revenue: 0, cost: 0, quoteCount: 0 };
+        }
+        byCustomer[custKey].revenue += revenue;
+        byCustomer[custKey].cost += cost;
+        byCustomer[custKey].quoteCount++;
       }
     });
 
     const totalProfit = totalRevenue - totalCost;
     const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-    return { totalRevenue, totalCost, totalProfit, overallMargin, quotesWithCost, perQuote };
+    const perCustomer = Object.values(byCustomer)
+      .map(c => ({
+        ...c,
+        profit: c.revenue - c.cost,
+        margin: c.revenue > 0 ? ((c.revenue - c.cost) / c.revenue) * 100 : 0,
+      }))
+      .sort((a, b) => b.profit - a.profit);
+
+    return { totalRevenue, totalCost, totalProfit, overallMargin, quotesWithCost, perQuote, perCustomer };
   }, [filteredQuotations]);
 
   // Monthly profit trend

@@ -355,7 +355,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Margin % */}
-        <div className="col-span-1 text-center font-mono text-sm whitespace-nowrap">
+        <div className="text-center font-mono text-sm whitespace-nowrap">
           {item.costPrice && item.unitPrice > 0 ? (
             <span className={((item.unitPrice - item.costPrice) / item.unitPrice * 100) >= 0 ? 'text-emerald-500' : 'text-destructive'}>
               {((item.unitPrice - item.costPrice) / item.unitPrice * 100).toFixed(1)}%

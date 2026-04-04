@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval } from 'date-fns';
 import { Quotation } from '@/types/quotation';
-import { calculateTotal, calculateLineTotal, formatCurrency } from '@/lib/quotation-utils';
+import { calculateTotal, calculateLineTotal, calculateSubtotal, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X, Download, Percent } from 'lucide-react';

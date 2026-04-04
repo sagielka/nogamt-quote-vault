@@ -138,7 +138,7 @@ export const ActivityFeed = ({ entityType, entityId, userNameMap = {}, limit = 1
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="max-h-96">
+        <ScrollArea className="h-[calc(100vh-280px)]">
           <div className="p-2">{content}</div>
         </ScrollArea>
       </CardContent>

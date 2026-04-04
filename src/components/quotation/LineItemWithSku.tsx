@@ -314,6 +314,19 @@ export const LineItemWithSku = ({
           />
         </div>
         
+        {/* Cost Price */}
+        <div className="col-span-1">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Cost"
+            value={item.costPrice || ''}
+            onChange={(e) => onUpdate(item.id, { costPrice: parseFloat(e.target.value) || 0 })}
+            className="input-focus text-right bg-background/50 border-primary/20 font-mono text-sm"
+          />
+        </div>
+
         {/* Unit Price - supports expressions like 56.75*2 */}
         <div className="col-span-2">
           <Input
@@ -342,6 +355,17 @@ export const LineItemWithSku = ({
           />
         </div>
         
+        {/* Margin % */}
+        <div className="col-span-1 text-center font-mono text-sm whitespace-nowrap">
+          {item.costPrice && item.unitPrice > 0 ? (
+            <span className={((item.unitPrice - item.costPrice) / item.unitPrice * 100) >= 0 ? 'text-emerald-500' : 'text-destructive'}>
+              {((item.unitPrice - item.costPrice) / item.unitPrice * 100).toFixed(1)}%
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+
         {/* Total */}
         <div className="col-span-1 text-right font-mono font-medium text-primary glow-text whitespace-nowrap">
           {formatCurrency(calculateLineTotal(item), currency)}

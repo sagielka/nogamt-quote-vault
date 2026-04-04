@@ -612,7 +612,7 @@ const Index = () => {
                 </TooltipProvider>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
               {currentView === 'list' && quotations.length > 0 && (
                 <Button onClick={() => navigateToView('create')}>
                   <Plus className="w-4 h-4 mr-2" />

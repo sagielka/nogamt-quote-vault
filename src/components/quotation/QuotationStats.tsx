@@ -1003,3 +1003,6 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
           )}
         </div>
       )}
+    </div>
+  );
+};

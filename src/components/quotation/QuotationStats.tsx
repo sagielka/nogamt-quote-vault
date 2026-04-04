@@ -293,6 +293,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     let quotesWithCost = 0;
 
     const perQuote: { quoteNumber: string; clientName: string; revenue: number; cost: number; profit: number; margin: number; status: string }[] = [];
+    const byCustomer: Record<string, { clientName: string; revenue: number; cost: number; quoteCount: number }> = {};
 
     filteredQuotations.forEach(q => {
       const revenue = calculateSubtotal(q.items);
@@ -314,13 +315,29 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
           margin,
           status: q.status,
         });
+
+        const custKey = q.clientName.trim().toLowerCase();
+        if (!byCustomer[custKey]) {
+          byCustomer[custKey] = { clientName: q.clientName, revenue: 0, cost: 0, quoteCount: 0 };
+        }
+        byCustomer[custKey].revenue += revenue;
+        byCustomer[custKey].cost += cost;
+        byCustomer[custKey].quoteCount++;
       }
     });
 
     const totalProfit = totalRevenue - totalCost;
     const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-    return { totalRevenue, totalCost, totalProfit, overallMargin, quotesWithCost, perQuote };
+    const perCustomer = Object.values(byCustomer)
+      .map(c => ({
+        ...c,
+        profit: c.revenue - c.cost,
+        margin: c.revenue > 0 ? ((c.revenue - c.cost) / c.revenue) * 100 : 0,
+      }))
+      .sort((a, b) => b.profit - a.profit);
+
+    return { totalRevenue, totalCost, totalProfit, overallMargin, quotesWithCost, perQuote, perCustomer };
   }, [filteredQuotations]);
 
   // Monthly profit trend
@@ -899,6 +916,9 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                     <TabsTrigger value="trend" className="text-xs gap-1">
                       <TrendingUp className="w-3 h-3" /> Monthly Trend
                     </TabsTrigger>
+                    <TabsTrigger value="customers" className="text-xs gap-1">
+                      <Users className="w-3 h-3" /> Per Customer
+                    </TabsTrigger>
                     <TabsTrigger value="quotes" className="text-xs gap-1">
                       <FileText className="w-3 h-3" /> Per Quote
                     </TabsTrigger>
@@ -954,6 +974,72 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground text-center py-10">No monthly data available</p>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="customers">
+                    {profitData.perCustomer.length > 0 ? (
+                      <div className="space-y-4">
+                        {/* Customer profit bar chart */}
+                        <ResponsiveContainer width="100%" height={Math.max(200, profitData.perCustomer.length * 40)}>
+                          <BarChart data={profitData.perCustomer.slice(0, 10)} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 10 }}>
+                            <XAxis type="number" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                            <YAxis dataKey="clientName" type="category" width={120} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: 12,
+                                color: 'hsl(var(--foreground))',
+                              }}
+                              labelStyle={{ color: 'hsl(var(--foreground))' }}
+                              itemStyle={{ color: 'hsl(var(--foreground))' }}
+                              formatter={(value: number) => [formatCurrency(value, stats.dominantCurrency as any), '']}
+                            />
+                            <Bar dataKey="revenue" fill="hsl(210, 80%, 55%)" name="Revenue" />
+                            <Bar dataKey="cost" fill="hsl(0, 70%, 55%)" name="Cost" />
+                            <Bar dataKey="profit" fill="hsl(152, 60%, 45%)" name="Profit" radius={[0, 4, 4, 0]} />
+                            <Legend wrapperStyle={{ fontSize: 11 }} />
+                          </BarChart>
+                        </ResponsiveContainer>
+
+                        {/* Customer table */}
+                        <div className="overflow-x-auto max-h-[350px] overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="text-xs">Customer</TableHead>
+                                <TableHead className="text-xs text-center">Quotes</TableHead>
+                                <TableHead className="text-xs text-right">Revenue</TableHead>
+                                <TableHead className="text-xs text-right">Cost</TableHead>
+                                <TableHead className="text-xs text-right">Profit</TableHead>
+                                <TableHead className="text-xs text-right">Margin</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {profitData.perCustomer.map(c => (
+                                <TableRow key={c.clientName}>
+                                  <TableCell className="text-xs font-medium truncate max-w-[180px]">{c.clientName}</TableCell>
+                                  <TableCell className="text-xs text-center">{c.quoteCount}</TableCell>
+                                  <TableCell className="text-xs text-right">{formatCurrency(c.revenue, stats.dominantCurrency as any)}</TableCell>
+                                  <TableCell className="text-xs text-right">{formatCurrency(c.cost, stats.dominantCurrency as any)}</TableCell>
+                                  <TableCell className={`text-xs text-right font-medium ${c.profit >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                                    {formatCurrency(c.profit, stats.dominantCurrency as any)}
+                                  </TableCell>
+                                  <TableCell className="text-xs text-right">
+                                    <span className={`font-bold ${c.margin >= 30 ? 'text-emerald-500' : c.margin >= 15 ? 'text-amber-500' : 'text-destructive'}`}>
+                                      {c.margin.toFixed(1)}%
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-10">No customer data available</p>
                     )}
                   </TabsContent>
 

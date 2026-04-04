@@ -238,6 +238,36 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const tax = calculateTax(afterDiscount, quotation.taxRate);
   const total = calculateTotal(quotation.items, quotation.taxRate, quotation.discountType, quotation.discountValue);
 
+  const handleGeneratePortalLink = async () => {
+    const token = await generatePortalLink(quotation.id);
+    if (token) {
+      const baseUrl = window.location.origin + window.location.pathname;
+      const link = `${baseUrl}#/portal?token=${token.token}`;
+      setPortalLink(link);
+      setShowPortalSection(true);
+      await navigator.clipboard.writeText(link);
+      toast({ title: 'Portal link generated & copied!', description: 'Share this link with your client.' });
+      // Refresh tokens list
+      const tokens = await getPortalTokens(quotation.id);
+      setPortalTokens(tokens);
+    } else {
+      toast({ title: 'Error', description: 'Failed to generate portal link.', variant: 'destructive' });
+    }
+  };
+
+  const handleLoadPortalTokens = async () => {
+    const tokens = await getPortalTokens(quotation.id);
+    setPortalTokens(tokens);
+    setShowPortalSection(true);
+  };
+
+  const handleDeactivateToken = async (tokenId: string) => {
+    await deactivateToken(tokenId);
+    const tokens = await getPortalTokens(quotation.id);
+    setPortalTokens(tokens);
+    toast({ title: 'Token deactivated' });
+  };
+
   const handlePrint = () => {
     window.print();
   };

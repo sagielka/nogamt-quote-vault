@@ -286,6 +286,70 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
       .slice(0, 20);
   }, [filteredQuotations]);
 
+  // Profit margin analytics
+  const profitData = useMemo(() => {
+    let totalRevenue = 0;
+    let totalCost = 0;
+    let quotesWithCost = 0;
+
+    const perQuote: { quoteNumber: string; clientName: string; revenue: number; cost: number; profit: number; margin: number; status: string }[] = [];
+
+    filteredQuotations.forEach(q => {
+      const revenue = calculateSubtotal(q.items);
+      const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
+      const hasCost = q.items.some(item => (item.costPrice || 0) > 0);
+
+      if (hasCost) {
+        quotesWithCost++;
+        totalRevenue += revenue;
+        totalCost += cost;
+        const profit = revenue - cost;
+        const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+        perQuote.push({
+          quoteNumber: q.quoteNumber.replace(/^QT/i, ''),
+          clientName: q.clientName,
+          revenue,
+          cost,
+          profit,
+          margin,
+          status: q.status,
+        });
+      }
+    });
+
+    const totalProfit = totalRevenue - totalCost;
+    const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+    return { totalRevenue, totalCost, totalProfit, overallMargin, quotesWithCost, perQuote };
+  }, [filteredQuotations]);
+
+  // Monthly profit trend
+  const monthlyProfitData = useMemo(() => {
+    const months: Record<string, { month: string; revenue: number; cost: number; profit: number }> = {};
+
+    filteredQuotations.forEach(q => {
+      const hasCost = q.items.some(item => (item.costPrice || 0) > 0);
+      if (!hasCost) return;
+
+      const date = new Date(q.createdAt);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+
+      if (!months[key]) months[key] = { month: label, revenue: 0, cost: 0, profit: 0 };
+
+      const revenue = calculateSubtotal(q.items);
+      const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
+      months[key].revenue += revenue;
+      months[key].cost += cost;
+      months[key].profit += revenue - cost;
+    });
+
+    return Object.entries(months)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([, v]) => ({ ...v, margin: v.revenue > 0 ? (v.profit / v.revenue) * 100 : 0 }));
+  }, [filteredQuotations]);
+
   const exportCSV = () => {
     const rows: string[][] = [];
     const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;

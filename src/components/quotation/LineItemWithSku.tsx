@@ -290,7 +290,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* LT (weeks) */}
-        <div className="col-span-1">
+        <div>
           <Input
             type="number"
             min="0"

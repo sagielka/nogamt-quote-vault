@@ -248,7 +248,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Description with autocomplete */}
-        <div className="col-span-3 relative">
+        <div className="relative">
           <Input
             ref={descInputRef}
             placeholder="Description"

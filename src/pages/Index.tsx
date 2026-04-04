@@ -570,7 +570,7 @@ const Index = () => {
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b no-print">
         <div className="container py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0 shrink">
+            <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
               <img src={logo} alt="NogaMT Logo" className="h-12 w-auto shrink-0" />
               
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 shrink-0">

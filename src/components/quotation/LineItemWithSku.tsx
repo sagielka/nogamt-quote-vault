@@ -314,7 +314,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Cost Price */}
-        <div className="col-span-1">
+        <div>
           <Input
             type="number"
             min="0"

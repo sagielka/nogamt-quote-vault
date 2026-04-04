@@ -950,6 +950,32 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
               <span className="uppercase tracking-wider">Total</span>
               <span className="text-primary glow-text font-mono">{formatCurrency(total, currency)}</span>
             </div>
+            
+            {/* Profit Margin Summary */}
+            {(() => {
+              const totalCost = items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
+              const totalRevenue = subtotal;
+              const totalProfit = totalRevenue - totalCost;
+              const marginPercent = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+              const hasCostData = items.some(item => item.costPrice && item.costPrice > 0);
+              
+              if (!hasCostData) return null;
+              
+              return (
+                <div className="pt-3 border-t border-primary/20 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground uppercase tracking-wider text-xs">Total Cost</span>
+                    <span className="font-mono font-medium">{formatCurrency(totalCost, currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground uppercase tracking-wider text-xs">Profit</span>
+                    <span className={`font-mono font-semibold ${totalProfit >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                      {formatCurrency(totalProfit, currency)} ({marginPercent.toFixed(1)}%)
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </CardContent>
       </Card>

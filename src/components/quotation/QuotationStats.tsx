@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval } from 'date-fns';
 import { Quotation } from '@/types/quotation';
-import { calculateTotal, calculateLineTotal, formatCurrency } from '@/lib/quotation-utils';
+import { calculateTotal, calculateLineTotal, calculateSubtotal, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X, Download } from 'lucide-react';
+import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X, Download, Percent } from 'lucide-react';
+import { LineChart, Line } from 'recharts';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -283,6 +284,70 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
       .map(i => ({ ...i, quoteCount: i.quoteCount.size }))
       .sort((a, b) => b.qty - a.qty)
       .slice(0, 20);
+  }, [filteredQuotations]);
+
+  // Profit margin analytics
+  const profitData = useMemo(() => {
+    let totalRevenue = 0;
+    let totalCost = 0;
+    let quotesWithCost = 0;
+
+    const perQuote: { quoteNumber: string; clientName: string; revenue: number; cost: number; profit: number; margin: number; status: string }[] = [];
+
+    filteredQuotations.forEach(q => {
+      const revenue = calculateSubtotal(q.items);
+      const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
+      const hasCost = q.items.some(item => (item.costPrice || 0) > 0);
+
+      if (hasCost) {
+        quotesWithCost++;
+        totalRevenue += revenue;
+        totalCost += cost;
+        const profit = revenue - cost;
+        const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+        perQuote.push({
+          quoteNumber: q.quoteNumber.replace(/^QT/i, ''),
+          clientName: q.clientName,
+          revenue,
+          cost,
+          profit,
+          margin,
+          status: q.status,
+        });
+      }
+    });
+
+    const totalProfit = totalRevenue - totalCost;
+    const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+    return { totalRevenue, totalCost, totalProfit, overallMargin, quotesWithCost, perQuote };
+  }, [filteredQuotations]);
+
+  // Monthly profit trend
+  const monthlyProfitData = useMemo(() => {
+    const months: Record<string, { month: string; revenue: number; cost: number; profit: number }> = {};
+
+    filteredQuotations.forEach(q => {
+      const hasCost = q.items.some(item => (item.costPrice || 0) > 0);
+      if (!hasCost) return;
+
+      const date = new Date(q.createdAt);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const label = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+
+      if (!months[key]) months[key] = { month: label, revenue: 0, cost: 0, profit: 0 };
+
+      const revenue = calculateSubtotal(q.items);
+      const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
+      months[key].revenue += revenue;
+      months[key].cost += cost;
+      months[key].profit += revenue - cost;
+    });
+
+    return Object.entries(months)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([, v]) => ({ ...v, margin: v.revenue > 0 ? (v.profit / v.revenue) * 100 : 0 }));
   }, [filteredQuotations]);
 
   const exportCSV = () => {
@@ -783,6 +848,151 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                               </TableCell>
                             </TableRow>
                           ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Profit Margin Analytics */}
+          {profitData.quotesWithCost > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Percent className="w-4 h-4" />
+                  Profit Margin Analytics
+                  <Badge variant="outline" className="text-[10px] ml-auto">
+                    {profitData.quotesWithCost} quotes with cost data
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {/* KPI Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Total Revenue</p>
+                    <p className="text-sm font-bold">{formatCurrency(profitData.totalRevenue, stats.dominantCurrency as any)}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Total Cost</p>
+                    <p className="text-sm font-bold">{formatCurrency(profitData.totalCost, stats.dominantCurrency as any)}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Total Profit</p>
+                    <p className={`text-sm font-bold ${profitData.totalProfit >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                      {formatCurrency(profitData.totalProfit, stats.dominantCurrency as any)}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-[10px] text-muted-foreground uppercase">Overall Margin</p>
+                    <p className={`text-sm font-bold ${profitData.overallMargin >= 30 ? 'text-emerald-500' : profitData.overallMargin >= 15 ? 'text-amber-500' : 'text-destructive'}`}>
+                      {profitData.overallMargin.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                <Tabs defaultValue="trend" className="w-full">
+                  <TabsList className="mb-3">
+                    <TabsTrigger value="trend" className="text-xs gap-1">
+                      <TrendingUp className="w-3 h-3" /> Monthly Trend
+                    </TabsTrigger>
+                    <TabsTrigger value="quotes" className="text-xs gap-1">
+                      <FileText className="w-3 h-3" /> Per Quote
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="trend">
+                    {monthlyProfitData.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Profit bar chart */}
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={monthlyProfitData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
+                            <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                            <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: 12,
+                                color: 'hsl(var(--foreground))',
+                              }}
+                              labelStyle={{ color: 'hsl(var(--foreground))' }}
+                              itemStyle={{ color: 'hsl(var(--foreground))' }}
+                              formatter={(value: number) => [formatCurrency(value, stats.dominantCurrency as any), '']}
+                            />
+                            <Bar dataKey="revenue" fill="hsl(210, 80%, 55%)" name="Revenue" />
+                            <Bar dataKey="cost" fill="hsl(0, 70%, 55%)" name="Cost" />
+                            <Bar dataKey="profit" fill="hsl(152, 60%, 45%)" name="Profit" radius={[4, 4, 0, 0]} />
+                            <Legend wrapperStyle={{ fontSize: 11 }} />
+                          </BarChart>
+                        </ResponsiveContainer>
+
+                        {/* Margin % line chart */}
+                        <ResponsiveContainer width="100%" height={220}>
+                          <LineChart data={monthlyProfitData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
+                            <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                            <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} unit="%" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: 12,
+                                color: 'hsl(var(--foreground))',
+                              }}
+                              labelStyle={{ color: 'hsl(var(--foreground))' }}
+                              itemStyle={{ color: 'hsl(var(--foreground))' }}
+                              formatter={(value: number) => [`${value.toFixed(1)}%`, 'Margin']}
+                            />
+                            <Line type="monotone" dataKey="margin" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="Margin %" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-10">No monthly data available</p>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="quotes">
+                    <div className="overflow-x-auto max-h-[350px] overflow-y-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs">Quote #</TableHead>
+                            <TableHead className="text-xs">Client</TableHead>
+                            <TableHead className="text-xs text-center">Status</TableHead>
+                            <TableHead className="text-xs text-right">Revenue</TableHead>
+                            <TableHead className="text-xs text-right">Cost</TableHead>
+                            <TableHead className="text-xs text-right">Profit</TableHead>
+                            <TableHead className="text-xs text-right">Margin</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {profitData.perQuote
+                            .sort((a, b) => b.margin - a.margin)
+                            .map(q => (
+                              <TableRow key={q.quoteNumber}>
+                                <TableCell className="text-xs font-mono font-medium">{q.quoteNumber}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground truncate max-w-[150px]">{q.clientName}</TableCell>
+                                <TableCell className="text-xs text-center">
+                                  <Badge variant="outline" className="text-[10px]">{q.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-xs text-right">{formatCurrency(q.revenue, stats.dominantCurrency as any)}</TableCell>
+                                <TableCell className="text-xs text-right">{formatCurrency(q.cost, stats.dominantCurrency as any)}</TableCell>
+                                <TableCell className={`text-xs text-right font-medium ${q.profit >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                                  {formatCurrency(q.profit, stats.dominantCurrency as any)}
+                                </TableCell>
+                                <TableCell className="text-xs text-right">
+                                  <span className={`font-bold ${q.margin >= 30 ? 'text-emerald-500' : q.margin >= 15 ? 'text-amber-500' : 'text-destructive'}`}>
+                                    {q.margin.toFixed(1)}%
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
                         </TableBody>
                       </Table>
                     </div>

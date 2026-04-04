@@ -847,16 +847,18 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
           {/* Header */}
-          <div className="hidden md:grid md:grid-cols-14 gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-3">
-            <div className="col-span-1"></div>
-            <div className="col-span-2 text-center">SKU</div>
-            <div className="col-span-3 text-center">Description</div>
-            <div className="col-span-1 text-center">LT (wks)</div>
-            <div className="col-span-1 text-center">MOQ</div>
-            <div className="col-span-2 text-center">Unit Price ({currency})</div>
-            <div className="col-span-1 text-center">Disc %</div>
-            <div className="col-span-1 text-center">Total</div>
-            <div className="col-span-2"></div>
+          <div className="hidden md:grid md:grid-cols-[auto_2fr_3fr_1fr_1fr_1fr_2fr_1fr_1fr_1fr_auto] gap-3 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 px-3">
+            <div></div>
+            <div className="text-center">SKU</div>
+            <div className="text-center">Description</div>
+            <div className="text-center">LT (wks)</div>
+            <div className="text-center">MOQ</div>
+            <div className="text-center">Cost</div>
+            <div className="text-center">Unit Price ({currency})</div>
+            <div className="text-center">Disc %</div>
+            <div className="text-center">Margin</div>
+            <div className="text-center">Total</div>
+            <div></div>
           </div>
 
           {/* Items */}
@@ -948,6 +950,32 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
               <span className="uppercase tracking-wider">Total</span>
               <span className="text-primary glow-text font-mono">{formatCurrency(total, currency)}</span>
             </div>
+            
+            {/* Profit Margin Summary */}
+            {(() => {
+              const totalCost = items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
+              const totalRevenue = subtotal;
+              const totalProfit = totalRevenue - totalCost;
+              const marginPercent = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+              const hasCostData = items.some(item => item.costPrice && item.costPrice > 0);
+              
+              if (!hasCostData) return null;
+              
+              return (
+                <div className="pt-3 border-t border-primary/20 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground uppercase tracking-wider text-xs">Total Cost</span>
+                    <span className="font-mono font-medium">{formatCurrency(totalCost, currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground uppercase tracking-wider text-xs">Profit</span>
+                    <span className={`font-mono font-semibold ${totalProfit >= 0 ? 'text-emerald-500' : 'text-destructive'}`}>
+                      {formatCurrency(totalProfit, currency)} ({marginPercent.toFixed(1)}%)
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </CardContent>
       </Card>

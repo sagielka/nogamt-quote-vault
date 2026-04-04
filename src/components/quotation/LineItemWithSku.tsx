@@ -371,7 +371,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Actions - moved to separate column with no overlap */}
-        <div className="col-span-2 flex justify-end gap-0.5 pl-4">
+        <div className="flex justify-end gap-0.5">
           <Button
             type="button"
             variant="ghost"

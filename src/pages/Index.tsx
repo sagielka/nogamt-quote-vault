@@ -569,17 +569,17 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b no-print">
         <div className="container py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="NogaMT Logo" className="h-12 w-auto" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0 shrink">
+              <img src={logo} alt="NogaMT Logo" className="h-12 w-auto shrink-0" />
               
-              <div className="hidden sm:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-full bg-muted/50">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 shrink-0">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                     {(user.email?.split('@')[0]?.slice(0, 2) || 'U').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs font-medium text-foreground truncate max-w-[150px]">
+                <span className="text-xs font-medium text-foreground truncate max-w-[100px]">
                   {user.email?.split('@')[0]}
                 </span>
               </div>
@@ -587,7 +587,7 @@ const Index = () => {
               {/* Online Users */}
               {onlineUsers.length > 0 && (
                 <TooltipProvider>
-                  <div className="hidden sm:flex items-center gap-1 ml-2">
+                  <div className="hidden md:flex items-center gap-1 shrink-0">
                     <Circle className="w-2 h-2 fill-green-500 text-green-500" />
                     <div className="flex -space-x-2">
                       {onlineUsers.slice(0, 5).map((ou, i) => (
@@ -612,8 +612,7 @@ const Index = () => {
                 </TooltipProvider>
               )}
             </div>
-            <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {currentView === 'list' && quotations.length > 0 && (
                 <Button onClick={() => navigateToView('create')}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -686,8 +685,7 @@ const Index = () => {
                 Logout
               </Button>
             </div>
-              <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto" />
-            </div>
+            <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto shrink-0" />
           </div>
         </div>
       </header>

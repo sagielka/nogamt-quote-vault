@@ -42,7 +42,7 @@ const quotationToDbRow = (data: QuotationFormData, userId: string, quoteNumber: 
   discount_value: data.discountValue,
   notes: data.notes || null,
   currency: data.currency,
-  status: data.status || 'draft',
+  status: data.status || 'sent',
   attachments: data.attachments || [],
   valid_until: data.validUntil.toISOString(),
 });

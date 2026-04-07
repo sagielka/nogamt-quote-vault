@@ -193,7 +193,7 @@ export const LineItemWithSku = ({
       style={style}
       className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
     >
-      <div className="grid grid-cols-[28px_minmax(60px,2fr)_minmax(80px,3fr)_50px_50px_70px_90px_50px_60px_80px_auto] gap-2 items-center p-3">
+      <div className="grid grid-cols-[28px_minmax(60px,2fr)_minmax(80px,3fr)_50px_50px_70px_90px_50px_60px_80px_90px] gap-2 items-center p-3">
         <div className="flex justify-center">
           <button
             type="button"

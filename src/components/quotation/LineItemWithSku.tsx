@@ -191,9 +191,9 @@ export const LineItemWithSku = ({
     <div
       ref={setNodeRef}
       style={style}
-      className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors"
+      className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors min-w-[900px]"
     >
-      <div className="grid grid-cols-[28px_minmax(60px,2fr)_minmax(80px,3fr)_50px_50px_70px_90px_50px_60px_80px_90px] gap-2 items-center p-3">
+      <div className="grid grid-cols-[28px_100px_1fr_50px_50px_70px_90px_50px_60px_90px_90px] gap-2 items-center p-3">
         <div className="flex justify-center">
           <button
             type="button"

@@ -845,20 +845,22 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
             <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent ml-4" />
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 pt-6">
+        <CardContent className="space-y-4 pt-6 overflow-x-auto">
           {/* Header */}
-          <div className="hidden md:grid md:grid-cols-[28px_minmax(60px,2fr)_minmax(80px,3fr)_50px_50px_70px_90px_50px_60px_80px_90px] gap-2 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 mx-3 mt-1 items-end">
-            <div></div>
-            <div className="text-center">SKU</div>
-            <div className="text-center">Description</div>
-            <div className="text-center">LT</div>
-            <div className="text-center">MOQ</div>
-            <div className="text-center">Cost</div>
-            <div className="text-center">Price ({currency})</div>
-            <div className="text-center">Disc%</div>
-            <div className="text-center">Margin</div>
-            <div className="text-right">Total</div>
-            <div className="w-[88px] text-center">Actions</div>
+          <div className="min-w-[900px]">
+            <div className="hidden md:grid md:grid-cols-[28px_100px_1fr_50px_50px_70px_90px_50px_60px_90px_90px] gap-2 text-xs font-medium text-primary uppercase tracking-wider border-b border-primary/20 pb-3 mx-3 mt-1 items-end">
+              <div></div>
+              <div className="text-center">SKU</div>
+              <div className="text-center">Description</div>
+              <div className="text-center">LT</div>
+              <div className="text-center">MOQ</div>
+              <div className="text-center">Cost</div>
+              <div className="text-center">Price ({currency})</div>
+              <div className="text-center">Disc%</div>
+              <div className="text-center">Margin</div>
+              <div className="text-right">Total</div>
+              <div className="text-center">Actions</div>
+            </div>
           </div>
 
           {/* Items */}

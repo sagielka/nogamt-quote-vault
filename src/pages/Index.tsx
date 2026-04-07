@@ -852,7 +852,7 @@ const Index = () => {
         )}
 
         {currentView === 'create' && (
-           <div className="max-w-5xl mx-auto">
+           <div className="max-w-7xl mx-auto">
             <div className="mb-6">
               <Button variant="ghost" onClick={() => navigateToView('list')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -867,7 +867,7 @@ const Index = () => {
         )}
 
          {currentView === 'edit' && selectedQuotation && (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="mb-6 flex items-center justify-between">
               <Button variant="ghost" onClick={() => {
                 navigateToView('list', null);

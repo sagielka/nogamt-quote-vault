@@ -549,18 +549,6 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline" onClick={() => {
-            const allEmails = quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean);
-            setSelectedRecipients(allEmails);
-            setConfirmSendOpen(true);
-          }} disabled={sendingQuote}>
-            {sendingQuote ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4 mr-2" />
-            )}
-            {sendingQuote ? 'Sending...' : 'Send Email'}
-          </Button>
           <Button variant="accent" onClick={handleDownloadPdf}>
             <Download className="w-4 h-4 mr-2" />
             Download PDF

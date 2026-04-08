@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
-import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
+import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
+import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -80,6 +81,10 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [portalTokens, setPortalTokens] = useState<PortalToken[]>([]);
   const [showPortalSection, setShowPortalSection] = useState(false);
   const { loading: portalLoading, generatePortalLink, getPortalTokens, deactivateToken } = useCustomerPortal();
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [selectedReminderRecipients, setSelectedReminderRecipients] = useState<string[]>([]);
+  const [additionalReminderEmail, setAdditionalReminderEmail] = useState('');
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses

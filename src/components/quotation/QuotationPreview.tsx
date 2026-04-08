@@ -488,7 +488,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
 
     try {
       const { base64 } = await getQuotationPdfBase64(quotation);
-      const totalFormatted = formatCurrency(previewTotal, quotation.currency);
+      const totalFormatted = formatCurrency(total, quotation.currency);
       const validUntil = formatDateUtil(quotation.validUntil);
 
       const results = await Promise.allSettled(

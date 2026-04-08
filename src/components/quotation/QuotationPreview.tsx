@@ -640,7 +640,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
               {isSendingReminder ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
               Send Reminder
             </Button>
-          )
+          )}
         </div>
       </div>
 

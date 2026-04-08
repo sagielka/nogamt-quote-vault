@@ -480,11 +480,6 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
 
   const showReminderButton = quotation.status !== 'accepted' && quotation.status !== 'finished';
 
-  const previewTotal = calculateTotal(
-    calculateSubtotal(quotation.items),
-    calculateTax(calculateSubtotal(quotation.items), quotation.taxRate),
-    calculateDiscount(calculateSubtotal(quotation.items), quotation.discountType, quotation.discountValue)
-  );
 
   const handleSendReminder = async () => {
     setIsSendingReminder(true);

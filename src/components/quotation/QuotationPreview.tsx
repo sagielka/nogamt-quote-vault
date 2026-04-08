@@ -18,7 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
-import { generateQuotationPdf, downloadQuotationPdf } from '@/lib/pdf-generator';
+import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
+import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -80,6 +81,10 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [portalTokens, setPortalTokens] = useState<PortalToken[]>([]);
   const [showPortalSection, setShowPortalSection] = useState(false);
   const { loading: portalLoading, generatePortalLink, getPortalTokens, deactivateToken } = useCustomerPortal();
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [selectedReminderRecipients, setSelectedReminderRecipients] = useState<string[]>([]);
+  const [additionalReminderEmail, setAdditionalReminderEmail] = useState('');
 
   const refreshSentEmails = useCallback(async () => {
     // Get emails for this quotation AND emails sent to this customer's email addresses
@@ -461,6 +466,65 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     }
   };
 
+  // Reminder logic
+  const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+  const MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+  const MAX_AGE_MS = 6 * 7 * 24 * 60 * 60 * 1000;
+
+  const reminderAllowed = (() => {
+    const age = Date.now() - new Date(quotation.createdAt).getTime();
+    if (age < MIN_AGE_MS || age > MAX_AGE_MS) return false;
+    if (!quotation.reminderSentAt) return true;
+    return Date.now() - new Date(quotation.reminderSentAt).getTime() >= REMINDER_COOLDOWN_MS;
+  })();
+
+  const showReminderButton = quotation.status !== 'accepted' && quotation.status !== 'finished';
+
+
+  const handleSendReminder = async () => {
+    setIsSendingReminder(true);
+    const emailsToSend = selectedReminderRecipients;
+    toast({ title: 'Sending reminder...', description: `Generating PDF and emailing ${emailsToSend.join(', ')}` });
+
+    try {
+      const { base64 } = await getQuotationPdfBase64(quotation);
+      const totalFormatted = formatCurrency(total, quotation.currency);
+      const validUntil = formatDateUtil(quotation.validUntil);
+
+      const results = await Promise.allSettled(
+        emailsToSend.map(email =>
+          supabase.functions.invoke('send-quotation-email', {
+            body: { to: email.trim(), clientName: quotation.clientName, quoteNumber: quotation.quoteNumber, total: totalFormatted, validUntil, pdfBase64: base64, isReminder: true },
+          })
+        )
+      );
+
+      const successEmails: string[] = [];
+      const failedEmails: string[] = [];
+      const unsubscribedEmails: string[] = [];
+
+      results.forEach((r, i) => {
+        const email = emailsToSend[i];
+        if (r.status === 'rejected') failedEmails.push(email);
+        else if (r.value.error) failedEmails.push(email);
+        else if (r.value.data?.unsubscribed) unsubscribedEmails.push(email);
+        else successEmails.push(email);
+      });
+
+      if (unsubscribedEmails.length > 0) toast({ title: 'Unsubscribed', description: `${unsubscribedEmails.join(', ')} has unsubscribed.`, variant: 'destructive' });
+      if (failedEmails.length > 0 && failedEmails.length < emailsToSend.length) toast({ title: 'Partial Failure', description: `Failed to send to: ${failedEmails.join(', ')}`, variant: 'destructive' });
+      if (failedEmails.length === emailsToSend.length) throw new Error('All emails failed to send');
+      if (successEmails.length > 0) toast({ title: 'Reminder Sent', description: `Follow-up email sent to ${successEmails.join(', ')}.` });
+
+      if (quotation.status === 'draft' && onStatusChange) onStatusChange(quotation.id, 'sent');
+      await refreshSentEmails();
+    } catch (err) {
+      console.error('Failed to send reminder:', err);
+      toast({ title: 'Error', description: 'Failed to send reminder email. Please try again.', variant: 'destructive' });
+    } finally {
+      setIsSendingReminder(false);
+    }
+  };
 
   return (
     <div className="animate-fade-in">
@@ -561,6 +625,20 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             <Button variant="ghost" size="sm" onClick={handleLoadPortalTokens}>
               <Eye className="w-4 h-4 mr-2" />
               View Links
+            </Button>
+          )}
+          {showReminderButton && (
+            <Button
+              variant="outline"
+              disabled={!reminderAllowed || isSendingReminder}
+              onClick={() => {
+                const allEmails = quotation.clientEmail.split(',').map(em => em.trim()).filter(Boolean);
+                setSelectedReminderRecipients(allEmails);
+                setReminderDialogOpen(true);
+              }}
+            >
+              {isSendingReminder ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Send Reminder
             </Button>
           )}
         </div>
@@ -1139,6 +1217,91 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             >
               <Send className="w-4 h-4 mr-2" />
               Send ({selectedRecipients.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reminder Recipient Selection Dialog */}
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Reminder Email?</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-2 text-sm text-muted-foreground">
+            <p>This will send a follow-up email with the quotation PDF to:</p>
+            <div className="bg-muted rounded-md p-3 space-y-2">
+              {quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
+                <label key={i} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedReminderRecipients.includes(email)}
+                    onChange={(ev) => {
+                      if (ev.target.checked) setSelectedReminderRecipients(prev => [...prev, email]);
+                      else setSelectedReminderRecipients(prev => prev.filter(r => r !== email));
+                    }}
+                    className="rounded border-input"
+                  />
+                  <Mail className="w-3 h-3 text-primary" />
+                  <span className="text-foreground font-medium">{email}</span>
+                </label>
+              ))}
+              {selectedReminderRecipients
+                .filter(r => !quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).includes(r))
+                .map((email, i) => (
+                  <label key={`added-${i}`} className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked onChange={() => setSelectedReminderRecipients(prev => prev.filter(r => r !== email))} className="rounded border-input" />
+                    <Mail className="w-3 h-3 text-primary" />
+                    <span className="text-foreground font-medium">{email}</span>
+                    <Badge variant="outline" className="text-xs ml-1">added</Badge>
+                  </label>
+                ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Input
+                type="email"
+                placeholder="Add email address..."
+                value={additionalReminderEmail}
+                onChange={(e) => setAdditionalReminderEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const email = additionalReminderEmail.trim();
+                    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedReminderRecipients.includes(email)) {
+                      setSelectedReminderRecipients(prev => [...prev, email]);
+                      setAdditionalReminderEmail('');
+                    }
+                  }
+                }}
+                className="text-sm"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!additionalReminderEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(additionalReminderEmail.trim()) || selectedReminderRecipients.includes(additionalReminderEmail.trim())}
+                onClick={() => {
+                  const email = additionalReminderEmail.trim();
+                  if (email && !selectedReminderRecipients.includes(email)) {
+                    setSelectedReminderRecipients(prev => [...prev, email]);
+                    setAdditionalReminderEmail('');
+                  }
+                }}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReminderDialogOpen(false)}>Cancel</Button>
+            <Button
+              disabled={selectedReminderRecipients.length === 0}
+              onClick={() => {
+                setReminderDialogOpen(false);
+                handleSendReminder();
+              }}
+            >
+              Send Reminder ({selectedReminderRecipients.length})
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -466,6 +466,70 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     }
   };
 
+  // Reminder logic
+  const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+  const MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+  const MAX_AGE_MS = 6 * 7 * 24 * 60 * 60 * 1000;
+
+  const reminderAllowed = (() => {
+    const age = Date.now() - new Date(quotation.createdAt).getTime();
+    if (age < MIN_AGE_MS || age > MAX_AGE_MS) return false;
+    if (!quotation.reminderSentAt) return true;
+    return Date.now() - new Date(quotation.reminderSentAt).getTime() >= REMINDER_COOLDOWN_MS;
+  })();
+
+  const showReminderButton = quotation.status !== 'accepted' && quotation.status !== 'finished';
+
+  const previewTotal = calculateTotal(
+    calculateSubtotal(quotation.items),
+    calculateTax(calculateSubtotal(quotation.items), quotation.taxRate),
+    calculateDiscount(calculateSubtotal(quotation.items), quotation.discountType, quotation.discountValue)
+  );
+
+  const handleSendReminder = async () => {
+    setIsSendingReminder(true);
+    const emailsToSend = selectedReminderRecipients;
+    toast({ title: 'Sending reminder...', description: `Generating PDF and emailing ${emailsToSend.join(', ')}` });
+
+    try {
+      const { base64 } = await getQuotationPdfBase64(quotation);
+      const totalFormatted = formatCurrency(previewTotal, quotation.currency);
+      const validUntil = formatDateUtil(quotation.validUntil);
+
+      const results = await Promise.allSettled(
+        emailsToSend.map(email =>
+          supabase.functions.invoke('send-quotation-email', {
+            body: { to: email.trim(), clientName: quotation.clientName, quoteNumber: quotation.quoteNumber, total: totalFormatted, validUntil, pdfBase64: base64, isReminder: true },
+          })
+        )
+      );
+
+      const successEmails: string[] = [];
+      const failedEmails: string[] = [];
+      const unsubscribedEmails: string[] = [];
+
+      results.forEach((r, i) => {
+        const email = emailsToSend[i];
+        if (r.status === 'rejected') failedEmails.push(email);
+        else if (r.value.error) failedEmails.push(email);
+        else if (r.value.data?.unsubscribed) unsubscribedEmails.push(email);
+        else successEmails.push(email);
+      });
+
+      if (unsubscribedEmails.length > 0) toast({ title: 'Unsubscribed', description: `${unsubscribedEmails.join(', ')} has unsubscribed.`, variant: 'destructive' });
+      if (failedEmails.length > 0 && failedEmails.length < emailsToSend.length) toast({ title: 'Partial Failure', description: `Failed to send to: ${failedEmails.join(', ')}`, variant: 'destructive' });
+      if (failedEmails.length === emailsToSend.length) throw new Error('All emails failed to send');
+      if (successEmails.length > 0) toast({ title: 'Reminder Sent', description: `Follow-up email sent to ${successEmails.join(', ')}.` });
+
+      if (quotation.status === 'draft' && onStatusChange) onStatusChange(quotation.id, 'sent');
+      await refreshSentEmails();
+    } catch (err) {
+      console.error('Failed to send reminder:', err);
+      toast({ title: 'Error', description: 'Failed to send reminder email. Please try again.', variant: 'destructive' });
+    } finally {
+      setIsSendingReminder(false);
+    }
+  };
 
   return (
     <div className="animate-fade-in">

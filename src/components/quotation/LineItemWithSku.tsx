@@ -221,7 +221,7 @@ export const LineItemWithSku = ({
           {activeField === 'sku' && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+              className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-96 overflow-y-auto"
             >
               {suggestions.map((product, idx) => {
                 const price = product.prices[priceList];
@@ -263,7 +263,7 @@ export const LineItemWithSku = ({
           {activeField === 'description' && suggestions.length > 0 && (
             <div
               ref={suggestionsRef}
-              className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+              className="absolute z-50 w-80 mt-1 bg-card border border-border rounded-md shadow-lg max-h-96 overflow-y-auto"
             >
               {suggestions.map((product, idx) => {
                 const price = product.prices[priceList];

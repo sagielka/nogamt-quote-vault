@@ -600,7 +600,7 @@ export const searchProducts = (query: string): ProductItem[] => {
     (product) =>
       product.sku.toLowerCase().includes(lowerQuery) ||
       product.description.toLowerCase().includes(lowerQuery)
-  ).slice(0, 10);
+  ).slice(0, 20);
 };
 
 // Get price for a specific product and price list

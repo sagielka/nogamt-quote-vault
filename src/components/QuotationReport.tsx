@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Quotation, Currency, CURRENCIES } from '@/types/quotation';
 import { calculateTotal, calculateSubtotal, calculateLineTotal, formatCurrency, formatDate } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import {
   LineChart, Line, CartesianGrid, Legend
 } from 'recharts';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 
 interface QuotationReportProps {

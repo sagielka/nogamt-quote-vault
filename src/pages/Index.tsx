@@ -668,7 +668,13 @@ const Index = () => {
                   Recurring
                 </Button>
               )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring') && (
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Reports
+                </Button>
+              )}
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring' || currentView === 'reports') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations

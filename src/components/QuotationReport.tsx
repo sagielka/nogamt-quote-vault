@@ -167,12 +167,56 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return items;
   }, [quotations]);
 
+  // === Helper: load font as base64 ===
+  const loadFontAsBase64 = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  // === Helper: detect Hebrew ===
+  const containsHebrew = (text: string): boolean => /[\u0590-\u05FF]/.test(text);
+
+  // === Helper: process text for RTL in jsPDF ===
+  const processText = (text: string): string => {
+    if (!containsHebrew(text)) return text;
+    const regex = /([\u0590-\u05FF\u0027\u0022]+(?:\s+[\u0590-\u05FF\u0027\u0022]+)*)|([^\u0590-\u05FF]+)/g;
+    const runs: { text: string; isHebrew: boolean }[] = [];
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match[1]) runs.push({ text: match[1], isHebrew: true });
+      else if (match[2]) runs.push({ text: match[2], isHebrew: false });
+    }
+    if (runs.length === 1 && runs[0].isHebrew) return text.split('').reverse().join('');
+    const processed = runs.map(r => r.isHebrew ? r.text.split('').reverse().join('') : r.text);
+    processed.reverse();
+    return processed.join('');
+  };
+
   // === EXPORT PDF ===
   const handleExportPDF = async () => {
     setExporting(true);
     try {
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Register Heebo font for Hebrew support
+      try {
+        const heeboBase64 = await loadFontAsBase64('/fonts/Heebo-Variable.ttf');
+        doc.addFileToVFS('Heebo-Regular.ttf', heeboBase64);
+        doc.addFont('Heebo-Regular.ttf', 'Heebo', 'normal');
+        doc.addFileToVFS('Heebo-Bold.ttf', heeboBase64);
+        doc.addFont('Heebo-Bold.ttf', 'Heebo', 'bold');
+        doc.setFont('Heebo', 'normal');
+      } catch (e) {
+        console.warn('Could not load Heebo font, falling back to helvetica:', e);
+      }
+
       let y = 20;
 
       doc.setFontSize(18);
@@ -193,14 +237,76 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       doc.text(`Average Value: $${kpis.avgValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
       doc.text(`Total Line Items: ${kpis.totalItems}`, 14, y); y += 12;
 
-      // Top customers
+      // === Capture charts from the dashboard ===
+      if (chartsRef.current) {
+        try {
+          const canvas = await html2canvas(chartsRef.current, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pageWidth - 28; // 14mm margins on each side
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          // Add charts on new page(s)
+          doc.addPage();
+          y = 15;
+          doc.setFontSize(14);
+          doc.text('Dashboard Charts', 14, y); y += 8;
+
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const maxImgPerPage = pageHeight - 25;
+
+          if (imgHeight <= maxImgPerPage) {
+            doc.addImage(imgData, 'PNG', 14, y, imgWidth, imgHeight);
+          } else {
+            // Multi-page chart rendering
+            let remainingHeight = imgHeight;
+            let srcY = 0;
+            const srcWidth = canvas.width;
+            const srcTotalHeight = canvas.height;
+            let isFirstChunk = true;
+
+            while (remainingHeight > 0) {
+              if (!isFirstChunk) {
+                doc.addPage();
+                y = 15;
+              }
+              const chunkDisplayHeight = Math.min(remainingHeight, maxImgPerPage);
+              const chunkSrcHeight = (chunkDisplayHeight / imgHeight) * srcTotalHeight;
+
+              // Create a cropped canvas for this chunk
+              const chunkCanvas = document.createElement('canvas');
+              chunkCanvas.width = srcWidth;
+              chunkCanvas.height = chunkSrcHeight;
+              const ctx = chunkCanvas.getContext('2d')!;
+              ctx.drawImage(canvas, 0, srcY, srcWidth, chunkSrcHeight, 0, 0, srcWidth, chunkSrcHeight);
+              const chunkImg = chunkCanvas.toDataURL('image/png');
+
+              doc.addImage(chunkImg, 'PNG', 14, y, imgWidth, chunkDisplayHeight);
+
+              srcY += chunkSrcHeight;
+              remainingHeight -= chunkDisplayHeight;
+              isFirstChunk = false;
+            }
+          }
+        } catch (chartErr) {
+          console.warn('Could not capture charts:', chartErr);
+        }
+      }
+
+      // Top customers (text) - new page
+      doc.addPage();
+      y = 20;
       doc.setFontSize(14);
       doc.text('Top Customers by Value', 14, y); y += 8;
       doc.setFontSize(9);
       const topCustomers = customerData.slice(0, 15);
       topCustomers.forEach(c => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${c.name}: ${c.count} quotes, $${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y);
+        doc.text(processText(`${c.name}: ${c.count} quotes, $${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
         y += 5;
       });
       y += 8;
@@ -213,7 +319,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       const topSkus = skuData.slice(0, 15);
       topSkus.forEach(s => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${s.sku || s.description}: qty ${s.totalQty}, $${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y);
+        doc.text(processText(`${s.sku || s.description}: qty ${s.totalQty}, $${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
         y += 5;
       });
 
@@ -229,7 +335,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       });
 
       doc.save('quotation-report.pdf');
-      toast({ title: 'PDF Exported', description: 'Report downloaded successfully.' });
+      toast({ title: 'PDF Exported', description: 'Report with charts downloaded successfully.' });
     } catch (err) {
       toast({ title: 'Export Failed', description: 'Could not generate PDF.', variant: 'destructive' });
     } finally {

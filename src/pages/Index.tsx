@@ -1062,6 +1062,15 @@ const Index = () => {
             }}
           />
         )}
+
+        {currentView === 'reports' && (
+          <QuotationReport
+            quotations={quotations}
+            onBack={() => navigateToView('list')}
+            onViewQuotation={(id) => navigateToView('preview', id)}
+            userNameMap={userNameMap}
+          />
+        )}
       </main>
 
       {/* Footer - hidden in print, shown in app */}

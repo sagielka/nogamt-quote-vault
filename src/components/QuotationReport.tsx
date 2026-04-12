@@ -53,6 +53,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
   const [exporting, setExporting] = useState(false);
   const [skuSearch, setSkuSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const chartsRef = useRef<HTMLDivElement>(null);
 
   // === KPI CALCULATIONS ===
   const kpis = useMemo(() => {

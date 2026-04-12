@@ -13,6 +13,7 @@ import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationC
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
 import { CustomerReport } from '@/components/CustomerReport';
+import { QuotationReport } from '@/components/QuotationReport';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';

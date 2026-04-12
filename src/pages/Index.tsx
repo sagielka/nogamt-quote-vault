@@ -13,6 +13,7 @@ import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationC
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
 import { CustomerReport } from '@/components/CustomerReport';
+import { QuotationReport } from '@/components/QuotationReport';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
 import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
@@ -22,7 +23,7 @@ import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +45,7 @@ import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'recurring';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'recurring' | 'reports';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -667,7 +668,13 @@ const Index = () => {
                   Recurring
                 </Button>
               )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring') && (
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Reports
+                </Button>
+              )}
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring' || currentView === 'reports') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -1053,6 +1060,15 @@ const Index = () => {
             onViewQuotation={(id) => {
               navigateToView('preview', id);
             }}
+          />
+        )}
+
+        {currentView === 'reports' && (
+          <QuotationReport
+            quotations={quotations}
+            onBack={() => navigateToView('list')}
+            onViewQuotation={(id) => navigateToView('preview', id)}
+            userNameMap={userNameMap}
           />
         )}
       </main>

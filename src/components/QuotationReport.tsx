@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Quotation, Currency, CURRENCIES } from '@/types/quotation';
 import { calculateTotal, calculateSubtotal, calculateLineTotal, formatCurrency, formatDate } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import {
   LineChart, Line, CartesianGrid, Legend
 } from 'recharts';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 
 interface QuotationReportProps {
@@ -52,6 +53,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
   const [exporting, setExporting] = useState(false);
   const [skuSearch, setSkuSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const chartsRef = useRef<HTMLDivElement>(null);
 
   // === KPI CALCULATIONS ===
   const kpis = useMemo(() => {
@@ -165,12 +167,56 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return items;
   }, [quotations]);
 
+  // === Helper: load font as base64 ===
+  const loadFontAsBase64 = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  // === Helper: detect Hebrew ===
+  const containsHebrew = (text: string): boolean => /[\u0590-\u05FF]/.test(text);
+
+  // === Helper: process text for RTL in jsPDF ===
+  const processText = (text: string): string => {
+    if (!containsHebrew(text)) return text;
+    const regex = /([\u0590-\u05FF\u0027\u0022]+(?:\s+[\u0590-\u05FF\u0027\u0022]+)*)|([^\u0590-\u05FF]+)/g;
+    const runs: { text: string; isHebrew: boolean }[] = [];
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match[1]) runs.push({ text: match[1], isHebrew: true });
+      else if (match[2]) runs.push({ text: match[2], isHebrew: false });
+    }
+    if (runs.length === 1 && runs[0].isHebrew) return text.split('').reverse().join('');
+    const processed = runs.map(r => r.isHebrew ? r.text.split('').reverse().join('') : r.text);
+    processed.reverse();
+    return processed.join('');
+  };
+
   // === EXPORT PDF ===
   const handleExportPDF = async () => {
     setExporting(true);
     try {
       const doc = new jsPDF('p', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Register Heebo font for Hebrew support
+      try {
+        const heeboBase64 = await loadFontAsBase64('/fonts/Heebo-Variable.ttf');
+        doc.addFileToVFS('Heebo-Regular.ttf', heeboBase64);
+        doc.addFont('Heebo-Regular.ttf', 'Heebo', 'normal');
+        doc.addFileToVFS('Heebo-Bold.ttf', heeboBase64);
+        doc.addFont('Heebo-Bold.ttf', 'Heebo', 'bold');
+        doc.setFont('Heebo', 'normal');
+      } catch (e) {
+        console.warn('Could not load Heebo font, falling back to helvetica:', e);
+      }
+
       let y = 20;
 
       doc.setFontSize(18);
@@ -191,14 +237,76 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       doc.text(`Average Value: $${kpis.avgValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
       doc.text(`Total Line Items: ${kpis.totalItems}`, 14, y); y += 12;
 
-      // Top customers
+      // === Capture charts from the dashboard ===
+      if (chartsRef.current) {
+        try {
+          const canvas = await html2canvas(chartsRef.current, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pageWidth - 28; // 14mm margins on each side
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+          // Add charts on new page(s)
+          doc.addPage();
+          y = 15;
+          doc.setFontSize(14);
+          doc.text('Dashboard Charts', 14, y); y += 8;
+
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const maxImgPerPage = pageHeight - 25;
+
+          if (imgHeight <= maxImgPerPage) {
+            doc.addImage(imgData, 'PNG', 14, y, imgWidth, imgHeight);
+          } else {
+            // Multi-page chart rendering
+            let remainingHeight = imgHeight;
+            let srcY = 0;
+            const srcWidth = canvas.width;
+            const srcTotalHeight = canvas.height;
+            let isFirstChunk = true;
+
+            while (remainingHeight > 0) {
+              if (!isFirstChunk) {
+                doc.addPage();
+                y = 15;
+              }
+              const chunkDisplayHeight = Math.min(remainingHeight, maxImgPerPage);
+              const chunkSrcHeight = (chunkDisplayHeight / imgHeight) * srcTotalHeight;
+
+              // Create a cropped canvas for this chunk
+              const chunkCanvas = document.createElement('canvas');
+              chunkCanvas.width = srcWidth;
+              chunkCanvas.height = chunkSrcHeight;
+              const ctx = chunkCanvas.getContext('2d')!;
+              ctx.drawImage(canvas, 0, srcY, srcWidth, chunkSrcHeight, 0, 0, srcWidth, chunkSrcHeight);
+              const chunkImg = chunkCanvas.toDataURL('image/png');
+
+              doc.addImage(chunkImg, 'PNG', 14, y, imgWidth, chunkDisplayHeight);
+
+              srcY += chunkSrcHeight;
+              remainingHeight -= chunkDisplayHeight;
+              isFirstChunk = false;
+            }
+          }
+        } catch (chartErr) {
+          console.warn('Could not capture charts:', chartErr);
+        }
+      }
+
+      // Top customers (text) - new page
+      doc.addPage();
+      y = 20;
       doc.setFontSize(14);
       doc.text('Top Customers by Value', 14, y); y += 8;
       doc.setFontSize(9);
       const topCustomers = customerData.slice(0, 15);
       topCustomers.forEach(c => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${c.name}: ${c.count} quotes, $${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y);
+        doc.text(processText(`${c.name}: ${c.count} quotes, $${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
         y += 5;
       });
       y += 8;
@@ -211,7 +319,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       const topSkus = skuData.slice(0, 15);
       topSkus.forEach(s => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${s.sku || s.description}: qty ${s.totalQty}, $${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y);
+        doc.text(processText(`${s.sku || s.description}: qty ${s.totalQty}, $${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
         y += 5;
       });
 
@@ -227,7 +335,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       });
 
       doc.save('quotation-report.pdf');
-      toast({ title: 'PDF Exported', description: 'Report downloaded successfully.' });
+      toast({ title: 'PDF Exported', description: 'Report with charts downloaded successfully.' });
     } catch (err) {
       toast({ title: 'Export Failed', description: 'Could not generate PDF.', variant: 'destructive' });
     } finally {
@@ -318,73 +426,75 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Status pie */}
+          <div ref={chartsRef} className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Status pie */}
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><PieChartIcon className="w-4 h-4" /> Status Distribution</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie data={statusData} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={90} label={({ status, count }) => `${status} (${count})`}>
+                        {statusData.map((entry, i) => (
+                          <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              {/* Status value bar */}
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4" /> Value by Status</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={statusData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="status" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="value" name="Value ($)" radius={[4, 4, 0, 0]}>
+                        {statusData.map((entry, i) => (
+                          <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+            {/* Top 10 customers */}
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><PieChartIcon className="w-4 h-4" /> Status Distribution</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4" /> Top 10 Customers by Value</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie data={statusData} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={90} label={({ status, count }) => `${status} (${count})`}>
-                      {statusData.map((entry, i) => (
-                        <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={customerData.slice(0, 10)} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
+                    <Bar dataKey="totalValue" name="Total Value ($)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-            {/* Status value bar */}
+            {/* Top 10 SKUs */}
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4" /> Value by Status</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Package className="w-4 h-4" /> Top 10 Products by Revenue</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={statusData}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={skuData.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="status" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="sku" type="category" width={120} tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="value" name="Value ($)" radius={[4, 4, 0, 0]}>
-                      {statusData.map((entry, i) => (
-                        <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Bar>
+                    <Bar dataKey="totalRevenue" name="Revenue ($)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
           </div>
-          {/* Top 10 customers */}
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4" /> Top 10 Customers by Value</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={customerData.slice(0, 10)} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="totalValue" name="Total Value ($)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          {/* Top 10 SKUs */}
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Package className="w-4 h-4" /> Top 10 Products by Revenue</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={skuData.slice(0, 10)} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="sku" type="category" width={120} tick={{ fontSize: 10 }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="totalRevenue" name="Revenue ($)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Customers Tab */}

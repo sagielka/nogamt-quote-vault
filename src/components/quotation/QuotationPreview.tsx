@@ -970,6 +970,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
+                        {email.recalled_at && (
+                          <Badge variant="destructive" className="text-xs">Recalled</Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           {email.email_type === 'reminder' ? 'Reminder' : email.email_type === 'quotation' ? 'Quotation' : 'Custom'}
                         </Badge>

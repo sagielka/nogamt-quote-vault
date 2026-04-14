@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Volume2, VolumeX, Trash2 } from 'lucide-react';
+import { MessageCircle, X, Send, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -8,16 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface ChatMessage {
   id: string;
@@ -35,7 +25,6 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
   const [newMessage, setNewMessage] = useState('');
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null; email: string }>>({});
   const [unread, setUnread] = useState(0);
-  const [recallTarget, setRecallTarget] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const stored = localStorage.getItem('chat-sound-enabled');
     return stored !== null ? stored === 'true' : true;
@@ -139,18 +128,6 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     await (supabase.from('messages' as any).insert({ user_id: user.id, content } as any) as any);
   };
 
-  const handleRecall = async () => {
-    if (!recallTarget) return;
-    const { error } = await (supabase.from('messages' as any).delete().eq('id', recallTarget) as any);
-    if (error) {
-      toast({ title: 'Failed to recall message', variant: 'destructive' });
-    } else {
-      setMessages((prev) => prev.filter((m) => m.id !== recallTarget));
-      toast({ title: 'Message recalled' });
-    }
-    setRecallTarget(null);
-  };
-
   const getUserLabel = (userId: string) => {
     if (userNameMap[userId]) return userNameMap[userId];
     const profile = profiles[userId];
@@ -211,7 +188,7 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
             {messages.map((msg) => {
               const isMe = msg.user_id === user.id;
               return (
-                <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''} group`}>
+                <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                   <Avatar className="h-7 w-7 shrink-0">
                     <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
                       {getInitials(msg.user_id)}
@@ -221,19 +198,8 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
                     <p className="text-[10px] text-muted-foreground mb-0.5">
                       {getUserLabel(msg.user_id)} · {format(new Date(msg.created_at), 'HH:mm')}
                     </p>
-                    <div className="relative inline-block">
-                      <div className={`px-3 py-1.5 rounded-xl text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
-                        {msg.content}
-                      </div>
-                      {isMe && (
-                        <button
-                          onClick={() => setRecallTarget(msg.id)}
-                          className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                          title="Recall message"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                    <div className={`px-3 py-1.5 rounded-xl text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
+                      {msg.content}
                     </div>
                   </div>
                 </div>
@@ -264,24 +230,6 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
           </div>
         </div>
       )}
-
-      {/* Recall confirmation dialog */}
-      <AlertDialog open={!!recallTarget} onOpenChange={(o) => !o && setRecallTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Recall message?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete this message for everyone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRecall} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Recall
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };

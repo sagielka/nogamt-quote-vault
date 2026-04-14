@@ -1002,7 +1002,44 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                           className="mt-2 text-sm text-foreground bg-background rounded p-3 max-h-60 overflow-y-auto border"
                           dangerouslySetInnerHTML={{ __html: email.body_html }}
                         />
-                        <div className="mt-2 flex justify-end">
+                        <div className="mt-2 flex justify-end gap-2">
+                          {!email.recalled_at && (
+                            <AlertDialog open={recallConfirmId === email.id} onOpenChange={(o) => !o && setRecallConfirmId(null)}>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                  disabled={recallingId === email.id}
+                                  onClick={() => setRecallConfirmId(email.id)}
+                                >
+                                  {recallingId === email.id ? (
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <Ban className="w-3 h-3 mr-1" />
+                                  )}
+                                  Recall
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Recall this email?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    A retraction notice will be sent to all recipients asking them to disregard the original email. The email will be marked as recalled.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleRecallEmail(email)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Recall Email
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"

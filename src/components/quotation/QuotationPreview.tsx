@@ -70,6 +70,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [recallingId, setRecallingId] = useState<string | null>(null);
+  const [recallConfirmId, setRecallConfirmId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);

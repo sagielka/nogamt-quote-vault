@@ -70,6 +70,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   const [sentEmails, setSentEmails] = useState<any[]>([]);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [recallingId, setRecallingId] = useState<string | null>(null);
+  const [recallConfirmId, setRecallConfirmId] = useState<string | null>(null);
   const [sendingQuote, setSendingQuote] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
@@ -234,6 +236,63 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
       });
     } finally {
       setResendingId(null);
+    }
+  }, [quotation.id, quotation.clientName, toast, refreshSentEmails]);
+
+  const handleRecallEmail = useCallback(async (email: any) => {
+    setRecallingId(email.id);
+    try {
+      const recipients = (email.recipient_emails || []).map((e: string) => ({
+        email: e,
+        name: quotation.clientName,
+      }));
+
+      // Send retraction notice
+      const retractionHtml = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #dc2626;">⚠️ Email Recall Notice</h2>
+          <p>The following email has been recalled by the sender. Please disregard it:</p>
+          <div style="background: #f3f4f6; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+            <p style="margin: 0; font-weight: bold;">Subject: ${email.subject}</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Sent: ${new Date(email.sent_at).toLocaleString()}</p>
+          </div>
+          <p style="color: #6b7280; font-size: 13px;">This is an automated notification from Noga M.T.</p>
+        </div>
+      `;
+
+      const { error: sendError } = await supabase.functions.invoke('send-customer-email', {
+        body: {
+          recipients,
+          subject: `⚠️ Recall: ${email.subject}`,
+          message: retractionHtml,
+          messageHtml: retractionHtml,
+          cc: email.cc_emails || [],
+          bcc: email.bcc_emails || [],
+          quotationId: quotation.id,
+        },
+      });
+
+      if (sendError) throw sendError;
+
+      // Mark as recalled in database
+      await (supabase.from('sent_emails' as any).update({ recalled_at: new Date().toISOString() } as any).eq('id', email.id) as any);
+
+      toast({
+        title: 'Email Recalled',
+        description: `Retraction notice sent to ${recipients.length} recipient(s).`,
+      });
+
+      await refreshSentEmails();
+    } catch (err: any) {
+      console.error('Recall failed:', err);
+      toast({
+        title: 'Recall Failed',
+        description: err.message || 'Failed to recall email.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRecallingId(null);
+      setRecallConfirmId(null);
     }
   }, [quotation.id, quotation.clientName, toast, refreshSentEmails]);
 
@@ -911,6 +970,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
+                        {email.recalled_at && (
+                          <Badge variant="destructive" className="text-xs">Recalled</Badge>
+                        )}
                         <Badge variant="outline" className="text-xs">
                           {email.email_type === 'reminder' ? 'Reminder' : email.email_type === 'quotation' ? 'Quotation' : 'Custom'}
                         </Badge>
@@ -940,7 +1002,44 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                           className="mt-2 text-sm text-foreground bg-background rounded p-3 max-h-60 overflow-y-auto border"
                           dangerouslySetInnerHTML={{ __html: email.body_html }}
                         />
-                        <div className="mt-2 flex justify-end">
+                        <div className="mt-2 flex justify-end gap-2">
+                          {!email.recalled_at && (
+                            <AlertDialog open={recallConfirmId === email.id} onOpenChange={(o) => !o && setRecallConfirmId(null)}>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                                  disabled={recallingId === email.id}
+                                  onClick={() => setRecallConfirmId(email.id)}
+                                >
+                                  {recallingId === email.id ? (
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <Ban className="w-3 h-3 mr-1" />
+                                  )}
+                                  Recall
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Recall this email?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    A retraction notice will be sent to all recipients asking them to disregard the original email. The email will be marked as recalled.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleRecallEmail(email)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Recall Email
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"

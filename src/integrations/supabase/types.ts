@@ -570,6 +570,7 @@ export type Database = {
           email_type: string
           id: string
           quotation_id: string | null
+          recalled_at: string | null
           recipient_emails: string[]
           sent_at: string
           subject: string
@@ -583,6 +584,7 @@ export type Database = {
           email_type?: string
           id?: string
           quotation_id?: string | null
+          recalled_at?: string | null
           recipient_emails: string[]
           sent_at?: string
           subject: string
@@ -596,6 +598,7 @@ export type Database = {
           email_type?: string
           id?: string
           quotation_id?: string | null
+          recalled_at?: string | null
           recipient_emails?: string[]
           sent_at?: string
           subject?: string

@@ -239,6 +239,63 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     }
   }, [quotation.id, quotation.clientName, toast, refreshSentEmails]);
 
+  const handleRecallEmail = useCallback(async (email: any) => {
+    setRecallingId(email.id);
+    try {
+      const recipients = (email.recipient_emails || []).map((e: string) => ({
+        email: e,
+        name: quotation.clientName,
+      }));
+
+      // Send retraction notice
+      const retractionHtml = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #dc2626;">⚠️ Email Recall Notice</h2>
+          <p>The following email has been recalled by the sender. Please disregard it:</p>
+          <div style="background: #f3f4f6; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+            <p style="margin: 0; font-weight: bold;">Subject: ${email.subject}</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">Sent: ${new Date(email.sent_at).toLocaleString()}</p>
+          </div>
+          <p style="color: #6b7280; font-size: 13px;">This is an automated notification from Noga M.T.</p>
+        </div>
+      `;
+
+      const { error: sendError } = await supabase.functions.invoke('send-customer-email', {
+        body: {
+          recipients,
+          subject: `⚠️ Recall: ${email.subject}`,
+          message: retractionHtml,
+          messageHtml: retractionHtml,
+          cc: email.cc_emails || [],
+          bcc: email.bcc_emails || [],
+          quotationId: quotation.id,
+        },
+      });
+
+      if (sendError) throw sendError;
+
+      // Mark as recalled in database
+      await (supabase.from('sent_emails' as any).update({ recalled_at: new Date().toISOString() } as any).eq('id', email.id) as any);
+
+      toast({
+        title: 'Email Recalled',
+        description: `Retraction notice sent to ${recipients.length} recipient(s).`,
+      });
+
+      await refreshSentEmails();
+    } catch (err: any) {
+      console.error('Recall failed:', err);
+      toast({
+        title: 'Recall Failed',
+        description: err.message || 'Failed to recall email.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRecallingId(null);
+      setRecallConfirmId(null);
+    }
+  }, [quotation.id, quotation.clientName, toast, refreshSentEmails]);
+
   const subtotal = calculateSubtotal(quotation.items);
   const discount = calculateDiscount(subtotal, quotation.discountType || 'percentage', quotation.discountValue || 0);
   const afterDiscount = subtotal - discount;

@@ -259,7 +259,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     setUploadingEmail(true);
     try {
       for (const file of validFiles) {
-        const filePath = `${quotationId}/${Date.now()}-${file.name}`;
+        const filePath = `${user.id}/${quotationId}/${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage.from('email-attachments').upload(filePath, file);
         if (uploadError) throw uploadError;
         const { error: dbError } = await supabase.from('quotation_email_attachments').insert({

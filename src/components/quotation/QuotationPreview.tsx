@@ -148,7 +148,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           continue;
         }
 
-        const filePath = `${quotation.id}/${Date.now()}-${file.name}`;
+        const filePath = `${user.id}/${quotation.id}/${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage
           .from('email-attachments')
           .upload(filePath, file);

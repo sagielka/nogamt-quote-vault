@@ -27,12 +27,15 @@ Deno.serve(async (req) => {
     // Find quotations that need follow-up:
     // - Created between 1 and 6 weeks ago
     // - Status is not 'accepted'
+    // Find quotations that need follow-up:
+    // - Created between 1 and 6 weeks ago
+    // - Status is not 'accepted' or 'finished'
     const { data: quotations, error: fetchError } = await supabase
       .from("quotations")
       .select("*")
       .gte("created_at", sixWeeksAgo.toISOString())
       .lte("created_at", oneWeekAgo.toISOString())
-      .or("status.is.null,and(status.neq.accepted,status.neq.finished)");
+      .or("status.is.null,status.eq.draft,status.eq.sent");
 
     if (fetchError) {
       console.error("Error fetching quotations:", fetchError);
@@ -42,15 +45,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Filter eligible quotations (7-day cooldown on follow_up_notified_at)
+    // Filter eligible quotations (7-day cooldown on follow_up_notified_at only)
     const eligible = (quotations || []).filter((q) => {
-      const reminderEligible =
-        !q.reminder_sent_at ||
-        new Date(q.reminder_sent_at).getTime() <= sevenDaysAgo.getTime();
-      const notificationEligible =
+      return (
         !q.follow_up_notified_at ||
-        new Date(q.follow_up_notified_at).getTime() <= sevenDaysAgo.getTime();
-      return reminderEligible && notificationEligible;
+        new Date(q.follow_up_notified_at).getTime() <= sevenDaysAgo.getTime()
+      );
     });
 
     if (eligible.length === 0) {

@@ -635,15 +635,16 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Monthly Value Trend</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Monthly Quote Value (mixed currencies)</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <p className="text-xs text-muted-foreground mb-2">Numeric sum across currencies — for trend shape only.</p>
+                <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line type="monotone" dataKey="value" name="Value ($)" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="value" name="Value (mixed)" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>

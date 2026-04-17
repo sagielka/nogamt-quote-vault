@@ -55,26 +55,35 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
   const [customerSearch, setCustomerSearch] = useState('');
   const chartsRef = useRef<HTMLDivElement>(null);
 
-  // === KPI CALCULATIONS ===
+  // === KPI CALCULATIONS (grouped by currency) ===
   const kpis = useMemo(() => {
     const total = quotations.length;
     const accepted = quotations.filter(q => q.status === 'accepted').length;
-    const totalValue = quotations.reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
-    const acceptedValue = quotations.filter(q => q.status === 'accepted')
-      .reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
-    const avgValue = total > 0 ? totalValue / total : 0;
     const conversionRate = total > 0 ? (accepted / total) * 100 : 0;
     const totalItems = quotations.reduce((sum, q) => sum + q.items.length, 0);
-    return { total, accepted, totalValue, acceptedValue, avgValue, conversionRate, totalItems };
+
+    const byCurrency: Record<string, { currency: Currency; total: number; accepted: number; count: number }> = {};
+    quotations.forEach(q => {
+      const cur = (q.currency || 'USD') as Currency;
+      if (!byCurrency[cur]) byCurrency[cur] = { currency: cur, total: 0, accepted: 0, count: 0 };
+      const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
+      byCurrency[cur].total += val;
+      byCurrency[cur].count++;
+      if (q.status === 'accepted') byCurrency[cur].accepted += val;
+    });
+    const currencyTotals = Object.values(byCurrency).sort((a, b) => b.total - a.total);
+    return { total, accepted, conversionRate, totalItems, currencyTotals };
   }, [quotations]);
 
-  // === BY CUSTOMER ===
+  // === BY CUSTOMER (per currency) ===
+  type CustomerRow = { name: string; currency: Currency; count: number; totalValue: number; acceptedCount: number; acceptedValue: number };
   const customerData = useMemo(() => {
-    const map: Record<string, { name: string; count: number; totalValue: number; acceptedCount: number; acceptedValue: number }> = {};
+    const map: Record<string, CustomerRow> = {};
     quotations.forEach(q => {
-      const key = q.clientName.toLowerCase();
+      const cur = (q.currency || 'USD') as Currency;
+      const key = `${q.clientName.toLowerCase()}__${cur}`;
       if (!map[key]) {
-        map[key] = { name: q.clientName, count: 0, totalValue: 0, acceptedCount: 0, acceptedValue: 0 };
+        map[key] = { name: q.clientName, currency: cur, count: 0, totalValue: 0, acceptedCount: 0, acceptedValue: 0 };
       }
       const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
       map[key].count++;
@@ -93,14 +102,16 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return customerData.filter(c => c.name.toLowerCase().includes(q));
   }, [customerData, customerSearch]);
 
-  // === BY SKU ===
+  // === BY SKU (per currency) ===
+  type SkuRow = { sku: string; description: string; currency: Currency; totalQty: number; totalRevenue: number; quoteCount: number; avgPrice: number };
   const skuData = useMemo(() => {
-    const map: Record<string, { sku: string; description: string; totalQty: number; totalRevenue: number; quoteCount: number; avgPrice: number }> = {};
+    const map: Record<string, SkuRow> = {};
     quotations.forEach(q => {
+      const cur = (q.currency || 'USD') as Currency;
       q.items.forEach(item => {
-        const key = item.sku || item.description;
+        const key = `${item.sku || item.description}__${cur}`;
         if (!map[key]) {
-          map[key] = { sku: item.sku, description: item.description, totalQty: 0, totalRevenue: 0, quoteCount: 0, avgPrice: 0 };
+          map[key] = { sku: item.sku, description: item.description, currency: cur, totalQty: 0, totalRevenue: 0, quoteCount: 0, avgPrice: 0 };
         }
         map[key].totalQty += item.moq;
         map[key].totalRevenue += calculateLineTotal(item);
@@ -117,16 +128,30 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return skuData.filter(s => s.sku.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
   }, [skuData, skuSearch]);
 
-  // === BY STATUS ===
+  // === BY STATUS (count only — values mix currencies) ===
   const statusData = useMemo(() => {
-    const map: Record<string, { status: string; count: number; value: number }> = {};
+    const map: Record<string, { status: string; count: number }> = {};
     quotations.forEach(q => {
       const s = q.status || 'draft';
-      if (!map[s]) map[s] = { status: s, count: 0, value: 0 };
+      if (!map[s]) map[s] = { status: s, count: 0 };
       map[s].count++;
-      map[s].value += calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
     });
     return Object.values(map);
+  }, [quotations]);
+
+  // === STATUS VALUE BY CURRENCY (for bar chart) ===
+  const statusValueByCurrency = useMemo(() => {
+    const map: Record<string, any> = {};
+    const currencies = new Set<string>();
+    quotations.forEach(q => {
+      const s = q.status || 'draft';
+      const cur = (q.currency || 'USD');
+      currencies.add(cur);
+      if (!map[s]) map[s] = { status: s };
+      const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
+      map[s][cur] = (map[s][cur] || 0) + val;
+    });
+    return { rows: Object.values(map), currencies: Array.from(currencies) };
   }, [quotations]);
 
   // === BY MONTH ===
@@ -232,10 +257,14 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       doc.setFontSize(10);
       doc.text(`Total Quotations: ${kpis.total}`, 14, y); y += 6;
       doc.text(`Accepted: ${kpis.accepted} (${kpis.conversionRate.toFixed(1)}%)`, 14, y); y += 6;
-      doc.text(`Total Value: $${kpis.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
-      doc.text(`Won Value: $${kpis.acceptedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
-      doc.text(`Average Value: $${kpis.avgValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
-      doc.text(`Total Line Items: ${kpis.totalItems}`, 14, y); y += 12;
+      doc.text(`Total Line Items: ${kpis.totalItems}`, 14, y); y += 8;
+      doc.text('Totals by currency:', 14, y); y += 6;
+      kpis.currencyTotals.forEach(c => {
+        const avg = c.count > 0 ? c.total / c.count : 0;
+        doc.text(`  ${c.currency}: ${c.count} quotes — total ${formatCurrency(c.total, c.currency)}, won ${formatCurrency(c.accepted, c.currency)}, avg ${formatCurrency(avg, c.currency)}`, 14, y);
+        y += 6;
+      });
+      y += 6;
 
       // === Capture charts from the dashboard ===
       if (chartsRef.current) {
@@ -306,7 +335,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       const topCustomers = customerData.slice(0, 15);
       topCustomers.forEach(c => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(processText(`${c.name}: ${c.count} quotes, $${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
+        doc.text(processText(`${c.name} [${c.currency}]: ${c.count} quotes, ${formatCurrency(c.totalValue, c.currency)}`), 14, y);
         y += 5;
       });
       y += 8;
@@ -319,18 +348,18 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       const topSkus = skuData.slice(0, 15);
       topSkus.forEach(s => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(processText(`${s.sku || s.description}: qty ${s.totalQty}, $${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
+        doc.text(processText(`${s.sku || s.description} [${s.currency}]: qty ${s.totalQty}, ${formatCurrency(s.totalRevenue, s.currency)}`), 14, y);
         y += 5;
       });
 
-      // Status breakdown
+      // Status breakdown (counts only — values vary by currency)
       if (y > 240) { doc.addPage(); y = 20; }
       y += 8;
       doc.setFontSize(14);
       doc.text('Status Breakdown', 14, y); y += 8;
       doc.setFontSize(9);
       statusData.forEach(s => {
-        doc.text(`${s.status}: ${s.count} quotes, $${s.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y);
+        doc.text(`${s.status}: ${s.count} quotes`, 14, y);
         y += 5;
       });
 
@@ -387,7 +416,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="pt-4 pb-3 px-4">
           <p className="text-xs text-muted-foreground">Total Quotes</p>
           <p className="text-2xl font-bold text-foreground">{kpis.total}</p>
@@ -401,17 +430,25 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
           <p className="text-2xl font-bold text-primary">{kpis.conversionRate.toFixed(1)}%</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-3 px-4">
-          <p className="text-xs text-muted-foreground">Total Value</p>
-          <p className="text-xl font-bold text-foreground">${kpis.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 px-4">
-          <p className="text-xs text-muted-foreground">Won Value</p>
-          <p className="text-xl font-bold text-success">${kpis.acceptedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 px-4">
           <p className="text-xs text-muted-foreground">Line Items</p>
           <p className="text-2xl font-bold text-foreground">{kpis.totalItems}</p>
         </CardContent></Card>
+      </div>
+
+      {/* Totals by currency */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {kpis.currencyTotals.map(c => (
+          <Card key={c.currency}>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Totals — {c.currency}</p>
+                <Badge variant="outline" className="text-xs">{c.count} quotes</Badge>
+              </div>
+              <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(c.total, c.currency)}</p>
+              <p className="text-xs text-success">Won: {formatCurrency(c.accepted, c.currency)}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}
@@ -444,21 +481,20 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
-              {/* Status value bar */}
+              {/* Status value bar — stacked per currency */}
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4" /> Value by Status</CardTitle></CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4" /> Value by Status (per currency)</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={statusData}>
+                    <BarChart data={statusValueByCurrency.rows}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="status" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="value" name="Value ($)" radius={[4, 4, 0, 0]}>
-                        {statusData.map((entry, i) => (
-                          <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
-                        ))}
-                      </Bar>
+                      <Legend />
+                      {statusValueByCurrency.currencies.map((cur, i) => (
+                        <Bar key={cur} dataKey={cur} name={cur} stackId="value" fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[4, 4, 0, 0]} />
+                      ))}
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -511,6 +547,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
+                      <TableHead>Currency</TableHead>
                       <TableHead className="text-right">Quotes</TableHead>
                       <TableHead className="text-right">Accepted</TableHead>
                       <TableHead className="text-right">Win Rate</TableHead>
@@ -522,11 +559,12 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                     {filteredCustomerData.map((c, i) => (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{c.currency}</Badge></TableCell>
                         <TableCell className="text-right">{c.count}</TableCell>
                         <TableCell className="text-right">{c.acceptedCount}</TableCell>
                         <TableCell className="text-right">{c.count > 0 ? ((c.acceptedCount / c.count) * 100).toFixed(0) : 0}%</TableCell>
-                        <TableCell className="text-right">${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${c.acceptedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(c.totalValue, c.currency)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(c.acceptedValue, c.currency)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -551,6 +589,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                     <TableRow>
                       <TableHead>SKU</TableHead>
                       <TableHead>Description</TableHead>
+                      <TableHead>Currency</TableHead>
                       <TableHead className="text-right">Quotes</TableHead>
                       <TableHead className="text-right">Total Qty</TableHead>
                       <TableHead className="text-right">Avg Price</TableHead>
@@ -562,10 +601,11 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                       <TableRow key={i}>
                         <TableCell className="font-mono text-xs">{s.sku || '—'}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{s.description}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{s.currency}</Badge></TableCell>
                         <TableCell className="text-right">{s.quoteCount}</TableCell>
                         <TableCell className="text-right">{s.totalQty.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">${s.avgPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(s.avgPrice, s.currency)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(s.totalRevenue, s.currency)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -595,15 +635,16 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Monthly Value Trend</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Monthly Quote Value (mixed currencies)</CardTitle></CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <p className="text-xs text-muted-foreground mb-2">Numeric sum across currencies — for trend shape only.</p>
+                <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line type="monotone" dataKey="value" name="Value ($)" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="value" name="Value (mixed)" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -628,6 +669,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                       <TableHead className="text-right">Qty</TableHead>
                       <TableHead className="text-right">Unit Price</TableHead>
                       <TableHead className="text-right">Line Total</TableHead>
+                      <TableHead>Currency</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -643,8 +685,9 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                         <TableCell className="font-mono text-xs">{item.sku || '—'}</TableCell>
                         <TableCell className="max-w-[180px] truncate">{item.description}</TableCell>
                         <TableCell className="text-right">{item.qty.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${item.lineTotal.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.unitPrice, item.currency)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.lineTotal, item.currency)}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{item.currency}</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

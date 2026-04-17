@@ -416,7 +416,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="pt-4 pb-3 px-4">
           <p className="text-xs text-muted-foreground">Total Quotes</p>
           <p className="text-2xl font-bold text-foreground">{kpis.total}</p>
@@ -430,17 +430,25 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
           <p className="text-2xl font-bold text-primary">{kpis.conversionRate.toFixed(1)}%</p>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-3 px-4">
-          <p className="text-xs text-muted-foreground">Total Value</p>
-          <p className="text-xl font-bold text-foreground">${kpis.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 px-4">
-          <p className="text-xs text-muted-foreground">Won Value</p>
-          <p className="text-xl font-bold text-success">${kpis.acceptedValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-        </CardContent></Card>
-        <Card><CardContent className="pt-4 pb-3 px-4">
           <p className="text-xs text-muted-foreground">Line Items</p>
           <p className="text-2xl font-bold text-foreground">{kpis.totalItems}</p>
         </CardContent></Card>
+      </div>
+
+      {/* Totals by currency */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {kpis.currencyTotals.map(c => (
+          <Card key={c.currency}>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Totals — {c.currency}</p>
+                <Badge variant="outline" className="text-xs">{c.count} quotes</Badge>
+              </div>
+              <p className="text-xl font-bold text-foreground mt-1">{formatCurrency(c.total, c.currency)}</p>
+              <p className="text-xs text-success">Won: {formatCurrency(c.accepted, c.currency)}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}

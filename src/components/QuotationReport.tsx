@@ -481,21 +481,20 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
-              {/* Status value bar */}
+              {/* Status value bar — stacked per currency */}
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4" /> Value by Status</CardTitle></CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4" /> Value by Status (per currency)</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={statusData}>
+                    <BarChart data={statusValueByCurrency.rows}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="status" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="value" name="Value ($)" radius={[4, 4, 0, 0]}>
-                        {statusData.map((entry, i) => (
-                          <Cell key={i} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
-                        ))}
-                      </Bar>
+                      <Legend />
+                      {statusValueByCurrency.currencies.map((cur, i) => (
+                        <Bar key={cur} dataKey={cur} name={cur} stackId="value" fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[4, 4, 0, 0]} />
+                      ))}
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>

@@ -405,9 +405,9 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     // Product families
     if (familyStats.length > 0) {
       rows.push(['=== PRODUCT FAMILIES ===']);
-      rows.push(['Family', 'Quantity', 'Quotes', 'Value']);
+      rows.push(['Family', 'Currency', 'Quantity', 'Quotes', 'Value']);
       familyStats.forEach(f => {
-        rows.push([f.family, String(f.qty), String(f.quoteCount), f.value.toFixed(2)]);
+        rows.push([f.family, f.currency, String(f.qty), String(f.quoteCount), f.value.toFixed(2)]);
       });
       rows.push([]);
     }
@@ -415,9 +415,9 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     // Top items
     if (topItems.length > 0) {
       rows.push(['=== TOP ITEMS ===']);
-      rows.push(['SKU', 'Description', 'Family', 'Quantity', 'In Quotes', 'Value']);
+      rows.push(['SKU', 'Description', 'Family', 'Currency', 'Quantity', 'In Quotes', 'Value']);
       topItems.forEach(item => {
-        rows.push([item.sku, item.description, getFamily(item.sku, item.description), String(item.qty), String(item.quoteCount), item.value.toFixed(2)]);
+        rows.push([item.sku, item.description, getFamily(item.sku, item.description), item.currency, String(item.qty), String(item.quoteCount), item.value.toFixed(2)]);
       });
     }
 
@@ -820,6 +820,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                           <TableHeader>
                             <TableRow>
                               <TableHead className="text-xs">Family</TableHead>
+                              <TableHead className="text-xs text-center">Currency</TableHead>
                               <TableHead className="text-xs text-center">Qty</TableHead>
                               <TableHead className="text-xs text-center">Quotes</TableHead>
                               <TableHead className="text-xs text-right">Value</TableHead>
@@ -827,14 +828,17 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                           </TableHeader>
                           <TableBody>
                             {familyStats.map(f => (
-                              <TableRow key={f.family}>
+                              <TableRow key={`${f.family}-${f.currency}`}>
                                 <TableCell className="text-xs font-medium">
                                   <Badge variant="outline" className="text-[10px]">{f.family}</Badge>
+                                </TableCell>
+                                <TableCell className="text-xs text-center">
+                                  <Badge variant="secondary" className="text-[10px]">{f.currency}</Badge>
                                 </TableCell>
                                 <TableCell className="text-xs text-center font-bold">{f.qty}</TableCell>
                                 <TableCell className="text-xs text-center">{f.quoteCount}</TableCell>
                                 <TableCell className="text-xs text-right">
-                                  {formatCurrency(f.value, stats.dominantCurrency as any)}
+                                  {formatCurrency(f.value, f.currency as any)}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -852,6 +856,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                             <TableHead className="text-xs">SKU</TableHead>
                             <TableHead className="text-xs">Description</TableHead>
                             <TableHead className="text-xs text-center">Family</TableHead>
+                            <TableHead className="text-xs text-center">Currency</TableHead>
                             <TableHead className="text-xs text-center">Total Qty</TableHead>
                             <TableHead className="text-xs text-center">In Quotes</TableHead>
                             <TableHead className="text-xs text-right">Total Value</TableHead>
@@ -859,16 +864,19 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
                         </TableHeader>
                         <TableBody>
                           {topItems.map((item, i) => (
-                            <TableRow key={item.sku}>
+                            <TableRow key={`${item.sku}-${item.currency}`}>
                               <TableCell className="text-xs font-mono font-medium">{item.sku}</TableCell>
                               <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">{item.description}</TableCell>
                               <TableCell className="text-xs text-center">
                                 <Badge variant="outline" className="text-[10px]">{getFamily(item.sku, item.description)}</Badge>
                               </TableCell>
+                              <TableCell className="text-xs text-center">
+                                <Badge variant="secondary" className="text-[10px]">{item.currency}</Badge>
+                              </TableCell>
                               <TableCell className="text-xs text-center font-bold">{item.qty}</TableCell>
                               <TableCell className="text-xs text-center">{item.quoteCount}</TableCell>
                               <TableCell className="text-xs text-right">
-                                {formatCurrency(item.value, stats.dominantCurrency as any)}
+                                {formatCurrency(item.value, item.currency as any)}
                               </TableCell>
                             </TableRow>
                           ))}

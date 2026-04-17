@@ -223,25 +223,28 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     return FAMILY_NAMES[code] || code;
   };
 
-  // Product family breakdown
+  // Product family breakdown (split by currency to avoid mixing values)
   const familyStats = useMemo(() => {
-    const families: Record<string, { qty: number; value: number; quotations: Set<string> }> = {};
+    const families: Record<string, { family: string; currency: string; qty: number; value: number; quotations: Set<string> }> = {};
 
     filteredQuotations.forEach(q => {
+      const cur = (q.currency || 'USD') as string;
       q.items.forEach(item => {
         const family = getFamily(item.sku, item.description);
-        if (!families[family]) {
-          families[family] = { qty: 0, value: 0, quotations: new Set() };
+        const key = `${family}__${cur}`;
+        if (!families[key]) {
+          families[key] = { family, currency: cur, qty: 0, value: 0, quotations: new Set() };
         }
-        families[family].qty += item.moq;
-        families[family].value += calculateLineTotal(item);
-        families[family].quotations.add(q.id);
+        families[key].qty += item.moq;
+        families[key].value += calculateLineTotal(item);
+        families[key].quotations.add(q.id);
       });
     });
 
-    return Object.entries(families)
-      .map(([family, data]) => ({
-        family,
+    return Object.values(families)
+      .map(data => ({
+        family: data.family,
+        currency: data.currency,
         qty: data.qty,
         value: data.value,
         quoteCount: data.quotations.size,
@@ -249,30 +252,34 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
       .sort((a, b) => b.value - a.value);
   }, [filteredQuotations]);
 
-  // Family pie chart data
+  // Family pie chart data — aggregate qty across currencies (qty is unit count, currency-agnostic)
   const familyPieData = useMemo(() => {
     const colors = [
       'hsl(210, 80%, 55%)', 'hsl(152, 60%, 45%)', 'hsl(35, 90%, 55%)',
       'hsl(280, 60%, 55%)', 'hsl(0, 70%, 55%)', 'hsl(180, 60%, 45%)',
       'hsl(60, 70%, 45%)', 'hsl(320, 60%, 55%)',
     ];
-    return familyStats.map((f, i) => ({
-      name: f.family,
-      value: f.qty,
-      color: colors[i % colors.length],
-    }));
+    const byFamily: Record<string, number> = {};
+    familyStats.forEach(f => {
+      byFamily[f.family] = (byFamily[f.family] || 0) + f.qty;
+    });
+    return Object.entries(byFamily)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }));
   }, [familyStats]);
 
-  // Top items by quantity
+  // Top items by quantity (split by currency to avoid mixing values)
   const topItems = useMemo(() => {
-    const items: Record<string, { sku: string; description: string; qty: number; value: number; quoteCount: Set<string> }> = {};
+    const items: Record<string, { sku: string; description: string; currency: string; qty: number; value: number; quoteCount: Set<string> }> = {};
 
     filteredQuotations.forEach(q => {
+      const cur = (q.currency || 'USD') as string;
       q.items.forEach(item => {
-        const key = item.sku.trim().toUpperCase();
-        if (!key) return;
+        const skuKey = item.sku.trim().toUpperCase();
+        if (!skuKey) return;
+        const key = `${skuKey}__${cur}`;
         if (!items[key]) {
-          items[key] = { sku: item.sku, description: item.description, qty: 0, value: 0, quoteCount: new Set() };
+          items[key] = { sku: item.sku, description: item.description, currency: cur, qty: 0, value: 0, quoteCount: new Set() };
         }
         items[key].qty += item.moq;
         items[key].value += calculateLineTotal(item);

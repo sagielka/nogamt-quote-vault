@@ -668,6 +668,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                       <TableHead className="text-right">Qty</TableHead>
                       <TableHead className="text-right">Unit Price</TableHead>
                       <TableHead className="text-right">Line Total</TableHead>
+                      <TableHead>Currency</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -683,8 +684,9 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                         <TableCell className="font-mono text-xs">{item.sku || '—'}</TableCell>
                         <TableCell className="max-w-[180px] truncate">{item.description}</TableCell>
                         <TableCell className="text-right">{item.qty.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${item.lineTotal.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.unitPrice, item.currency)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(item.lineTotal, item.currency)}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{item.currency}</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

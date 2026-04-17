@@ -589,6 +589,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                     <TableRow>
                       <TableHead>SKU</TableHead>
                       <TableHead>Description</TableHead>
+                      <TableHead>Currency</TableHead>
                       <TableHead className="text-right">Quotes</TableHead>
                       <TableHead className="text-right">Total Qty</TableHead>
                       <TableHead className="text-right">Avg Price</TableHead>
@@ -600,10 +601,11 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                       <TableRow key={i}>
                         <TableCell className="font-mono text-xs">{s.sku || '—'}</TableCell>
                         <TableCell className="max-w-[200px] truncate">{s.description}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{s.currency}</Badge></TableCell>
                         <TableCell className="text-right">{s.quoteCount}</TableCell>
                         <TableCell className="text-right">{s.totalQty.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">${s.avgPrice.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(s.avgPrice, s.currency)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(s.totalRevenue, s.currency)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

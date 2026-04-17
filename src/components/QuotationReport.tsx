@@ -55,17 +55,24 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
   const [customerSearch, setCustomerSearch] = useState('');
   const chartsRef = useRef<HTMLDivElement>(null);
 
-  // === KPI CALCULATIONS ===
+  // === KPI CALCULATIONS (grouped by currency) ===
   const kpis = useMemo(() => {
     const total = quotations.length;
     const accepted = quotations.filter(q => q.status === 'accepted').length;
-    const totalValue = quotations.reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
-    const acceptedValue = quotations.filter(q => q.status === 'accepted')
-      .reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
-    const avgValue = total > 0 ? totalValue / total : 0;
     const conversionRate = total > 0 ? (accepted / total) * 100 : 0;
     const totalItems = quotations.reduce((sum, q) => sum + q.items.length, 0);
-    return { total, accepted, totalValue, acceptedValue, avgValue, conversionRate, totalItems };
+
+    const byCurrency: Record<string, { currency: Currency; total: number; accepted: number; count: number }> = {};
+    quotations.forEach(q => {
+      const cur = (q.currency || 'USD') as Currency;
+      if (!byCurrency[cur]) byCurrency[cur] = { currency: cur, total: 0, accepted: 0, count: 0 };
+      const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
+      byCurrency[cur].total += val;
+      byCurrency[cur].count++;
+      if (q.status === 'accepted') byCurrency[cur].accepted += val;
+    });
+    const currencyTotals = Object.values(byCurrency).sort((a, b) => b.total - a.total);
+    return { total, accepted, conversionRate, totalItems, currencyTotals };
   }, [quotations]);
 
   // === BY CUSTOMER ===

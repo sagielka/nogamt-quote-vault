@@ -547,6 +547,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                   <TableHeader>
                     <TableRow>
                       <TableHead>Customer</TableHead>
+                      <TableHead>Currency</TableHead>
                       <TableHead className="text-right">Quotes</TableHead>
                       <TableHead className="text-right">Accepted</TableHead>
                       <TableHead className="text-right">Win Rate</TableHead>
@@ -558,11 +559,12 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                     {filteredCustomerData.map((c, i) => (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell><Badge variant="outline" className="text-xs">{c.currency}</Badge></TableCell>
                         <TableCell className="text-right">{c.count}</TableCell>
                         <TableCell className="text-right">{c.acceptedCount}</TableCell>
                         <TableCell className="text-right">{c.count > 0 ? ((c.acceptedCount / c.count) * 100).toFixed(0) : 0}%</TableCell>
-                        <TableCell className="text-right">${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">${c.acceptedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(c.totalValue, c.currency)}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(c.acceptedValue, c.currency)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

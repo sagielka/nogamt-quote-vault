@@ -102,14 +102,16 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return customerData.filter(c => c.name.toLowerCase().includes(q));
   }, [customerData, customerSearch]);
 
-  // === BY SKU ===
+  // === BY SKU (per currency) ===
+  type SkuRow = { sku: string; description: string; currency: Currency; totalQty: number; totalRevenue: number; quoteCount: number; avgPrice: number };
   const skuData = useMemo(() => {
-    const map: Record<string, { sku: string; description: string; totalQty: number; totalRevenue: number; quoteCount: number; avgPrice: number }> = {};
+    const map: Record<string, SkuRow> = {};
     quotations.forEach(q => {
+      const cur = (q.currency || 'USD') as Currency;
       q.items.forEach(item => {
-        const key = item.sku || item.description;
+        const key = `${item.sku || item.description}__${cur}`;
         if (!map[key]) {
-          map[key] = { sku: item.sku, description: item.description, totalQty: 0, totalRevenue: 0, quoteCount: 0, avgPrice: 0 };
+          map[key] = { sku: item.sku, description: item.description, currency: cur, totalQty: 0, totalRevenue: 0, quoteCount: 0, avgPrice: 0 };
         }
         map[key].totalQty += item.moq;
         map[key].totalRevenue += calculateLineTotal(item);
@@ -126,16 +128,30 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return skuData.filter(s => s.sku.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
   }, [skuData, skuSearch]);
 
-  // === BY STATUS ===
+  // === BY STATUS (count only — values mix currencies) ===
   const statusData = useMemo(() => {
-    const map: Record<string, { status: string; count: number; value: number }> = {};
+    const map: Record<string, { status: string; count: number }> = {};
     quotations.forEach(q => {
       const s = q.status || 'draft';
-      if (!map[s]) map[s] = { status: s, count: 0, value: 0 };
+      if (!map[s]) map[s] = { status: s, count: 0 };
       map[s].count++;
-      map[s].value += calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
     });
     return Object.values(map);
+  }, [quotations]);
+
+  // === STATUS VALUE BY CURRENCY (for bar chart) ===
+  const statusValueByCurrency = useMemo(() => {
+    const map: Record<string, any> = {};
+    const currencies = new Set<string>();
+    quotations.forEach(q => {
+      const s = q.status || 'draft';
+      const cur = (q.currency || 'USD');
+      currencies.add(cur);
+      if (!map[s]) map[s] = { status: s };
+      const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
+      map[s][cur] = (map[s][cur] || 0) + val;
+    });
+    return { rows: Object.values(map), currencies: Array.from(currencies) };
   }, [quotations]);
 
   // === BY MONTH ===

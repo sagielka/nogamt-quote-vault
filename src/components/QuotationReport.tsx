@@ -75,13 +75,15 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return { total, accepted, conversionRate, totalItems, currencyTotals };
   }, [quotations]);
 
-  // === BY CUSTOMER ===
+  // === BY CUSTOMER (per currency) ===
+  type CustomerRow = { name: string; currency: Currency; count: number; totalValue: number; acceptedCount: number; acceptedValue: number };
   const customerData = useMemo(() => {
-    const map: Record<string, { name: string; count: number; totalValue: number; acceptedCount: number; acceptedValue: number }> = {};
+    const map: Record<string, CustomerRow> = {};
     quotations.forEach(q => {
-      const key = q.clientName.toLowerCase();
+      const cur = (q.currency || 'USD') as Currency;
+      const key = `${q.clientName.toLowerCase()}__${cur}`;
       if (!map[key]) {
-        map[key] = { name: q.clientName, count: 0, totalValue: 0, acceptedCount: 0, acceptedValue: 0 };
+        map[key] = { name: q.clientName, currency: cur, count: 0, totalValue: 0, acceptedCount: 0, acceptedValue: 0 };
       }
       const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
       map[key].count++;

@@ -257,10 +257,14 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       doc.setFontSize(10);
       doc.text(`Total Quotations: ${kpis.total}`, 14, y); y += 6;
       doc.text(`Accepted: ${kpis.accepted} (${kpis.conversionRate.toFixed(1)}%)`, 14, y); y += 6;
-      doc.text(`Total Value: $${kpis.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
-      doc.text(`Won Value: $${kpis.acceptedValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
-      doc.text(`Average Value: $${kpis.avgValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y); y += 6;
-      doc.text(`Total Line Items: ${kpis.totalItems}`, 14, y); y += 12;
+      doc.text(`Total Line Items: ${kpis.totalItems}`, 14, y); y += 8;
+      doc.text('Totals by currency:', 14, y); y += 6;
+      kpis.currencyTotals.forEach(c => {
+        const avg = c.count > 0 ? c.total / c.count : 0;
+        doc.text(`  ${c.currency}: ${c.count} quotes — total ${formatCurrency(c.total, c.currency)}, won ${formatCurrency(c.accepted, c.currency)}, avg ${formatCurrency(avg, c.currency)}`, 14, y);
+        y += 6;
+      });
+      y += 6;
 
       // === Capture charts from the dashboard ===
       if (chartsRef.current) {

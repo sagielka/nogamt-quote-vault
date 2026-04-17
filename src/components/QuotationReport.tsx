@@ -335,7 +335,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       const topCustomers = customerData.slice(0, 15);
       topCustomers.forEach(c => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(processText(`${c.name}: ${c.count} quotes, $${c.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
+        doc.text(processText(`${c.name} [${c.currency}]: ${c.count} quotes, ${formatCurrency(c.totalValue, c.currency)}`), 14, y);
         y += 5;
       });
       y += 8;
@@ -348,18 +348,18 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
       const topSkus = skuData.slice(0, 15);
       topSkus.forEach(s => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(processText(`${s.sku || s.description}: qty ${s.totalQty}, $${s.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`), 14, y);
+        doc.text(processText(`${s.sku || s.description} [${s.currency}]: qty ${s.totalQty}, ${formatCurrency(s.totalRevenue, s.currency)}`), 14, y);
         y += 5;
       });
 
-      // Status breakdown
+      // Status breakdown (counts only — values vary by currency)
       if (y > 240) { doc.addPage(); y = 20; }
       y += 8;
       doc.setFontSize(14);
       doc.text('Status Breakdown', 14, y); y += 8;
       doc.setFontSize(9);
       statusData.forEach(s => {
-        doc.text(`${s.status}: ${s.count} quotes, $${s.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 14, y);
+        doc.text(`${s.status}: ${s.count} quotes`, 14, y);
         y += 5;
       });
 

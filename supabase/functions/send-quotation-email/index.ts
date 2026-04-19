@@ -103,10 +103,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Verify quotation exists and get handler user_id
+    // Verify quotation exists and get handler user_id + reminder/status state
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
-      .select('id, user_id')
+      .select('id, user_id, status, reminder_sent_at')
       .eq('quote_number', quoteNumber)
       .single();
 
@@ -115,6 +115,32 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: 'Quotation not found' }),
         { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Server-side guards for reminders to prevent duplicates
+    if (isReminder) {
+      // Block if quote is no longer eligible
+      if (quotation.status === 'accepted' || quotation.status === 'finished') {
+        return new Response(
+          JSON.stringify({ error: `Quotation is ${quotation.status} — reminders disabled.` }),
+          { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      // Enforce 7-day cooldown server-side. Allow a small grace window (5 min)
+      // so multi-recipient parallel sends in the same campaign all go through.
+      if (quotation.reminder_sent_at) {
+        const last = new Date(quotation.reminder_sent_at).getTime();
+        const elapsed = Date.now() - last;
+        const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+        const GRACE_MS = 5 * 60 * 1000; // 5 minutes for fan-out to multiple recipients
+        if (elapsed >= GRACE_MS && elapsed < COOLDOWN_MS) {
+          const daysLeft = Math.ceil((COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000));
+          return new Response(
+            JSON.stringify({ error: `Reminder cooldown active — ${daysLeft} day(s) remaining.`, cooldown: true }),
+            { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
     }
 
     // Resolve handler email for CC

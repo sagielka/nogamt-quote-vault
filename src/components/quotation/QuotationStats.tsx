@@ -123,7 +123,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     });
     const dominantCurrency = Object.entries(currencyCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
-    return { total, byStatus, totalValue, acceptedValue, conversionRate, expiringSoon, dominantCurrency };
+    return { total, byStatus, totalValue, acceptedValue, conversionRate, expiringSoon, dominantCurrency, totalValueByCurrency, acceptedValueByCurrency };
   }, [filteredQuotations]);
 
   // Monthly trend data

@@ -92,14 +92,20 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
       declined: filteredQuotations.filter(q => q.status === 'declined').length,
     };
 
-    const totalValue = filteredQuotations.reduce((sum, q) => {
+    // Group values by currency to avoid mixing different currencies (e.g. ILS + USD)
+    const totalValueByCurrency: Record<string, number> = {};
+    const acceptedValueByCurrency: Record<string, number> = {};
+    filteredQuotations.forEach(q => {
+      const cur = (q.currency || 'USD') as string;
       const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
-      return sum + val;
-    }, 0);
-
-    const acceptedValue = filteredQuotations
-      .filter(q => q.status === 'accepted')
-      .reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
+      totalValueByCurrency[cur] = (totalValueByCurrency[cur] || 0) + val;
+      if (q.status === 'accepted') {
+        acceptedValueByCurrency[cur] = (acceptedValueByCurrency[cur] || 0) + val;
+      }
+    });
+    // Keep scalar fallbacks (dominant currency only) for places that still need a single number
+    const totalValue = 0;
+    const acceptedValue = 0;
 
     const conversionRate = total > 0 ? ((byStatus.accepted / total) * 100) : 0;
 
@@ -117,7 +123,7 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     });
     const dominantCurrency = Object.entries(currencyCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'USD';
 
-    return { total, byStatus, totalValue, acceptedValue, conversionRate, expiringSoon, dominantCurrency };
+    return { total, byStatus, totalValue, acceptedValue, conversionRate, expiringSoon, dominantCurrency, totalValueByCurrency, acceptedValueByCurrency };
   }, [filteredQuotations]);
 
   // Monthly trend data
@@ -382,9 +388,13 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     rows.push(['=== SUMMARY ===']);
     rows.push(['Metric', 'Value']);
     rows.push(['Total Quotes', String(stats.total)]);
-    rows.push(['Total Value', String(stats.totalValue.toFixed(2))]);
+    Object.entries(stats.totalValueByCurrency).forEach(([cur, val]) => {
+      rows.push([`Total Value (${cur})`, val.toFixed(2)]);
+    });
     rows.push(['Orders Received', String(stats.byStatus.accepted)]);
-    rows.push(['Accepted Value', String(stats.acceptedValue.toFixed(2))]);
+    Object.entries(stats.acceptedValueByCurrency).forEach(([cur, val]) => {
+      rows.push([`Accepted Value (${cur})`, val.toFixed(2)]);
+    });
     rows.push(['Conversion Rate', `${stats.conversionRate.toFixed(1)}%`]);
     rows.push(['Pending (Sent)', String(stats.byStatus.sent)]);
     rows.push(['Drafts', String(stats.byStatus.draft)]);
@@ -441,7 +451,11 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     },
     {
       label: 'Total Value',
-      value: formatCurrency(stats.totalValue, stats.dominantCurrency as any),
+      value: (() => {
+        const entries = Object.entries(stats.totalValueByCurrency).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return formatCurrency(0, stats.dominantCurrency as any);
+        return entries.map(([cur, val]) => formatCurrency(val, cur as any)).join(' · ');
+      })(),
       icon: DollarSign,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
@@ -449,7 +463,11 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     {
       label: 'Orders Received',
       value: stats.byStatus.accepted,
-      subtitle: formatCurrency(stats.acceptedValue, stats.dominantCurrency as any),
+      subtitle: (() => {
+        const entries = Object.entries(stats.acceptedValueByCurrency).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return formatCurrency(0, stats.dominantCurrency as any);
+        return entries.map(([cur, val]) => formatCurrency(val, cur as any)).join(' · ');
+      })(),
       icon: CheckCircle,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10',

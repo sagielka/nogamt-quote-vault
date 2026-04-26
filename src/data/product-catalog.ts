@@ -574,13 +574,28 @@ const staticCatalogProducts: ProductItem[] = [
   { sku: "UX9000", description: "AGENT KIT", prices: { EURO: 750.00, DOLLAR: 877.50, NOGA_BV_EURO: 229.50, SHEKEL: 3334.50 } },
 ];
 
+// Deduplicate products by SKU (case-insensitive), keeping the first occurrence.
+// Priority: static catalog > uspot > uchamf. Source data sometimes contains the
+// same SKU twice with different descriptions — only the first is shown.
+const dedupeBySku = (products: ProductItem[]): ProductItem[] => {
+  const seen = new Set<string>();
+  const result: ProductItem[] = [];
+  for (const p of products) {
+    const key = (p.sku || '').trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(p);
+  }
+  return result;
+};
+
 // Dynamic product catalog getter - combines static products with dynamic US/UC inserts
 export const getProductCatalog = (): ProductItem[] => {
-  return [
+  return dedupeBySku([
     ...staticCatalogProducts,
     ...getUspotProducts(),
     ...getUchamfProducts(),
-  ];
+  ]);
 };
 
 // Legacy export for backward compatibility - NOTE: This is evaluated once on import!

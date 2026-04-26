@@ -447,7 +447,11 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     },
     {
       label: 'Total Value',
-      value: formatCurrency(stats.totalValue, stats.dominantCurrency as any),
+      value: (() => {
+        const entries = Object.entries(stats.totalValueByCurrency).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return formatCurrency(0, stats.dominantCurrency as any);
+        return entries.map(([cur, val]) => formatCurrency(val, cur as any)).join(' · ');
+      })(),
       icon: DollarSign,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
@@ -455,7 +459,11 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     {
       label: 'Orders Received',
       value: stats.byStatus.accepted,
-      subtitle: formatCurrency(stats.acceptedValue, stats.dominantCurrency as any),
+      subtitle: (() => {
+        const entries = Object.entries(stats.acceptedValueByCurrency).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return formatCurrency(0, stats.dominantCurrency as any);
+        return entries.map(([cur, val]) => formatCurrency(val, cur as any)).join(' · ');
+      })(),
       icon: CheckCircle,
       color: 'text-emerald-500',
       bgColor: 'bg-emerald-500/10',

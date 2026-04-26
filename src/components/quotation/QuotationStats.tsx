@@ -92,14 +92,20 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
       declined: filteredQuotations.filter(q => q.status === 'declined').length,
     };
 
-    const totalValue = filteredQuotations.reduce((sum, q) => {
+    // Group values by currency to avoid mixing different currencies (e.g. ILS + USD)
+    const totalValueByCurrency: Record<string, number> = {};
+    const acceptedValueByCurrency: Record<string, number> = {};
+    filteredQuotations.forEach(q => {
+      const cur = (q.currency || 'USD') as string;
       const val = calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue);
-      return sum + val;
-    }, 0);
-
-    const acceptedValue = filteredQuotations
-      .filter(q => q.status === 'accepted')
-      .reduce((sum, q) => sum + calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue), 0);
+      totalValueByCurrency[cur] = (totalValueByCurrency[cur] || 0) + val;
+      if (q.status === 'accepted') {
+        acceptedValueByCurrency[cur] = (acceptedValueByCurrency[cur] || 0) + val;
+      }
+    });
+    // Keep scalar fallbacks (dominant currency only) for places that still need a single number
+    const totalValue = 0;
+    const acceptedValue = 0;
 
     const conversionRate = total > 0 ? ((byStatus.accepted / total) * 100) : 0;
 

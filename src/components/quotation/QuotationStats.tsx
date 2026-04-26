@@ -388,9 +388,13 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     rows.push(['=== SUMMARY ===']);
     rows.push(['Metric', 'Value']);
     rows.push(['Total Quotes', String(stats.total)]);
-    rows.push(['Total Value', String(stats.totalValue.toFixed(2))]);
+    Object.entries(stats.totalValueByCurrency).forEach(([cur, val]) => {
+      rows.push([`Total Value (${cur})`, val.toFixed(2)]);
+    });
     rows.push(['Orders Received', String(stats.byStatus.accepted)]);
-    rows.push(['Accepted Value', String(stats.acceptedValue.toFixed(2))]);
+    Object.entries(stats.acceptedValueByCurrency).forEach(([cur, val]) => {
+      rows.push([`Accepted Value (${cur})`, val.toFixed(2)]);
+    });
     rows.push(['Conversion Rate', `${stats.conversionRate.toFixed(1)}%`]);
     rows.push(['Pending (Sent)', String(stats.byStatus.sent)]);
     rows.push(['Drafts', String(stats.byStatus.draft)]);

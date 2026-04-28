@@ -277,7 +277,7 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
 
               <Button
                 onClick={handleExtract}
-                disabled={isExtracting || (!emailText.trim() && !attachmentText.trim())}
+                disabled={isExtracting || (!emailText.trim() && !attachmentText.trim() && !attachmentBase64)}
                 className="w-full"
               >
                 {isExtracting ? (

@@ -23,7 +23,8 @@ import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3 } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles } from 'lucide-react';
+import { AIQuoteAssistant } from '@/components/AIQuoteAssistant';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,6 +137,8 @@ const Index = () => {
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const [editOrderPickerOpen, setEditOrderPickerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiPrefillData, setAiPrefillData] = useState<Partial<QuotationFormData> | null>(null);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -615,10 +618,16 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
               {currentView === 'list' && quotations.length > 0 && (
-                <Button onClick={() => navigateToView('create')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Quote
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => setAiAssistantOpen(true)} className="border-primary/40">
+                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                    AI Quote
+                  </Button>
+                  <Button onClick={() => navigateToView('create')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Quote
+                  </Button>
+                </>
               )}
               {currentView === 'list' && (
                 <Button 
@@ -869,7 +878,11 @@ const Index = () => {
             <h2 className="heading-display text-2xl text-foreground mb-6">
               Create New Quotation
             </h2>
-            <QuotationForm onSubmit={handleCreateQuotation} existingQuotations={quotations} />
+            <QuotationForm
+              onSubmit={(data) => { setAiPrefillData(null); handleCreateQuotation(data); }}
+              initialData={aiPrefillData ?? undefined}
+              existingQuotations={quotations}
+            />
           </div>
         )}
 
@@ -1094,6 +1107,15 @@ const Index = () => {
       </footer>
 
       <TeamChat userNameMap={userNameMap} />
+
+      <AIQuoteAssistant
+        open={aiAssistantOpen}
+        onOpenChange={setAiAssistantOpen}
+        onPrefill={(data) => {
+          setAiPrefillData(data);
+          navigateToView('create');
+        }}
+      />
     </div>
   );
 };

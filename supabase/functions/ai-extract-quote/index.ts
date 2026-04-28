@@ -35,9 +35,27 @@ Deno.serve(async (req) => {
     const attachmentName: string = (body.attachmentName ?? "").toString();
     const catalog: CatalogHint[] = Array.isArray(body.catalog) ? body.catalog.slice(0, 600) : [];
 
-    const hasBinary = !!(attachmentBase64 && attachmentMime);
+    let extraText = attachmentText;
+    let hasBinary = !!(attachmentBase64 && attachmentMime);
 
-    if (!emailText.trim() && !attachmentText.trim() && !hasBinary) {
+    // DOCX: extract text server-side (Gemini can't read .docx natively)
+    const isDocx =
+      attachmentMime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      attachmentName.toLowerCase().endsWith(".docx");
+
+    if (attachmentBase64 && isDocx) {
+      try {
+        const docxText = await extractDocxText(attachmentBase64);
+        extraText = (extraText ? extraText + "\n\n" : "") + docxText.slice(0, 50000);
+        hasBinary = false; // we converted it to text, don't pass binary to model
+      } catch (e) {
+        console.error("DOCX extraction failed:", e);
+        extraText = (extraText ? extraText + "\n\n" : "") +
+          `[Could not extract text from ${attachmentName}]`;
+      }
+    }
+
+    if (!emailText.trim() && !extraText.trim() && !hasBinary) {
       return new Response(
         JSON.stringify({ error: "No content provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },

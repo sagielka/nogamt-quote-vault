@@ -270,7 +270,7 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
                       ref={fileInputRef}
                       type="file"
                       className="hidden"
-                      accept=".eml,.msg,.txt,.html,.htm,.csv,.pdf,.docx"
+                      accept=".eml,.msg,.txt,.html,.htm,.csv,.pdf,.docx,.png,.jpg,.jpeg,.webp"
                       onChange={handleFileChange}
                     />
                   </>

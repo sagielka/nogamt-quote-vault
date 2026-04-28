@@ -261,7 +261,7 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
                   <>
                     <Upload className="w-6 h-6 mx-auto text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground mb-2">
-                      Drop a .eml / .msg / .txt / .csv file here, or
+                      Drop a PDF, DOCX, image, or .eml/.msg/.txt/.csv file here, or
                     </p>
                     <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
                       Choose file

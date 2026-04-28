@@ -1,6 +1,8 @@
 // AI Quote Extraction
-// Takes raw email text + optional file (text or base64 PDF/image), returns structured quote data
-// using Lovable AI Gateway with tool-calling for reliable JSON.
+// Takes raw email text + optional file (text, base64 PDF/image, or base64 DOCX),
+// returns structured quote data using Lovable AI Gateway with tool-calling.
+
+import { BlobReader, TextWriter, ZipReader } from "https://deno.land/x/zipjs@v2.7.45/index.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +13,42 @@ const corsHeaders = {
 interface CatalogHint {
   sku: string;
   description: string;
+}
+
+// Extract plain text from a DOCX file (base64). Reads word/document.xml from the zip
+// and strips XML tags, preserving paragraph and table-cell breaks.
+async function extractDocxText(base64: string): Promise<string> {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const blob = new Blob([bytes]);
+  const zipReader = new ZipReader(new BlobReader(blob));
+  const entries = await zipReader.getEntries();
+  const docEntry = entries.find((e) => e.filename === "word/document.xml");
+  if (!docEntry || !docEntry.getData) {
+    await zipReader.close();
+    throw new Error("Not a valid DOCX (missing word/document.xml)");
+  }
+  const xml = await docEntry.getData(new TextWriter());
+  await zipReader.close();
+
+  // Insert breaks for paragraphs, table cells/rows, and explicit line breaks
+  const withBreaks = xml
+    .replace(/<w:br\s*\/>/g, "\n")
+    .replace(/<\/w:p>/g, "\n")
+    .replace(/<\/w:tc>/g, "\t")
+    .replace(/<\/w:tr>/g, "\n");
+  // Strip remaining tags and decode common entities
+  const text = withBreaks
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return text;
 }
 
 Deno.serve(async (req) => {
@@ -35,9 +73,27 @@ Deno.serve(async (req) => {
     const attachmentName: string = (body.attachmentName ?? "").toString();
     const catalog: CatalogHint[] = Array.isArray(body.catalog) ? body.catalog.slice(0, 600) : [];
 
-    const hasBinary = !!(attachmentBase64 && attachmentMime);
+    let extraText = attachmentText;
+    let hasBinary = !!(attachmentBase64 && attachmentMime);
 
-    if (!emailText.trim() && !attachmentText.trim() && !hasBinary) {
+    // DOCX: extract text server-side (Gemini can't read .docx natively)
+    const isDocx =
+      attachmentMime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      attachmentName.toLowerCase().endsWith(".docx");
+
+    if (attachmentBase64 && isDocx) {
+      try {
+        const docxText = await extractDocxText(attachmentBase64);
+        extraText = (extraText ? extraText + "\n\n" : "") + docxText.slice(0, 50000);
+        hasBinary = false; // we converted it to text, don't pass binary to model
+      } catch (e) {
+        console.error("DOCX extraction failed:", e);
+        extraText = (extraText ? extraText + "\n\n" : "") +
+          `[Could not extract text from ${attachmentName}]`;
+      }
+    }
+
+    if (!emailText.trim() && !extraText.trim() && !hasBinary) {
       return new Response(
         JSON.stringify({ error: "No content provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -67,7 +123,7 @@ ${catalogList || "(no catalog provided)"}`;
     const userParts: any[] = [];
     const textBlock = [
       emailText ? "===== EMAIL =====\n" + emailText : "",
-      attachmentText ? "\n===== ATTACHMENT TEXT =====\n" + attachmentText : "",
+      extraText ? "\n===== ATTACHMENT TEXT =====\n" + extraText : "",
       hasBinary ? `\n===== ATTACHED FILE: ${attachmentName} (${attachmentMime}) — see file content below =====` : "",
     ].filter(Boolean).join("\n");
 

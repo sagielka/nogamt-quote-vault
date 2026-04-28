@@ -248,6 +248,8 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
                       onClick={() => {
                         setAttachmentName('');
                         setAttachmentText('');
+                        setAttachmentBase64('');
+                        setAttachmentMime('');
                       }}
                     >
                       <X className="w-4 h-4" />

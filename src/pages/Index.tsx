@@ -137,6 +137,8 @@ const Index = () => {
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const [editOrderPickerOpen, setEditOrderPickerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiPrefillData, setAiPrefillData] = useState<Partial<QuotationFormData> | null>(null);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -616,10 +618,16 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
               {currentView === 'list' && quotations.length > 0 && (
-                <Button onClick={() => navigateToView('create')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Quote
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => setAiAssistantOpen(true)} className="border-primary/40">
+                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
+                    AI Quote
+                  </Button>
+                  <Button onClick={() => navigateToView('create')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Quote
+                  </Button>
+                </>
               )}
               {currentView === 'list' && (
                 <Button 

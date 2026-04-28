@@ -1,5 +1,5 @@
 // AI Quote Extraction
-// Takes raw email text + optional file content, returns structured quote data
+// Takes raw email text + optional file (text or base64 PDF/image), returns structured quote data
 // using Lovable AI Gateway with tool-calling for reliable JSON.
 
 const corsHeaders = {
@@ -30,9 +30,14 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const emailText: string = (body.emailText ?? "").toString().slice(0, 50000);
     const attachmentText: string = (body.attachmentText ?? "").toString().slice(0, 50000);
+    const attachmentBase64: string = (body.attachmentBase64 ?? "").toString();
+    const attachmentMime: string = (body.attachmentMime ?? "").toString();
+    const attachmentName: string = (body.attachmentName ?? "").toString();
     const catalog: CatalogHint[] = Array.isArray(body.catalog) ? body.catalog.slice(0, 600) : [];
 
-    if (!emailText.trim() && !attachmentText.trim()) {
+    const hasBinary = !!(attachmentBase64 && attachmentMime);
+
+    if (!emailText.trim() && !attachmentText.trim() && !hasBinary) {
       return new Response(
         JSON.stringify({ error: "No content provided" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -45,29 +50,43 @@ Deno.serve(async (req) => {
       .join("\n");
 
     const systemPrompt = `You are a quotation extraction assistant for Noga Engineering, a precision tooling company.
-You receive an email (and optionally an attachment) from a customer requesting a price quote.
-Extract the customer details and the requested items.
+You receive an email and/or an attached document (PDF, image, scanned order) from a customer requesting a price quote or sending a purchase order.
+Extract the customer details and ALL requested items found in the document.
 
 For each item, do your best to match against the provided catalog SKU list. If a customer reference doesn't exactly match a SKU, suggest the closest catalog SKU as 'suggestedSku' and put your matched value in 'sku' only when you are confident. Otherwise leave 'sku' empty and include the raw text in 'rawText'.
 
-Currency: detect from symbols/words in the email (USD/EUR/GBP/ILS/JPY/CNY). Default USD.
-Quantities: parse numbers; default 1 if a quantity word is missing.
+Currency: detect from symbols/words (USD/EUR/GBP/ILS/JPY/CNY). Default USD.
+Quantities: parse numbers; default 1 if missing.
+
+Read tables in PDFs/images carefully — purchase orders typically list SKU, description, and quantity in tabular form.
 
 CATALOG (SKU | description):
 ${catalogList || "(no catalog provided)"}`;
 
-    const userContent = [
-      "===== EMAIL =====",
-      emailText || "(no email body)",
-      attachmentText ? "\n===== ATTACHMENT =====\n" + attachmentText : "",
-    ].join("\n");
+    // Build multimodal user message
+    const userParts: any[] = [];
+    const textBlock = [
+      emailText ? "===== EMAIL =====\n" + emailText : "",
+      attachmentText ? "\n===== ATTACHMENT TEXT =====\n" + attachmentText : "",
+      hasBinary ? `\n===== ATTACHED FILE: ${attachmentName} (${attachmentMime}) — see file content below =====` : "",
+    ].filter(Boolean).join("\n");
+
+    if (textBlock) userParts.push({ type: "text", text: textBlock });
+
+    if (hasBinary) {
+      // Gemini via OpenAI-compatible gateway accepts image_url for both images and PDFs as data URLs
+      userParts.push({
+        type: "image_url",
+        image_url: { url: `data:${attachmentMime};base64,${attachmentBase64}` },
+      });
+    }
 
     const tools = [
       {
         type: "function",
         function: {
           name: "extract_quote_request",
-          description: "Return structured quote request data extracted from the email.",
+          description: "Return structured quote request data extracted from the email and/or attachment.",
           parameters: {
             type: "object",
             properties: {
@@ -122,7 +141,7 @@ ${catalogList || "(no catalog provided)"}`;
         model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
+          { role: "user", content: userParts.length > 0 ? userParts : "(empty)" },
         ],
         tools,
         tool_choice: { type: "function", function: { name: "extract_quote_request" } },
@@ -153,6 +172,7 @@ ${catalogList || "(no catalog provided)"}`;
     const aiJson = await aiResp.json();
     const toolCall = aiJson?.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
+      console.error("No tool call in AI response:", JSON.stringify(aiJson).slice(0, 1000));
       return new Response(
         JSON.stringify({ error: "AI did not return structured data" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

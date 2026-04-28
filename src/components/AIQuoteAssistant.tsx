@@ -122,7 +122,7 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
   };
 
   const handleExtract = async () => {
-    if (!emailText.trim() && !attachmentText.trim()) {
+    if (!emailText.trim() && !attachmentText.trim() && !attachmentBase64) {
       toast({ title: 'Nothing to extract', description: 'Paste an email or drop a file.', variant: 'destructive' });
       return;
     }
@@ -131,7 +131,14 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
       // Send a compact catalog reference (sku + description only)
       const catalog = productCatalog.map((p) => ({ sku: p.sku, description: p.description }));
       const { data, error } = await supabase.functions.invoke('ai-extract-quote', {
-        body: { emailText, attachmentText, catalog },
+        body: {
+          emailText,
+          attachmentText,
+          attachmentBase64,
+          attachmentMime,
+          attachmentName,
+          catalog,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

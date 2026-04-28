@@ -85,7 +85,7 @@ ${catalogList || "(no catalog provided)"}`;
     const userParts: any[] = [];
     const textBlock = [
       emailText ? "===== EMAIL =====\n" + emailText : "",
-      attachmentText ? "\n===== ATTACHMENT TEXT =====\n" + attachmentText : "",
+      extraText ? "\n===== ATTACHMENT TEXT =====\n" + extraText : "",
       hasBinary ? `\n===== ATTACHED FILE: ${attachmentName} (${attachmentMime}) — see file content below =====` : "",
     ].filter(Boolean).join("\n");
 

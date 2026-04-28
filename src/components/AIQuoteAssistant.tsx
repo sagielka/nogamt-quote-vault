@@ -85,12 +85,14 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
     if (['txt', 'eml', 'msg', 'html', 'htm', 'csv'].includes(ext)) {
       const text = await file.text();
       setAttachmentText(text.slice(0, 50000));
-    } else if (ext === 'pdf' || ['png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
-      // Send PDFs and images directly to the AI as base64 (Gemini reads them natively)
+    } else if (ext === 'pdf' || ['png', 'jpg', 'jpeg', 'webp'].includes(ext) || ext === 'docx') {
+      // PDFs/images: Gemini reads them natively. DOCX: server-side text extraction.
       const base64 = await fileToBase64(file);
       const mime =
         ext === 'pdf'
           ? 'application/pdf'
+          : ext === 'docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
           : ext === 'jpg' || ext === 'jpeg'
           ? 'image/jpeg'
           : `image/${ext}`;
@@ -98,13 +100,13 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
       setAttachmentMime(mime);
       toast({
         title: 'File attached',
-        description: `${file.name} will be read directly by the AI.`,
+        description: `${file.name} will be parsed automatically.`,
       });
     } else {
       setAttachmentText(`[Attached file: ${file.name} — unsupported format, paste contents into the email box]`);
       toast({
         title: 'Unsupported file',
-        description: 'Paste any text into the email box for best results.',
+        description: 'Supported: PDF, DOCX, images, .eml/.msg/.txt/.csv/.html.',
         variant: 'destructive',
       });
     }

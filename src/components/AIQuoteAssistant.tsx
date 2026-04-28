@@ -40,6 +40,8 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
   const { toast } = useToast();
   const [emailText, setEmailText] = useState('');
   const [attachmentText, setAttachmentText] = useState('');
+  const [attachmentBase64, setAttachmentBase64] = useState('');
+  const [attachmentMime, setAttachmentMime] = useState('');
   const [attachmentName, setAttachmentName] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
@@ -49,10 +51,25 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
   const reset = () => {
     setEmailText('');
     setAttachmentText('');
+    setAttachmentBase64('');
+    setAttachmentMime('');
     setAttachmentName('');
     setExtracted(null);
     setChosenSkus({});
   };
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // strip "data:...;base64," prefix
+        const base64 = result.split(',')[1] || '';
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   const readFile = async (file: File) => {
     const ext = file.name.toLowerCase().split('.').pop() || '';
@@ -61,15 +78,34 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
       return;
     }
     setAttachmentName(file.name);
+    setAttachmentText('');
+    setAttachmentBase64('');
+    setAttachmentMime('');
+
     if (['txt', 'eml', 'msg', 'html', 'htm', 'csv'].includes(ext)) {
       const text = await file.text();
       setAttachmentText(text.slice(0, 50000));
-    } else {
-      // For PDF/docx we don't have parsing on client; tell AI it's binary
-      setAttachmentText(`[Attached file: ${file.name} — binary content not extracted client-side]`);
+    } else if (ext === 'pdf' || ['png', 'jpg', 'jpeg', 'webp'].includes(ext)) {
+      // Send PDFs and images directly to the AI as base64 (Gemini reads them natively)
+      const base64 = await fileToBase64(file);
+      const mime =
+        ext === 'pdf'
+          ? 'application/pdf'
+          : ext === 'jpg' || ext === 'jpeg'
+          ? 'image/jpeg'
+          : `image/${ext}`;
+      setAttachmentBase64(base64);
+      setAttachmentMime(mime);
       toast({
         title: 'File attached',
-        description: 'Binary files (PDF/DOCX) — copy any text content into the email box for best results.',
+        description: `${file.name} will be read directly by the AI.`,
+      });
+    } else {
+      setAttachmentText(`[Attached file: ${file.name} — unsupported format, paste contents into the email box]`);
+      toast({
+        title: 'Unsupported file',
+        description: 'Paste any text into the email box for best results.',
+        variant: 'destructive',
       });
     }
   };

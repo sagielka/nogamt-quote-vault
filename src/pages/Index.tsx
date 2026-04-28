@@ -1107,6 +1107,15 @@ const Index = () => {
       </footer>
 
       <TeamChat userNameMap={userNameMap} />
+
+      <AIQuoteAssistant
+        open={aiAssistantOpen}
+        onOpenChange={setAiAssistantOpen}
+        onPrefill={(data) => {
+          setAiPrefillData(data);
+          navigateToView('create');
+        }}
+      />
     </div>
   );
 };

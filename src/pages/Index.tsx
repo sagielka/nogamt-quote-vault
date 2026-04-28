@@ -23,7 +23,8 @@ import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3 } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles } from 'lucide-react';
+import { AIQuoteAssistant } from '@/components/AIQuoteAssistant';
 import {
   AlertDialog,
   AlertDialogAction,

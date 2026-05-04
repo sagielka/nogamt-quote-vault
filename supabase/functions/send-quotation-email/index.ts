@@ -103,15 +103,19 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { data: unsubscribed } = await serviceSupabase
+    // Check unsubscribed — filter out unsubscribed recipients from toList
+    const allToEmails = toList.map(t => t.email.toLowerCase());
+    const { data: unsubscribedRows } = await serviceSupabase
       .from('unsubscribed_emails')
-      .select('id')
-      .eq('email', to.toLowerCase())
-      .maybeSingle();
+      .select('email')
+      .in('email', allToEmails);
 
-    if (unsubscribed) {
+    const unsubscribedSet = new Set((unsubscribedRows || []).map(r => r.email.toLowerCase()));
+    const filteredToList = toList.filter(t => !unsubscribedSet.has(t.email.toLowerCase()));
+
+    if (filteredToList.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'This email has unsubscribed from communications.', unsubscribed: true }),
+        JSON.stringify({ error: 'All recipients have unsubscribed from communications.', unsubscribed: true }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

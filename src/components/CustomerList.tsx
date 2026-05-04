@@ -66,6 +66,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 
 const EMAIL_TEMPLATES = [
   {

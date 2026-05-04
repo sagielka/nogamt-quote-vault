@@ -277,7 +277,8 @@ const handler = async (req: Request): Promise<Response> => {
         .insert({
           quotation_id: quotation.id,
           user_id: user.id,
-          recipient_emails: [to],
+          recipient_emails: filteredToList.map(t => t.email),
+          cc_emails: ccList.map(c => c.email),
           subject,
           body_html: htmlContent,
           email_type: isReminder ? 'reminder' : 'quotation',

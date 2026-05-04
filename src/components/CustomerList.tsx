@@ -566,8 +566,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             message: emailMessage.trim(),
             messageHtml: getEditorHtml(),
             ccSender: ccSelf,
-            cc: ccField.split(',').map(e => e.trim()).filter(e => emailRegex.test(e)),
-            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => emailRegex.test(e))],
+            cc: ccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)),
+            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))],
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }

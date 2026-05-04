@@ -1331,66 +1331,66 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
           <div className="py-2 space-y-2 text-sm text-muted-foreground">
             <p>This will send a follow-up email with the quotation PDF to:</p>
             <div className="bg-muted rounded-md p-3 space-y-2">
-              {quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).map((email, i) => (
-                <label key={i} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedReminderRecipients.includes(email)}
-                    onChange={(ev) => {
-                      if (ev.target.checked) setSelectedReminderRecipients(prev => [...prev, email]);
-                      else setSelectedReminderRecipients(prev => prev.filter(r => r !== email));
-                    }}
-                    className="rounded border-input"
-                  />
-                  <Mail className="w-3 h-3 text-primary" />
-                  <span className="text-foreground font-medium">{email}</span>
-                </label>
-              ))}
-              {selectedReminderRecipients
-                .filter(r => !quotation.clientEmail.split(',').map(e => e.trim()).filter(Boolean).includes(r))
-                .map((email, i) => (
-                  <label key={`added-${i}`} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked onChange={() => setSelectedReminderRecipients(prev => prev.filter(r => r !== email))} className="rounded border-input" />
-                    <Mail className="w-3 h-3 text-primary" />
-                    <span className="text-foreground font-medium">{email}</span>
-                    <Badge variant="outline" className="text-xs ml-1">added</Badge>
-                  </label>
-                ))}
-            </div>
-            <div className="flex gap-2 mt-2">
-              <Input
-                type="email"
-                placeholder="Add email address..."
-                value={additionalReminderEmail}
-                onChange={(e) => setAdditionalReminderEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const email = additionalReminderEmail.trim();
-                    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedReminderRecipients.includes(email)) {
-                      setSelectedReminderRecipients(prev => [...prev, email]);
-                      setAdditionalReminderEmail('');
-                    }
-                  }
-                }}
-                className="text-sm"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={!additionalReminderEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(additionalReminderEmail.trim()) || selectedReminderRecipients.includes(additionalReminderEmail.trim())}
-                onClick={() => {
-                  const email = additionalReminderEmail.trim();
-                  if (email && !selectedReminderRecipients.includes(email)) {
-                    setSelectedReminderRecipients(prev => [...prev, email]);
-                    setAdditionalReminderEmail('');
-                  }
-                }}
-              >
-                Add
-              </Button>
-            </div>
+               {quotation.clientEmail.split(',').map(e => e.trim().toLowerCase()).filter(Boolean).map((email, i) => (
+                 <label key={i} className="flex items-center gap-2 cursor-pointer">
+                   <input
+                     type="checkbox"
+                     checked={selectedReminderRecipients.includes(email)}
+                     onChange={(ev) => {
+                       if (ev.target.checked) setSelectedReminderRecipients(prev => prev.includes(email) ? prev : [...prev, email]);
+                       else setSelectedReminderRecipients(prev => prev.filter(r => r !== email));
+                     }}
+                     className="rounded border-input"
+                   />
+                   <Mail className="w-3 h-3 text-primary" />
+                   <span className="text-foreground font-medium">{email}</span>
+                 </label>
+               ))}
+               {selectedReminderRecipients
+                 .filter(r => !quotation.clientEmail.split(',').map(e => e.trim().toLowerCase()).filter(Boolean).includes(r))
+                 .map((email, i) => (
+                   <label key={`added-${i}`} className="flex items-center gap-2 cursor-pointer">
+                     <input type="checkbox" checked onChange={() => setSelectedReminderRecipients(prev => prev.filter(r => r !== email))} className="rounded border-input" />
+                     <Mail className="w-3 h-3 text-primary" />
+                     <span className="text-foreground font-medium">{email}</span>
+                     <Badge variant="outline" className="text-xs ml-1">added</Badge>
+                   </label>
+                 ))}
+             </div>
+             <div className="flex gap-2 mt-2">
+               <Input
+                 type="email"
+                 placeholder="Add email address..."
+                 value={additionalReminderEmail}
+                 onChange={(e) => setAdditionalReminderEmail(e.target.value)}
+                 onKeyDown={(e) => {
+                   if (e.key === 'Enter') {
+                     e.preventDefault();
+                     const email = additionalReminderEmail.trim().toLowerCase();
+                     if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedReminderRecipients.includes(email)) {
+                       setSelectedReminderRecipients(prev => [...prev, email]);
+                       setAdditionalReminderEmail('');
+                     }
+                   }
+                 }}
+                 className="text-sm"
+               />
+               <Button
+                 type="button"
+                 size="sm"
+                 variant="outline"
+                 disabled={!additionalReminderEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(additionalReminderEmail.trim()) || selectedReminderRecipients.includes(additionalReminderEmail.trim().toLowerCase())}
+                 onClick={() => {
+                   const email = additionalReminderEmail.trim().toLowerCase();
+                   if (email && !selectedReminderRecipients.includes(email)) {
+                     setSelectedReminderRecipients(prev => [...prev, email]);
+                     setAdditionalReminderEmail('');
+                   }
+                 }}
+               >
+                 Add
+               </Button>
+             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setReminderDialogOpen(false)}>Cancel</Button>

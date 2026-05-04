@@ -28,6 +28,7 @@ import { EmailTrackingRecord } from '@/hooks/useEmailTracking';
 import logo from '@/assets/logo.png';
 import thinkingInside from '@/assets/thinking-inside-new.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
+import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
 
 // Declare electron API types

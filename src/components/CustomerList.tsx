@@ -163,6 +163,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [editorMinimized, setEditorMinimized] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState<Customer[]>([]);
   const [toField, setToField] = useState('');
+  const [pickerSelectedEmails, setPickerSelectedEmails] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');

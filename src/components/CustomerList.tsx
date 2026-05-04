@@ -66,6 +66,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 
 const EMAIL_TEMPLATES = [
   {
@@ -163,6 +164,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [editorMinimized, setEditorMinimized] = useState(false);
   const [emailRecipients, setEmailRecipients] = useState<Customer[]>([]);
   const [toField, setToField] = useState('');
+  const [pickerSelectedEmails, setPickerSelectedEmails] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
@@ -481,9 +483,9 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
 
   const openEmailDialog = (recipients: Customer[]) => {
     setEmailRecipients(recipients);
-    // Pre-populate To field with all emails from all recipients
-    const allEmails = recipients.flatMap(c => c.email.split(',').map(e => e.trim()).filter(Boolean));
-    setToField(allEmails.join(', '));
+    // Pre-populate picker with all emails from all recipients
+    const allEmails = recipients.flatMap(c => c.email.split(',').map(e => e.trim().toLowerCase()).filter(Boolean));
+    setPickerSelectedEmails([...new Set(allEmails)]);
     setEmailSubject('');
     setEmailMessage('');
     setAttachments([]);
@@ -535,13 +537,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
       toast({ title: 'Validation Error', description: 'Subject and message are required.', variant: 'destructive' });
       return;
     }
-    const toEmails = toField.split(',').map(e => e.trim()).filter(Boolean);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidTo = toEmails.filter(e => !emailRegex.test(e));
-    if (invalidTo.length > 0) {
-      toast({ title: 'Invalid Email', description: `Invalid To email(s): ${invalidTo.join(', ')}`, variant: 'destructive' });
-      return;
-    }
+    const toEmails = pickerSelectedEmails.filter(Boolean);
     if (toEmails.length === 0) {
       toast({ title: 'Validation Error', description: 'At least one recipient is required.', variant: 'destructive' });
       return;
@@ -570,8 +566,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             message: emailMessage.trim(),
             messageHtml: getEditorHtml(),
             ccSender: ccSelf,
-            cc: ccField.split(',').map(e => e.trim()).filter(e => emailRegex.test(e)),
-            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => emailRegex.test(e))],
+            cc: ccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)),
+            bcc: ['sagi@noga.com', ...bccField.split(',').map(e => e.trim()).filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))],
             attachments: attachments.map((a) => ({ name: a.name, content: a.content })),
           }),
         }
@@ -932,231 +928,239 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
       </AlertDialog>
 
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>
-              {emailRecipients.length === 1
-                ? `Email ${emailRecipients[0].name}`
-                : `Email ${emailRecipients.length} Customers`}
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              Compose Email
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
-            <div>
-              <Label className="text-xs text-muted-foreground">To (comma-separated)</Label>
-              <Input value={toField} onChange={(e) => setToField(e.target.value)} placeholder="email@example.com, email2@example.com" type="text" />
-              {emailRecipients.length === 1 && (
-                <p className="text-[10px] text-muted-foreground mt-1">New emails added here will be saved to {emailRecipients[0].name}'s contact</p>
-              )}
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">CC (comma-separated)</Label>
-              <Input value={ccField} onChange={(e) => setCcField(e.target.value)} placeholder="cc1@example.com, cc2@example.com" type="text" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">BCC (comma-separated)</Label>
-              <Input value={bccField} onChange={(e) => setBccField(e.target.value)} placeholder="bcc@example.com" type="text" />
-            </div>
-            <div>
-              <Label>Template</Label>
-              <Select
-                value=""
-                onValueChange={(id) => {
-                  const tpl = allTemplates.find((t) => t.id === id);
-                  if (tpl) {
-                    setEmailSubject(tpl.subject);
-                    setEmailMessage(tpl.message);
-                    if (editorRef.current) {
-                      editorRef.current.innerHTML = tpl.message.replace(/\n/g, '<br>');
-                    }
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Load a template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {EMAIL_TEMPLATES.length > 0 && (
-                    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Built-in</div>
-                  )}
-                  {EMAIL_TEMPLATES.map((tpl) => (
-                    <SelectItem key={tpl.id} value={tpl.id}>
-                      {tpl.name}
-                    </SelectItem>
-                  ))}
-                  {customTemplates.length > 0 && (
-                    <>
-                      <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1">Saved</div>
-                      {customTemplates.map((tpl) => (
-                        <div key={tpl.id} className="flex items-center group">
-                          <SelectItem value={tpl.id} className="flex-1">
-                            {tpl.name}
-                          </SelectItem>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0 mr-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteTemplate(tpl.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Subject *</Label>
-              <Input
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="Email subject..."
-                maxLength={200}
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label>Message *</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs text-muted-foreground"
-                  onClick={() => setEditorMinimized(prev => !prev)}
-                >
-                  {editorMinimized ? <Maximize2 className="h-3 w-3 mr-1" /> : <Minimize2 className="h-3 w-3 mr-1" />}
-                  {editorMinimized ? 'Expand' : 'Minimize'}
-                </Button>
-              </div>
-              {!editorMinimized ? (
-                <TooltipProvider delayDuration={300}>
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
-                          <Bold className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
-                          <Italic className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
-                          <Underline className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
-                      <div className="w-px h-5 bg-border mx-1" />
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
-                          <List className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
-                          <ListOrdered className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
-                      <div className="w-px h-5 bg-border mx-1" />
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
-                          <Undo className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
-                          <Redo className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
-                      <div className="w-px h-5 bg-border mx-1" />
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
-                          const text = window.getSelection()?.toString();
-                          if (text) {
-                            await navigator.clipboard.writeText(text);
-                            toast({ title: 'Copied to clipboard' });
-                          }
-                        }}>
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
-                          try {
-                            const text = await navigator.clipboard.readText();
-                            execFormat('insertText', text);
-                          } catch {
-                            toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
-                          }
-                        }}>
-                          <ClipboardPaste className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
-                    </div>
-                    <div
-                      ref={editorRef}
-                      contentEditable
-                      className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
-                      onInput={handleEditorInput}
-                      data-placeholder="Write your message..."
-                      style={{ whiteSpace: 'pre-wrap' }}
-                    />
-                  </div>
-                </TooltipProvider>
-              ) : (
-                <div className="border rounded-md p-3 bg-muted/30 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setEditorMinimized(false)}>
-                  {emailMessage.trim() ? (
-                    <p className="line-clamp-2">{emailMessage.substring(0, 120)}{emailMessage.length > 120 ? '...' : ''}</p>
-                  ) : (
-                    <p className="italic">Click to expand editor...</p>
-                  )}
-                </div>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
-            </div>
-            <div>
-              <Label className="text-sm">Attachments</Label>
-              <div className="mt-1 space-y-2">
-                {attachments.map((att, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
-                    <Paperclip className="w-3 h-3 shrink-0 text-muted-foreground" />
-                    <span className="truncate flex-1">{att.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {(att.size / 1024).toFixed(0)}KB
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeAttachment(i)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-                <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
-                  <Paperclip className="w-4 h-4" />
-                  Add file
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileSelect}
+          <div className="flex gap-4 overflow-hidden flex-1 min-h-0">
+            {/* Left panel – Recipients */}
+            <div className="w-[320px] shrink-0 border rounded-lg p-3 space-y-3 overflow-y-auto bg-muted/20">
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recipients ({pickerSelectedEmails.length})</Label>
+                <div className="mt-2">
+                  <CustomerEmailPicker
+                    selectedEmails={pickerSelectedEmails}
+                    onEmailsChange={setPickerSelectedEmails}
                   />
-                </label>
-                <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
+                </div>
+              </div>
+              <div className="border-t pt-3">
+                <Label className="text-xs text-muted-foreground">CC (comma-separated)</Label>
+                <Input value={ccField} onChange={(e) => setCcField(e.target.value)} placeholder="cc1@example.com" type="text" className="text-sm mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">BCC (comma-separated)</Label>
+                <Input value={bccField} onChange={(e) => setBccField(e.target.value)} placeholder="bcc@example.com" type="text" className="text-sm mt-1" />
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="cc-self-big"
+                  checked={ccSelf}
+                  onChange={(e) => setCcSelf(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="cc-self-big" className="text-xs font-normal cursor-pointer">
+                  CC myself ({user?.email})
+                </Label>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="cc-self"
-                checked={ccSelf}
-                onChange={(e) => setCcSelf(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <Label htmlFor="cc-self" className="text-sm font-normal cursor-pointer">
-                CC myself ({user?.email})
-              </Label>
+
+            {/* Right panel – Compose */}
+            <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+              <div>
+                <Label>Template</Label>
+                <Select
+                  value=""
+                  onValueChange={(id) => {
+                    const tpl = allTemplates.find((t) => t.id === id);
+                    if (tpl) {
+                      setEmailSubject(tpl.subject);
+                      setEmailMessage(tpl.message);
+                      if (editorRef.current) {
+                        editorRef.current.innerHTML = tpl.message.replace(/\n/g, '<br>');
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Load a template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMAIL_TEMPLATES.length > 0 && (
+                      <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Built-in</div>
+                    )}
+                    {EMAIL_TEMPLATES.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id}>
+                        {tpl.name}
+                      </SelectItem>
+                    ))}
+                    {customTemplates.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1">Saved</div>
+                        {customTemplates.map((tpl) => (
+                          <div key={tpl.id} className="flex items-center group">
+                            <SelectItem value={tpl.id} className="flex-1">
+                              {tpl.name}
+                            </SelectItem>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0 mr-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTemplate(tpl.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Subject *</Label>
+                <Input
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Email subject..."
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label>Message *</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-muted-foreground"
+                    onClick={() => setEditorMinimized(prev => !prev)}
+                  >
+                    {editorMinimized ? <Maximize2 className="h-3 w-3 mr-1" /> : <Minimize2 className="h-3 w-3 mr-1" />}
+                    {editorMinimized ? 'Expand' : 'Minimize'}
+                  </Button>
+                </div>
+                {!editorMinimized ? (
+                  <TooltipProvider delayDuration={300}>
+                    <div className="border rounded-md overflow-hidden">
+                      <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
+                            <Bold className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
+                            <Italic className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
+                            <Underline className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
+                        <div className="w-px h-5 bg-border mx-1" />
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
+                            <List className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
+                            <ListOrdered className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
+                        <div className="w-px h-5 bg-border mx-1" />
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
+                            <Undo className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
+                            <Redo className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
+                        <div className="w-px h-5 bg-border mx-1" />
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                            const text = window.getSelection()?.toString();
+                            if (text) {
+                              await navigator.clipboard.writeText(text);
+                              toast({ title: 'Copied to clipboard' });
+                            }
+                          }}>
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                            try {
+                              const text = await navigator.clipboard.readText();
+                              execFormat('insertText', text);
+                            } catch {
+                              toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
+                            }
+                          }}>
+                            <ClipboardPaste className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
+                      </div>
+                      <div
+                        ref={editorRef}
+                        contentEditable
+                        className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
+                        onInput={handleEditorInput}
+                        data-placeholder="Write your message..."
+                        style={{ whiteSpace: 'pre-wrap' }}
+                      />
+                    </div>
+                  </TooltipProvider>
+                ) : (
+                  <div className="border rounded-md p-3 bg-muted/30 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setEditorMinimized(false)}>
+                    {emailMessage.trim() ? (
+                      <p className="line-clamp-2">{emailMessage.substring(0, 120)}{emailMessage.length > 120 ? '...' : ''}</p>
+                    ) : (
+                      <p className="italic">Click to expand editor...</p>
+                    )}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
+              </div>
+              <div>
+                <Label className="text-sm">Attachments</Label>
+                <div className="mt-1 space-y-2">
+                  {attachments.map((att, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
+                      <Paperclip className="w-3 h-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate flex-1">{att.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {(att.size / 1024).toFixed(0)}KB
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeAttachment(i)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
+                    <Paperclip className="w-4 h-4" />
+                    Add file
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+                  <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="flex-wrap gap-2 border-t pt-4 shrink-0">
@@ -1177,13 +1181,13 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
-            <Button onClick={handleSendEmail} disabled={sendingEmail}>
+            <Button onClick={handleSendEmail} disabled={sendingEmail || pickerSelectedEmails.length === 0}>
               {sendingEmail ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2" />
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              {sendingEmail ? 'Sending...' : 'Send'}
+              {sendingEmail ? 'Sending...' : `Send (${pickerSelectedEmails.length})`}
             </Button>
           </DialogFooter>
         </DialogContent>

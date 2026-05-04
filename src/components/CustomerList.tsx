@@ -1166,19 +1166,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                 <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="cc-self"
-                checked={ccSelf}
-                onChange={(e) => setCcSelf(e.target.checked)}
-                className="h-4 w-4 rounded border-border"
-              />
-              <Label htmlFor="cc-self" className="text-sm font-normal cursor-pointer">
-                CC myself ({user?.email})
-              </Label>
-            </div>
-          </div>
+            </div>{/* end right panel */}
+          </div>{/* end two-column wrapper */}
           <DialogFooter className="flex-wrap gap-2 border-t pt-4 shrink-0">
             <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
             <Button

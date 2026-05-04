@@ -928,12 +928,11 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
       </AlertDialog>
 
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>
-              {emailRecipients.length === 1
-                ? `Email ${emailRecipients[0].name}`
-                : `Email ${emailRecipients.length} Customers`}
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              Compose Email
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 overflow-y-auto flex-1 pr-1">

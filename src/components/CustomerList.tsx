@@ -936,7 +936,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             </DialogTitle>
           </DialogHeader>
           <div className="flex gap-4 overflow-hidden flex-1 min-h-0">
-            {/* Left panel – Customer & Email Picker */}
+            {/* Left panel – Recipients */}
             <div className="w-[320px] shrink-0 border rounded-lg p-3 space-y-3 overflow-y-auto bg-muted/20">
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recipients ({pickerSelectedEmails.length})</Label>
@@ -971,189 +971,196 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
 
             {/* Right panel – Compose */}
             <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-                    setEmailSubject(tpl.subject);
-                    setEmailMessage(tpl.message);
-                    if (editorRef.current) {
-                      editorRef.current.innerHTML = tpl.message.replace(/\n/g, '<br>');
+              <div>
+                <Label>Template</Label>
+                <Select
+                  value=""
+                  onValueChange={(id) => {
+                    const tpl = allTemplates.find((t) => t.id === id);
+                    if (tpl) {
+                      setEmailSubject(tpl.subject);
+                      setEmailMessage(tpl.message);
+                      if (editorRef.current) {
+                        editorRef.current.innerHTML = tpl.message.replace(/\n/g, '<br>');
+                      }
                     }
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Load a template..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {EMAIL_TEMPLATES.length > 0 && (
-                    <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Built-in</div>
-                  )}
-                  {EMAIL_TEMPLATES.map((tpl) => (
-                    <SelectItem key={tpl.id} value={tpl.id}>
-                      {tpl.name}
-                    </SelectItem>
-                  ))}
-                  {customTemplates.length > 0 && (
-                    <>
-                      <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1">Saved</div>
-                      {customTemplates.map((tpl) => (
-                        <div key={tpl.id} className="flex items-center group">
-                          <SelectItem value={tpl.id} className="flex-1">
-                            {tpl.name}
-                          </SelectItem>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0 mr-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteTemplate(tpl.id);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Subject *</Label>
-              <Input
-                value={emailSubject}
-                onChange={(e) => setEmailSubject(e.target.value)}
-                placeholder="Email subject..."
-                maxLength={200}
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label>Message *</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs text-muted-foreground"
-                  onClick={() => setEditorMinimized(prev => !prev)}
+                  }}
                 >
-                  {editorMinimized ? <Maximize2 className="h-3 w-3 mr-1" /> : <Minimize2 className="h-3 w-3 mr-1" />}
-                  {editorMinimized ? 'Expand' : 'Minimize'}
-                </Button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Load a template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMAIL_TEMPLATES.length > 0 && (
+                      <div className="px-2 py-1 text-xs font-semibold text-muted-foreground">Built-in</div>
+                    )}
+                    {EMAIL_TEMPLATES.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id}>
+                        {tpl.name}
+                      </SelectItem>
+                    ))}
+                    {customTemplates.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-xs font-semibold text-muted-foreground border-t mt-1 pt-1">Saved</div>
+                        {customTemplates.map((tpl) => (
+                          <div key={tpl.id} className="flex items-center group">
+                            <SelectItem value={tpl.id} className="flex-1">
+                              {tpl.name}
+                            </SelectItem>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0 mr-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTemplate(tpl.id);
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
-              {!editorMinimized ? (
-                <TooltipProvider delayDuration={300}>
-                  <div className="border rounded-md overflow-hidden">
-                    <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
-                          <Bold className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
-                          <Italic className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
-                          <Underline className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
-                      <div className="w-px h-5 bg-border mx-1" />
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
-                          <List className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
-                          <ListOrdered className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
-                      <div className="w-px h-5 bg-border mx-1" />
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
-                          <Undo className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
-                          <Redo className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
-                      <div className="w-px h-5 bg-border mx-1" />
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
-                          const text = window.getSelection()?.toString();
-                          if (text) {
-                            await navigator.clipboard.writeText(text);
-                            toast({ title: 'Copied to clipboard' });
-                          }
-                        }}>
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
-                      <Tooltip><TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
-                          try {
-                            const text = await navigator.clipboard.readText();
-                            execFormat('insertText', text);
-                          } catch {
-                            toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
-                          }
-                        }}>
-                          <ClipboardPaste className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
-                    </div>
-                    <div
-                      ref={editorRef}
-                      contentEditable
-                      className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
-                      onInput={handleEditorInput}
-                      data-placeholder="Write your message..."
-                      style={{ whiteSpace: 'pre-wrap' }}
-                    />
-                  </div>
-                </TooltipProvider>
-              ) : (
-                <div className="border rounded-md p-3 bg-muted/30 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setEditorMinimized(false)}>
-                  {emailMessage.trim() ? (
-                    <p className="line-clamp-2">{emailMessage.substring(0, 120)}{emailMessage.length > 120 ? '...' : ''}</p>
-                  ) : (
-                    <p className="italic">Click to expand editor...</p>
-                  )}
+              <div>
+                <Label>Subject *</Label>
+                <Input
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Email subject..."
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label>Message *</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-muted-foreground"
+                    onClick={() => setEditorMinimized(prev => !prev)}
+                  >
+                    {editorMinimized ? <Maximize2 className="h-3 w-3 mr-1" /> : <Minimize2 className="h-3 w-3 mr-1" />}
+                    {editorMinimized ? 'Expand' : 'Minimize'}
+                  </Button>
                 </div>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
-            </div>
-            <div>
-              <Label className="text-sm">Attachments</Label>
-              <div className="mt-1 space-y-2">
-                {attachments.map((att, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
-                    <Paperclip className="w-3 h-3 shrink-0 text-muted-foreground" />
-                    <span className="truncate flex-1">{att.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {(att.size / 1024).toFixed(0)}KB
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeAttachment(i)}>
-                      <X className="h-3 w-3" />
-                    </Button>
+                {!editorMinimized ? (
+                  <TooltipProvider delayDuration={300}>
+                    <div className="border rounded-md overflow-hidden">
+                      <div className="flex items-center gap-0.5 px-2 py-1 bg-muted/50 border-b flex-wrap">
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('bold')}>
+                            <Bold className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Bold (Ctrl+B)</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('italic')}>
+                            <Italic className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Italic (Ctrl+I)</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('underline')}>
+                            <Underline className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Underline (Ctrl+U)</TooltipContent></Tooltip>
+                        <div className="w-px h-5 bg-border mx-1" />
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertUnorderedList')}>
+                            <List className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Bullet List</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('insertOrderedList')}>
+                            <ListOrdered className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Numbered List</TooltipContent></Tooltip>
+                        <div className="w-px h-5 bg-border mx-1" />
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('undo')}>
+                            <Undo className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Undo (Ctrl+Z)</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execFormat('redo')}>
+                            <Redo className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Redo (Ctrl+Y)</TooltipContent></Tooltip>
+                        <div className="w-px h-5 bg-border mx-1" />
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                            const text = window.getSelection()?.toString();
+                            if (text) {
+                              await navigator.clipboard.writeText(text);
+                              toast({ title: 'Copied to clipboard' });
+                            }
+                          }}>
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Copy</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={async () => {
+                            try {
+                              const text = await navigator.clipboard.readText();
+                              execFormat('insertText', text);
+                            } catch {
+                              toast({ title: 'Paste', description: 'Use Ctrl+V to paste', variant: 'destructive' });
+                            }
+                          }}>
+                            <ClipboardPaste className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger><TooltipContent>Paste</TooltipContent></Tooltip>
+                      </div>
+                      <div
+                        ref={editorRef}
+                        contentEditable
+                        className="min-h-[150px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
+                        onInput={handleEditorInput}
+                        data-placeholder="Write your message..."
+                        style={{ whiteSpace: 'pre-wrap' }}
+                      />
+                    </div>
+                  </TooltipProvider>
+                ) : (
+                  <div className="border rounded-md p-3 bg-muted/30 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setEditorMinimized(false)}>
+                    {emailMessage.trim() ? (
+                      <p className="line-clamp-2">{emailMessage.substring(0, 120)}{emailMessage.length > 120 ? '...' : ''}</p>
+                    ) : (
+                      <p className="italic">Click to expand editor...</p>
+                    )}
                   </div>
-                ))}
-                <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
-                  <Paperclip className="w-4 h-4" />
-                  Add file
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleFileSelect}
-                  />
-                </label>
-                <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">{emailMessage.length}/5000</p>
               </div>
-            </div>
+              <div>
+                <Label className="text-sm">Attachments</Label>
+                <div className="mt-1 space-y-2">
+                  {attachments.map((att, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1">
+                      <Paperclip className="w-3 h-3 shrink-0 text-muted-foreground" />
+                      <span className="truncate flex-1">{att.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {(att.size / 1024).toFixed(0)}KB
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeAttachment(i)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer hover:underline">
+                    <Paperclip className="w-4 h-4" />
+                    Add file
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+                  <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="flex-wrap gap-2 border-t pt-4 shrink-0">
@@ -1174,13 +1181,13 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
-            <Button onClick={handleSendEmail} disabled={sendingEmail}>
+            <Button onClick={handleSendEmail} disabled={sendingEmail || pickerSelectedEmails.length === 0}>
               {sendingEmail ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2" />
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              {sendingEmail ? 'Sending...' : 'Send'}
+              {sendingEmail ? 'Sending...' : `Send (${pickerSelectedEmails.length})`}
             </Button>
           </DialogFooter>
         </DialogContent>

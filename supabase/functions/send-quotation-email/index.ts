@@ -236,7 +236,7 @@ const handler = async (req: Request): Promise<Response> => {
         name: "Noga Engineering & Technology Ltd.",
         email: "quotes@noga-mt.com",
       },
-      to: [{ email: to, name: clientName }],
+      to: filteredToList,
       ...(ccList.length > 0 ? { cc: ccList } : {}),
       subject,
       htmlContent,

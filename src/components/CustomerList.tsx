@@ -940,17 +940,42 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
               <Label className="text-xs text-muted-foreground">To (comma-separated)</Label>
               <Input value={toField} onChange={(e) => setToField(e.target.value)} placeholder="email@example.com, email2@example.com" type="text" />
               {emailRecipients.length === 1 && (
-                <p className="text-[10px] text-muted-foreground mt-1">New emails added here will be saved to {emailRecipients[0].name}'s contact</p>
-              )}
+          <div className="flex gap-4 overflow-hidden flex-1 min-h-0">
+            {/* Left panel – Customer & Email Picker */}
+            <div className="w-[320px] shrink-0 border rounded-lg p-3 space-y-3 overflow-y-auto bg-muted/20">
+              <div>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recipients ({pickerSelectedEmails.length})</Label>
+                <div className="mt-2">
+                  <CustomerEmailPicker
+                    selectedEmails={pickerSelectedEmails}
+                    onEmailsChange={setPickerSelectedEmails}
+                  />
+                </div>
+              </div>
+              <div className="border-t pt-3">
+                <Label className="text-xs text-muted-foreground">CC (comma-separated)</Label>
+                <Input value={ccField} onChange={(e) => setCcField(e.target.value)} placeholder="cc1@example.com" type="text" className="text-sm mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">BCC (comma-separated)</Label>
+                <Input value={bccField} onChange={(e) => setBccField(e.target.value)} placeholder="bcc@example.com" type="text" className="text-sm mt-1" />
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="cc-self-big"
+                  checked={ccSelf}
+                  onChange={(e) => setCcSelf(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <Label htmlFor="cc-self-big" className="text-xs font-normal cursor-pointer">
+                  CC myself ({user?.email})
+                </Label>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">CC (comma-separated)</Label>
-              <Input value={ccField} onChange={(e) => setCcField(e.target.value)} placeholder="cc1@example.com, cc2@example.com" type="text" />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">BCC (comma-separated)</Label>
-              <Input value={bccField} onChange={(e) => setBccField(e.target.value)} placeholder="bcc@example.com" type="text" />
-            </div>
+
+            {/* Right panel – Compose */}
+            <div className="flex-1 space-y-3 overflow-y-auto pr-1">
             <div>
               <Label>Template</Label>
               <Select

@@ -10,6 +10,7 @@ const corsHeaders = {
 
 interface SendQuotationRequest {
   to: string;
+  recipients?: string[];
   clientName: string;
   quoteNumber: string;
   total: string;

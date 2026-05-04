@@ -481,9 +481,9 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
 
   const openEmailDialog = (recipients: Customer[]) => {
     setEmailRecipients(recipients);
-    // Pre-populate To field with all emails from all recipients
-    const allEmails = recipients.flatMap(c => c.email.split(',').map(e => e.trim()).filter(Boolean));
-    setToField(allEmails.join(', '));
+    // Pre-populate picker with all emails from all recipients
+    const allEmails = recipients.flatMap(c => c.email.split(',').map(e => e.trim().toLowerCase()).filter(Boolean));
+    setPickerSelectedEmails([...new Set(allEmails)]);
     setEmailSubject('');
     setEmailMessage('');
     setAttachments([]);

@@ -935,11 +935,6 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
               Compose Email
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
-            <div>
-              <Label className="text-xs text-muted-foreground">To (comma-separated)</Label>
-              <Input value={toField} onChange={(e) => setToField(e.target.value)} placeholder="email@example.com, email2@example.com" type="text" />
-              {emailRecipients.length === 1 && (
           <div className="flex gap-4 overflow-hidden flex-1 min-h-0">
             {/* Left panel – Customer & Email Picker */}
             <div className="w-[320px] shrink-0 border rounded-lg p-3 space-y-3 overflow-y-auto bg-muted/20">
@@ -976,13 +971,6 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
 
             {/* Right panel – Compose */}
             <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-            <div>
-              <Label>Template</Label>
-              <Select
-                value=""
-                onValueChange={(id) => {
-                  const tpl = allTemplates.find((t) => t.id === id);
-                  if (tpl) {
                     setEmailSubject(tpl.subject);
                     setEmailMessage(tpl.message);
                     if (editorRef.current) {

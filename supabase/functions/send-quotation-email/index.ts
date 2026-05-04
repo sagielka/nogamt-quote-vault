@@ -83,7 +83,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+    const { to, recipients, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+
+    // For reminders with multiple recipients, send one email with all in TO
+    const toList: { email: string; name?: string }[] = [];
+    if (isReminder && recipients && recipients.length > 0) {
+      for (const r of recipients) {
+        const trimmed = r.trim().toLowerCase();
+        if (isValidEmail(trimmed)) toList.push({ email: trimmed });
+      }
+    }
+    if (toList.length === 0) {
+      toList.push({ email: to, name: clientName });
+    }
 
     // Check if email is unsubscribed
     const serviceSupabase = createClient(

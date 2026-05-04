@@ -551,30 +551,28 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
       const totalFormatted = formatCurrency(total, quotation.currency);
       const validUntil = formatDateUtil(quotation.validUntil);
 
-      const results = await Promise.allSettled(
-        emailsToSend.map(email =>
-          supabase.functions.invoke('send-quotation-email', {
-            body: { to: email.trim(), clientName: quotation.clientName, quoteNumber: quotation.quoteNumber, total: totalFormatted, validUntil, pdfBase64: base64, isReminder: true },
-          })
-        )
-      );
-
-      const successEmails: string[] = [];
-      const failedEmails: string[] = [];
-      const unsubscribedEmails: string[] = [];
-
-      results.forEach((r, i) => {
-        const email = emailsToSend[i];
-        if (r.status === 'rejected') failedEmails.push(email);
-        else if (r.value.error) failedEmails.push(email);
-        else if (r.value.data?.unsubscribed) unsubscribedEmails.push(email);
-        else successEmails.push(email);
+      // Send one email with all recipients in TO and handler in CC (handled server-side)
+      const { data, error } = await supabase.functions.invoke('send-quotation-email', {
+        body: {
+          to: emailsToSend[0],
+          recipients: emailsToSend,
+          clientName: quotation.clientName,
+          quoteNumber: quotation.quoteNumber,
+          total: totalFormatted,
+          validUntil,
+          pdfBase64: base64,
+          isReminder: true,
+        },
       });
 
-      if (unsubscribedEmails.length > 0) toast({ title: 'Unsubscribed', description: `${unsubscribedEmails.join(', ')} has unsubscribed.`, variant: 'destructive' });
-      if (failedEmails.length > 0 && failedEmails.length < emailsToSend.length) toast({ title: 'Partial Failure', description: `Failed to send to: ${failedEmails.join(', ')}`, variant: 'destructive' });
-      if (failedEmails.length === emailsToSend.length) throw new Error('All emails failed to send');
-      if (successEmails.length > 0) toast({ title: 'Reminder Sent', description: `Follow-up email sent to ${successEmails.join(', ')}.` });
+      if (error) throw error;
+      if (data?.unsubscribed) {
+        toast({ title: 'Unsubscribed', description: 'All recipients have unsubscribed.', variant: 'destructive' });
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        toast({ title: 'Reminder Sent', description: `Follow-up email sent to ${emailsToSend.join(', ')}.` });
+      }
 
       if (quotation.status === 'draft' && onStatusChange) onStatusChange(quotation.id, 'sent');
       await refreshSentEmails();

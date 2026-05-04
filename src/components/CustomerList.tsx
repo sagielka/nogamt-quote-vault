@@ -1166,8 +1166,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                 <p className="text-xs text-muted-foreground">Max 5MB per file, 10MB total</p>
               </div>
             </div>
-            </div>{/* end right panel */}
-          </div>{/* end two-column wrapper */}
+            </div>
+          </div>
           <DialogFooter className="flex-wrap gap-2 border-t pt-4 shrink-0">
             <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
             <Button

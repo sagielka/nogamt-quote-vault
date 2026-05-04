@@ -10,6 +10,7 @@ const corsHeaders = {
 
 interface SendQuotationRequest {
   to: string;
+  recipients?: string[];
   clientName: string;
   quoteNumber: string;
   total: string;
@@ -82,7 +83,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+    const { to, recipients, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+
+    // For reminders with multiple recipients, send one email with all in TO
+    const toList: { email: string; name?: string }[] = [];
+    if (isReminder && recipients && recipients.length > 0) {
+      for (const r of recipients) {
+        const trimmed = r.trim().toLowerCase();
+        if (isValidEmail(trimmed)) toList.push({ email: trimmed });
+      }
+    }
+    if (toList.length === 0) {
+      toList.push({ email: to, name: clientName });
+    }
 
     // Check if email is unsubscribed
     const serviceSupabase = createClient(
@@ -90,15 +103,19 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { data: unsubscribed } = await serviceSupabase
+    // Check unsubscribed — filter out unsubscribed recipients from toList
+    const allToEmails = toList.map(t => t.email.toLowerCase());
+    const { data: unsubscribedRows } = await serviceSupabase
       .from('unsubscribed_emails')
-      .select('id')
-      .eq('email', to.toLowerCase())
-      .maybeSingle();
+      .select('email')
+      .in('email', allToEmails);
 
-    if (unsubscribed) {
+    const unsubscribedSet = new Set((unsubscribedRows || []).map(r => r.email.toLowerCase()));
+    const filteredToList = toList.filter(t => !unsubscribedSet.has(t.email.toLowerCase()));
+
+    if (filteredToList.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'This email has unsubscribed from communications.', unsubscribed: true }),
+        JSON.stringify({ error: 'All recipients have unsubscribed from communications.', unsubscribed: true }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -219,7 +236,7 @@ const handler = async (req: Request): Promise<Response> => {
         name: "Noga Engineering & Technology Ltd.",
         email: "quotes@noga-mt.com",
       },
-      to: [{ email: to, name: clientName }],
+      to: filteredToList,
       ...(ccList.length > 0 ? { cc: ccList } : {}),
       subject,
       htmlContent,
@@ -260,7 +277,8 @@ const handler = async (req: Request): Promise<Response> => {
         .insert({
           quotation_id: quotation.id,
           user_id: user.id,
-          recipient_emails: [to],
+          recipient_emails: filteredToList.map(t => t.email),
+          cc_emails: ccList.map(c => c.email),
           subject,
           body_html: htmlContent,
           email_type: isReminder ? 'reminder' : 'quotation',

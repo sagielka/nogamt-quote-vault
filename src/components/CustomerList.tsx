@@ -537,13 +537,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
       toast({ title: 'Validation Error', description: 'Subject and message are required.', variant: 'destructive' });
       return;
     }
-    const toEmails = toField.split(',').map(e => e.trim()).filter(Boolean);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidTo = toEmails.filter(e => !emailRegex.test(e));
-    if (invalidTo.length > 0) {
-      toast({ title: 'Invalid Email', description: `Invalid To email(s): ${invalidTo.join(', ')}`, variant: 'destructive' });
-      return;
-    }
+    const toEmails = pickerSelectedEmails.filter(Boolean);
     if (toEmails.length === 0) {
       toast({ title: 'Validation Error', description: 'At least one recipient is required.', variant: 'destructive' });
       return;

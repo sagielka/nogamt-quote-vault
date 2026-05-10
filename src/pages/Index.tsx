@@ -725,6 +725,7 @@ const Index = () => {
                   }}
                   expiringSoonActive={expiringSoonFilter}
                 />
+                <ItemPricesView compact />
                 <div className="flex items-center justify-between">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations

@@ -673,12 +673,6 @@ const Index = () => {
                 </Button>
               )}
               {currentView === 'list' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
-                  <RepeatIcon className="w-4 h-4 mr-2" />
-                  Recurring
-                </Button>
-              )}
-              {currentView === 'list' && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Reports

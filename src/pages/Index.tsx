@@ -16,7 +16,7 @@ import { CustomerReport } from '@/components/CustomerReport';
 import { QuotationReport } from '@/components/QuotationReport';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
-import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
+
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';

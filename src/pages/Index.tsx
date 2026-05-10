@@ -1052,9 +1052,7 @@ const Index = () => {
           <ActivityFeed userNameMap={userNameMap} limit={50} />
         )}
 
-        {currentView === 'recurring' && (
-          <RecurringQuotationsView onBack={() => navigateToView('list')} />
-        )}
+
 
         {currentView === 'report' && reportCustomer && (
           <CustomerReport

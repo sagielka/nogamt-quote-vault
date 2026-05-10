@@ -16,7 +16,7 @@ import { CustomerReport } from '@/components/CustomerReport';
 import { QuotationReport } from '@/components/QuotationReport';
 import { ActivityFeed } from '@/components/ActivityFeed';
 import { BulkActionsBar } from '@/components/BulkActionsBar';
-import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
+
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerList } from '@/components/CustomerList';
@@ -47,7 +47,7 @@ import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 import { ItemPricesView } from '@/components/ItemPricesView';
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'recurring' | 'reports';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -673,18 +673,12 @@ const Index = () => {
                 </Button>
               )}
               {currentView === 'list' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
-                  <RepeatIcon className="w-4 h-4 mr-2" />
-                  Recurring
-                </Button>
-              )}
-              {currentView === 'list' && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Reports
                 </Button>
               )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'recurring' || currentView === 'reports') && (
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -1058,9 +1052,7 @@ const Index = () => {
           <ActivityFeed userNameMap={userNameMap} limit={50} />
         )}
 
-        {currentView === 'recurring' && (
-          <RecurringQuotationsView onBack={() => navigateToView('list')} />
-        )}
+
 
         {currentView === 'report' && reportCustomer && (
           <CustomerReport

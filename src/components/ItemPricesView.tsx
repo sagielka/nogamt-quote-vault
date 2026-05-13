@@ -53,6 +53,7 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
               <th className="px-3 py-2 font-medium text-right">USD</th>
               <th className="px-3 py-2 font-medium text-right">ILS</th>
               <th className="px-3 py-2 font-medium text-right">BV EUR</th>
+              <th className="px-3 py-2 font-medium text-right">CN $</th>
             </tr>
           </thead>
           <tbody>
@@ -64,11 +65,12 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.DOLLAR, '$')}</td>
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.SHEKEL, '₪')}</td>
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.NOGA_BV_EURO, '€')}</td>
+                <td className="px-3 py-1.5 text-right">{fmt(p.prices.CHINA_DOLLAR, '$')}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
+                <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
                   No items match your search.
                 </td>
               </tr>

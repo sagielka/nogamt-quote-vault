@@ -36,13 +36,14 @@ export const getUchamfInserts = (): UchamfInsertItem[] => {
   return dynamicUchamfData || uchamfInsertsFallback;
 };
 
-export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO';
+export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR';
 
 export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: string }[] = [
   { value: 'EURO', label: 'Euro Prices', baseCurrency: 'EUR' },
   { value: 'DOLLAR', label: 'Dollar Prices', baseCurrency: 'USD' },
   { value: 'SHEKEL', label: 'Noga Tools Shekel Prices', baseCurrency: 'ILS' },
   { value: 'NOGA_BV_EURO', label: 'Noga BV Euro Prices', baseCurrency: 'EUR' },
+  { value: 'CHINA_DOLLAR', label: 'China Dollar Prices', baseCurrency: 'USD' },
 ];
 
 export interface ProductItem {
@@ -53,6 +54,7 @@ export interface ProductItem {
     DOLLAR: number | null;
     SHEKEL: number | null;
     NOGA_BV_EURO: number | null;
+    CHINA_DOLLAR: number | null;
   };
 }
 

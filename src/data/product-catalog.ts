@@ -204,6 +204,7 @@ const getUspotProducts = (): ProductItem[] => {
       DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
       SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
       NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
+      CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
     },
   }));
 };
@@ -222,6 +223,7 @@ const getUchamfProducts = (): ProductItem[] => {
         DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
         SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
         NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
+        CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
       },
     };
   });

@@ -43,7 +43,7 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
           className="pl-9"
         />
       </div>
-      <div className="max-h-80 overflow-auto rounded border border-border">
+      <div className="max-h-[132px] overflow-auto rounded border border-border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 sticky top-0">
             <tr className="text-left">

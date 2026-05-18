@@ -91,24 +91,24 @@ export const convertPrice = (
 };
 
 // US SKU pricing table based on number (2-7) or letter (B-G)
-const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number }> = {
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 215.64 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 253.51 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 298.05 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 350.49 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 412.20 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
+const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number }> = {
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 }, // G
 };
 
 // UC SKU pricing table based on number (1-7) corresponding to letters (A-G)
-const UC_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number }> = {
-  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 177.84 },  // A
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 215.64 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 253.51 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 298.05 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 350.49 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 412.20 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
+const UC_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number }> = {
+  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 152.00, CHINA_DOLLAR: 46.80 },  // A
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 }, // G
 };
 
 // Map letters to their corresponding number for US/UC SKU pricing
@@ -204,7 +204,7 @@ const getUspotProducts = (): ProductItem[] => {
       DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
       SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
       NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
-      CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
+      CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.CHINA_DOLLAR ?? null,
     },
   }));
 };
@@ -223,7 +223,7 @@ const getUchamfProducts = (): ProductItem[] => {
         DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
         SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
         NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
-        CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
+        CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.CHINA_DOLLAR ?? null,
       },
     };
   });
@@ -493,12 +493,12 @@ const staticCatalogProducts: ProductItem[] = [
   { sku: "UB1065", description: "UB-d065-C08-H53-L115", prices: { EURO: 63.64, DOLLAR: 74.45, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
   { sku: "UB1070", description: "UB-d070-C08-H53-L115", prices: { EURO: 63.64, DOLLAR: 74.45, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
   { sku: "UB1075", description: "UB-d075-C08-H53-L115", prices: { EURO: 63.64, DOLLAR: 74.45, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
-  { sku: "UB1080", description: "UB-d080-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 81.42 } },
-  { sku: "UB1085", description: "UB-d085-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 81.42 } },
-  { sku: "UB1090", description: "UB-d090-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 81.42 } },
-  { sku: "UB1095", description: "UB-d095-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 81.42 } },
-  { sku: "UB1100", description: "UB-d100-C10-H80-L125", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 81.42 } },
-  { sku: "UB1105", description: "UB-d105-C10-H80-L125", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 81.42 } },
+  { sku: "UB1080", description: "UB-d080-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
+  { sku: "UB1085", description: "UB-d085-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
+  { sku: "UB1090", description: "UB-d090-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
+  { sku: "UB1095", description: "UB-d095-C10-H53-L115", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
+  { sku: "UB1100", description: "UB-d100-C10-H80-L125", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
+  { sku: "UB1105", description: "UB-d105-C10-H80-L125", prices: { EURO: 63.64, DOLLAR: 81.42, NOGA_BV_EURO: 47.73, SHEKEL: 241.82 , CHINA_DOLLAR: 74.45 } },
   { sku: "UB1110", description: "UB-d110-C10-H80-L125", prices: { EURO: 69.59, DOLLAR: 81.42, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
   { sku: "UB1115", description: "UB-d115-C12-H80-L125", prices: { EURO: 69.59, DOLLAR: 81.42, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
   { sku: "UB1120", description: "UB-d120-C12-H80-L125", prices: { EURO: 69.59, DOLLAR: 81.42, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
@@ -515,19 +515,19 @@ const staticCatalogProducts: ProductItem[] = [
   { sku: "UB1175", description: "UB-d175-C16-H80-L125", prices: { EURO: 69.59, DOLLAR: 81.42, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
   { sku: "UB1180", description: "UB-d180-C16-H80-L125", prices: { EURO: 69.59, DOLLAR: 81.42, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
   { sku: "UB1185", description: "UB-d185-C16-H80-L125", prices: { EURO: 69.59, DOLLAR: 81.42, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
-  { sku: "UB1190", description: "UB-d190-C16-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 101.53 } },
-  { sku: "UB1195", description: "UB-d195-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 101.53 } },
-  { sku: "UB1200", description: "UB-d200-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 101.53 } },
-  { sku: "UB1205", description: "UB-d205-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 101.53 } },
-  { sku: "UB1210", description: "UB-d210-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 101.53 } },
-  { sku: "UB1215", description: "UB-d215-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 101.53 } },
+  { sku: "UB1190", description: "UB-d190-C16-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
+  { sku: "UB1195", description: "UB-d195-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
+  { sku: "UB1200", description: "UB-d200-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
+  { sku: "UB1205", description: "UB-d205-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
+  { sku: "UB1210", description: "UB-d210-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
+  { sku: "UB1215", description: "UB-d215-C20-H80-L125", prices: { EURO: 69.59, DOLLAR: 101.53, NOGA_BV_EURO: 52.19, SHEKEL: 264.44 , CHINA_DOLLAR: 81.42 } },
   { sku: "UB1220", description: "UB-d220-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 101.53, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
-  { sku: "UB1225", description: "UB-d225-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 84.61 } },
-  { sku: "UB1230", description: "UB-d230-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 84.61 } },
-  { sku: "UB1235", description: "UB-d235-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 84.61 } },
-  { sku: "UB1240", description: "UB-d240-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 84.61 } },
-  { sku: "UB1245", description: "UB-d245-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 84.61 } },
-  { sku: "UB1250", description: "UB-d250-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 84.61 } },
+  { sku: "UB1225", description: "UB-d225-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
+  { sku: "UB1230", description: "UB-d230-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
+  { sku: "UB1235", description: "UB-d235-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
+  { sku: "UB1240", description: "UB-d240-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
+  { sku: "UB1245", description: "UB-d245-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
+  { sku: "UB1250", description: "UB-d250-C20-H80-L125", prices: { EURO: 86.77, DOLLAR: 84.61, NOGA_BV_EURO: 65.08, SHEKEL: 329.74 , CHINA_DOLLAR: 101.53 } },
   { sku: "UB2500", description: "UBS-d025-C08-H29-L69", prices: { EURO: 72.31, DOLLAR: 84.61, NOGA_BV_EURO: 54.23, SHEKEL: 274.79 , CHINA_DOLLAR: 84.61 } },
   { sku: "UB3000", description: "UBS-d030-C08-H29-L85", prices: { EURO: 72.31, DOLLAR: 84.61, NOGA_BV_EURO: 54.23, SHEKEL: 274.79 , CHINA_DOLLAR: 84.61 } },
   { sku: "UB3001", description: "UBS-d035-C08-H29-L85", prices: { EURO: 72.31, DOLLAR: 84.61, NOGA_BV_EURO: 54.23, SHEKEL: 274.79 , CHINA_DOLLAR: 84.61 } },
@@ -573,18 +573,18 @@ const staticCatalogProducts: ProductItem[] = [
   { sku: "UB3042", description: "UBS-d240-C20-H80-L125", prices: { EURO: 97.19, DOLLAR: 113.71, NOGA_BV_EURO: 72.89, SHEKEL: 369.31 , CHINA_DOLLAR: 113.71 } },
   { sku: "UB3043", description: "UBS-d245-C20-H80-L125", prices: { EURO: 97.19, DOLLAR: 113.71, NOGA_BV_EURO: 72.89, SHEKEL: 369.31 , CHINA_DOLLAR: 113.71 } },
   { sku: "UB3044", description: "UBS-d250-C20-H80-L125", prices: { EURO: 97.19, DOLLAR: 113.71, NOGA_BV_EURO: 72.89, SHEKEL: 369.31 , CHINA_DOLLAR: 113.71 } },
-  { sku: "UB2020", description: "UB-TSB-2.5-PL", prices: { EURO: 8.98, DOLLAR: 11.07, NOGA_BV_EURO: 7.1, SHEKEL: 34.14 , CHINA_DOLLAR: 11.07 } },
-  { sku: "UB2021", description: "UB-TSB-2.5-PL-NCW", prices: { EURO: 13.24, DOLLAR: 15.49, NOGA_BV_EURO: 9.93, SHEKEL: 50.31 , CHINA_DOLLAR: 15.49 } },
+  { sku: "UB2020", description: "UB-TSB-2.5-PL", prices: { EURO: 8.98, DOLLAR: 11.07, NOGA_BV_EURO: 7.1, SHEKEL: 34.14 , CHINA_DOLLAR: 11.06 } },
+  { sku: "UB2021", description: "UB-TSB-2.5-PL-NCW", prices: { EURO: 13.24, DOLLAR: 15.49, NOGA_BV_EURO: 9.93, SHEKEL: 50.31 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2022", description: "UB-TSB-2.5-PL", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.58, SHEKEL: 48.53 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2026", description: "UB-SCB-2.5-PL-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 89.83 , CHINA_DOLLAR: 27.66 } },
   { sku: "UB2030", description: "UB-TSB-3-PL", prices: { EURO: 9.46, DOLLAR: 11.06, NOGA_BV_EURO: 7.09, SHEKEL: 35.93 , CHINA_DOLLAR: 11.06 } },
-  { sku: "UB2031", description: "UB-TSB-3-PL-NCW", prices: { EURO: 13.24, DOLLAR: 15.49, NOGA_BV_EURO: 9.93, SHEKEL: 50.31 , CHINA_DOLLAR: 15.49 } },
+  { sku: "UB2031", description: "UB-TSB-3-PL-NCW", prices: { EURO: 13.24, DOLLAR: 15.49, NOGA_BV_EURO: 9.93, SHEKEL: 50.31 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2032", description: "UB-TSB-3-PL-NCT", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.57, SHEKEL: 48.51 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2034", description: "UB-TSB-3-ML-NCT", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.57, SHEKEL: 48.51 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2036", description: "UB-SCB-3-PL-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 89.84 , CHINA_DOLLAR: 27.66 } },
   { sku: "UB2038", description: "UB-SCB-3-ML-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 89.84 , CHINA_DOLLAR: 27.66 } },
   { sku: "UB2060", description: "UB-TSB-5-PL", prices: { EURO: 9.46, DOLLAR: 11.06, NOGA_BV_EURO: 7.09, SHEKEL: 35.93 , CHINA_DOLLAR: 11.06 } },
-  { sku: "UB2061", description: "UB-TSB-5-PL-NCW", prices: { EURO: 13.24, DOLLAR: 15.49, NOGA_BV_EURO: 9.93, SHEKEL: 50.31 , CHINA_DOLLAR: 15.49 } },
+  { sku: "UB2061", description: "UB-TSB-5-PL-NCW", prices: { EURO: 13.24, DOLLAR: 15.49, NOGA_BV_EURO: 9.93, SHEKEL: 50.31 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2062", description: "UB-TSB-5-PL-NCT", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.57, SHEKEL: 48.51 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2063", description: "UB-TSB-5-ML-NCT", prices: { EURO: 12.77, DOLLAR: 14.94, NOGA_BV_EURO: 9.57, SHEKEL: 48.51 , CHINA_DOLLAR: 14.94 } },
   { sku: "UB2067", description: "UB-SCB-5-PL-NCT", prices: { EURO: 23.64, DOLLAR: 27.66, NOGA_BV_EURO: 17.73, SHEKEL: 89.84 , CHINA_DOLLAR: 27.66 } },

@@ -204,7 +204,7 @@ const getUspotProducts = (): ProductItem[] => {
       DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
       SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
       NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
-      CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.DOLLAR ?? null,
+      CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.CHINA_DOLLAR ?? null,
     },
   }));
 };

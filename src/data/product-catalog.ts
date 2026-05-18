@@ -223,7 +223,7 @@ const getUchamfProducts = (): ProductItem[] => {
         DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
         SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
         NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
-        CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.DOLLAR ?? null,
+        CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.CHINA_DOLLAR ?? null,
       },
     };
   });

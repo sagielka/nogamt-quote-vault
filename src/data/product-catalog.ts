@@ -91,24 +91,24 @@ export const convertPrice = (
 };
 
 // US SKU pricing table based on number (2-7) or letter (B-G)
-const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number }> = {
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 215.64 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 253.51 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 298.05 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 350.49 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 412.20 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
+const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number }> = {
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 }, // G
 };
 
 // UC SKU pricing table based on number (1-7) corresponding to letters (A-G)
-const UC_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number }> = {
-  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 177.84 },  // A
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 215.64 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 253.51 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 298.05 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 350.49 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 412.20 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 482.07 }, // G
+const UC_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number }> = {
+  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 152.00, CHINA_DOLLAR: 46.80 },  // A
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 }, // G
 };
 
 // Map letters to their corresponding number for US/UC SKU pricing

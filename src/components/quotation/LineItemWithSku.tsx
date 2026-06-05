@@ -193,7 +193,7 @@ export const LineItemWithSku = ({
       style={style}
       className="animate-fade-in rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-colors min-w-[1050px]"
     >
-      <div className="grid grid-cols-[28px_130px_1fr_45px_45px_65px_85px_45px_55px_85px_88px] gap-1.5 items-center p-3">
+      <div className="grid grid-cols-[28px_130px_1fr_45px_45px_65px_85px_45px_75px_55px_85px_88px] gap-1.5 items-center p-3">
         <div className="flex justify-center">
           <button
             type="button"
@@ -353,7 +353,14 @@ export const LineItemWithSku = ({
             className="input-focus text-center bg-background/50 border-primary/20"
           />
         </div>
-        
+
+        {/* Net unit price (after discount) */}
+        <div className="text-center font-mono text-sm whitespace-nowrap text-muted-foreground">
+          {item.discountPercent && item.unitPrice > 0
+            ? formatCurrency(item.unitPrice * (1 - item.discountPercent / 100), currency)
+            : <span>—</span>}
+        </div>
+
         {/* Margin % */}
         <div className="text-center font-mono text-sm whitespace-nowrap">
           {item.costPrice && item.unitPrice > 0 ? (

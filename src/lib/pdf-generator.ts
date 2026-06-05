@@ -350,6 +350,8 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
     pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price + 14, rowY, { align: 'right' });
     pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
+    const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+    pdf.text(item.discountPercent ? formatCurrency(netUnit, quotation.currency) : '—', colX.net + 14, rowY, { align: 'right' });
 
     pdf.setTextColor(...black);
     setFont(pdf, 'bold');

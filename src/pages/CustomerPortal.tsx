@@ -64,11 +64,11 @@ const CustomerPortal = () => {
     if (!token) return;
     setResponding(true);
     try {
-      await (supabase.from('customer_portal_tokens' as any).update({
-        client_response: response,
-        client_response_at: new Date().toISOString(),
-        client_comment: comment || null,
-      } as any).eq('id', token.id) as any);
+      await (supabase.rpc('submit_portal_response' as any, {
+        _token: token.token,
+        _response: response,
+        _comment: comment || null,
+      }) as any);
 
       setSubmitted(true);
       setToken({ ...token, client_response: response });

@@ -982,7 +982,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                       setEmailSubject(tpl.subject);
                       setEmailMessage(tpl.message);
                       if (editorRef.current) {
-                        editorRef.current.innerHTML = tpl.message.replace(/\n/g, '<br>');
+                        editorRef.current.innerHTML = DOMPurify.sanitize(tpl.message.replace(/\n/g, '<br>'));
                       }
                     }
                   }}

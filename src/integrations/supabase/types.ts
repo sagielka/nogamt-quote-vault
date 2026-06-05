@@ -658,11 +658,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_portal_data: { Args: { _token: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      submit_portal_response: {
+        Args: { _comment: string; _response: string; _token: string }
         Returns: boolean
       }
     }

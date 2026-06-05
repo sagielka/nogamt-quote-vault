@@ -1203,7 +1203,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
           <div className="border rounded-lg p-4 bg-white">
             <div
               dangerouslySetInnerHTML={{
-                __html: `
+                __html: DOMPurify.sanitize(`
                   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #ff9004; margin-bottom: 20px;">
                       <img src="/logo.png" alt="Noga Engineering & Technology" style="max-height: 60px; max-width: 200px; background-color: #ffffff; padding: 4px; border-radius: 4px;" />

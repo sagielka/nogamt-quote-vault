@@ -847,7 +847,14 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     </td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.leadTime || '—'}</td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.moq || 1}</td>
-                    <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">{formatCurrency(item.unitPrice, quotation.currency)}</td>
+                    <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">
+                      <div>{formatCurrency(item.unitPrice, quotation.currency)}</div>
+                      {item.discountPercent > 0 && (
+                        <div className="text-xs text-foreground/80 print:text-gray-700 mt-0.5">
+                          Net: {formatCurrency(item.unitPrice * (1 - item.discountPercent / 100), quotation.currency)}
+                        </div>
+                      )}
+                    </td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">
                       {item.discountPercent ? `${item.discountPercent}%` : '—'}
                     </td>

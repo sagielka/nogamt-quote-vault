@@ -353,7 +353,14 @@ export const LineItemWithSku = ({
             className="input-focus text-center bg-background/50 border-primary/20"
           />
         </div>
-        
+
+        {/* Net unit price (after discount) */}
+        <div className="text-center font-mono text-sm whitespace-nowrap text-muted-foreground">
+          {item.discountPercent && item.unitPrice > 0
+            ? formatCurrency(item.unitPrice * (1 - item.discountPercent / 100), currency)
+            : <span>—</span>}
+        </div>
+
         {/* Margin % */}
         <div className="text-center font-mono text-sm whitespace-nowrap">
           {item.costPrice && item.unitPrice > 0 ? (

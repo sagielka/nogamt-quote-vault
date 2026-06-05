@@ -1220,7 +1220,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                       <a href="#" style="color: #bbb;">Unsubscribe</a> from future emails.
                     </p>
                   </div>
-                `,
+                `),
               }}
             />
           </div>

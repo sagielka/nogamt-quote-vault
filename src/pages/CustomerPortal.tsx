@@ -29,45 +29,26 @@ const CustomerPortal = () => {
       }
 
       try {
-        // Fetch token info (anon access)
-        const { data: tokenData, error: tokenError } = await supabase
-          .from('customer_portal_tokens' as any)
-          .select('*')
-          .eq('token', tokenValue)
-          .eq('is_active', true)
-          .single() as any;
+        const { data, error: rpcError } = await (supabase
+          .rpc('get_portal_data' as any, { _token: tokenValue }) as any);
 
-        if (tokenError || !tokenData) {
+        if (rpcError || !data) {
           setError('This portal link is invalid, expired, or has been deactivated.');
           setLoading(false);
           return;
         }
 
-        if (new Date(tokenData.expires_at) < new Date()) {
-          setError('This portal link has expired.');
+        const tokenData = (data as any).token;
+        const quoteData = (data as any).quotation;
+
+        if (!tokenData || !quoteData) {
+          setError('This portal link is invalid, expired, or has been deactivated.');
           setLoading(false);
           return;
         }
 
         setToken(tokenData);
-
-        if (tokenData.client_response) {
-          setSubmitted(true);
-        }
-
-        // Fetch quotation (anon access via RLS that checks active token)
-        const { data: quoteData, error: quoteError } = await supabase
-          .from('quotations')
-          .select('*')
-          .eq('id', tokenData.quotation_id)
-          .single();
-
-        if (quoteError || !quoteData) {
-          setError('Unable to load quotation details.');
-          setLoading(false);
-          return;
-        }
-
+        if (tokenData.client_response) setSubmitted(true);
         setQuotation(quoteData);
       } catch {
         setError('An unexpected error occurred.');
@@ -83,11 +64,11 @@ const CustomerPortal = () => {
     if (!token) return;
     setResponding(true);
     try {
-      await (supabase.from('customer_portal_tokens' as any).update({
-        client_response: response,
-        client_response_at: new Date().toISOString(),
-        client_comment: comment || null,
-      } as any).eq('id', token.id) as any);
+      await (supabase.rpc('submit_portal_response' as any, {
+        _token: token.token,
+        _response: response,
+        _comment: comment || null,
+      }) as any);
 
       setSubmitted(true);
       setToken({ ...token, client_response: response });

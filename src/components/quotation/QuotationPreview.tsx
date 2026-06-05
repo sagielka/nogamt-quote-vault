@@ -822,12 +822,14 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">MOQ</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Unit Price ({quotation.currency})</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>
+                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Net Unit ({quotation.currency})</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {quotation.items.map((item, index) => {
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
+                  const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
                   return (
                   <tr key={item.id} className="border-b border-border print:border-gray-200">
                     <td className="py-4 text-muted-foreground print:text-gray-600 align-top">
@@ -848,15 +850,13 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.leadTime || '—'}</td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.moq || 1}</td>
                     <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">
-                      <div>{formatCurrency(item.unitPrice, quotation.currency)}</div>
-                      {item.discountPercent > 0 && (
-                        <div className="text-xs text-foreground/80 print:text-gray-700 mt-0.5">
-                          Net: {formatCurrency(item.unitPrice * (1 - item.discountPercent / 100), quotation.currency)}
-                        </div>
-                      )}
+                      {formatCurrency(item.unitPrice, quotation.currency)}
                     </td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">
                       {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                    </td>
+                    <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">
+                      {item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—'}
                     </td>
                     <td className="py-4 text-right font-medium text-foreground print:text-gray-900 align-top">
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}

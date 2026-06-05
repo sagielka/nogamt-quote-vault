@@ -1006,7 +1006,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         )}
                         <div
                           className="mt-2 text-sm text-foreground bg-background rounded p-3 max-h-60 overflow-y-auto border"
-                          dangerouslySetInnerHTML={{ __html: email.body_html }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(email.body_html || '') }}
                         />
                         <div className="mt-2 flex justify-end gap-2">
                           {!email.recalled_at && (

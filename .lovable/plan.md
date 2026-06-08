@@ -1,46 +1,23 @@
+## Goal
+On a new quotation, when an existing customer is picked and the user then edits the email field, treat the new email as a quote-only override: keep the customer card's primary details intact, append the new email to the customer's stored email list (comma-separated), and save the quote with the new email.
 
-## Phase 1: Database Foundation
-Add new tables and columns needed for all features:
-- **`quotation_versions`** table — stores version history (snapshot of items, notes, etc.)
-- **`activity_log`** table — tracks who changed what and when
-- **`cost_price`** field on line items (stored in quotations JSON)
-- **`recurring_quotations`** table — schedule + template for auto-generated quotes
-- **`customer_portal_tokens`** table — secure tokens for public quote access
+## Behavior
+- If the entered email already exists in the selected customer's emails (comma-split, case-insensitive), do nothing extra — just use it for the quote.
+- If it's a new email and the customer was selected from the picker:
+  - Append the new email to the customer's `email` field as `existing, newEmail` (respecting the 500-char cap from memory; if it would overflow, skip the append and just use it on the quote).
+  - Do NOT change the customer's name/address.
+  - Use the new email as the quote's `clientEmail`.
+- If no existing customer was selected (free-typed), keep current behavior (create/update by name/email match).
 
-## Phase 2: Profit Margin Calculator
-- Add cost price field to each line item in the quotation form
-- Calculate and display margin % and total profit alongside totals
-- Show margins in the quotation preview (optional toggle)
+## Technical changes (single file: `src/components/quotation/QuotationForm.tsx`)
+1. In `saveCustomerToDatabase`, when `selectedCustomerId` is set:
+   - Fetch the existing customer's `email` (not just `id`).
+   - Split on commas; if `clientEmail` is already in the list → update only `name`/`address` (leave email untouched).
+   - If `clientEmail` is new → build `appendedEmails = [...existing, clientEmail].join(', ')`, guard against 500-char limit, and update with the appended email string. Name/address stay the user-edited values but email is the appended list, not the new email alone.
+2. Suppress the duplicate `customers` upsert inside `useQuotations.addQuotation` / `updateQuotation` for this flow so it doesn't overwrite the email back to a single value. Simplest: pass a flag (e.g. `skipCustomerSync: true`) on the form data when submitting from `QuotationForm` (which already handles the sync itself via `saveCustomerToDatabase`), and have the hook skip its upsert when present.
+3. The quote itself already stores whatever is in `clientEmail`, so the new email is automatically used for the quotation — no extra change needed there.
 
-## Phase 3: Dashboard Analytics
-- New Dashboard page with charts (using existing Recharts dependency)
-- Revenue trends over time, conversion rates (sent→accepted), quotes per month
-- Top customers by revenue
-- Summary stats cards (total quotes, total revenue, avg quote value)
-
-## Phase 4: Quote Versioning
-- Auto-save a version snapshot each time a quotation is edited
-- Version history panel showing v1, v2, v3 with timestamps and who made changes
-- Ability to view/restore previous versions
-
-## Phase 5: Activity Log
-- Log all CRUD operations on quotations (create, edit, status change, delete)
-- Viewable log per quotation and a global activity feed
-- Shows user, action, timestamp, and key changes
-
-## Phase 6: Bulk Actions
-- Multi-select checkboxes on quotation list
-- Toolbar appears with options: Archive, Change Status, Export as PDF
-- Select all / deselect all functionality
-
-## Phase 7: Customer Portal
-- Generate secure, expiring public links for quotations
-- Public page showing quote details (read-only) with Accept/Decline buttons
-- Edge function to validate tokens and handle responses
-
-## Phase 8: Recurring Quotations
-- UI to set up recurring schedules (weekly/monthly/quarterly) for a customer
-- Edge function + cron job to auto-generate quotes from templates
-- Management view to see/edit/disable recurring schedules
-
-Each phase will be implemented and testable independently.
+## Out of scope
+- No UI changes to the email input.
+- No changes to the customer edit dialog (explicit edits there still overwrite as today).
+- No schema changes.

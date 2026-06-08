@@ -479,32 +479,32 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     if (!clientName || !clientEmail || !user) return;
 
     // First try to find by tracked ID, then fall back to email match
-    let existingCustomer: { id: string } | null = null;
-    
+    let existingCustomer: { id: string; email: string } | null = null;
+
     if (selectedCustomerId) {
       const { data } = await supabase
         .from('customers')
-        .select('id')
+        .select('id, email')
         .eq('id', selectedCustomerId)
         .single();
       existingCustomer = data;
     }
-    
+
     if (!existingCustomer) {
       // Fall back to matching by name (case-insensitive) for the same user
       const { data } = await supabase
         .from('customers')
-        .select('id')
+        .select('id, email')
         .eq('user_id', user.id)
         .ilike('name', clientName);
       existingCustomer = data && data.length > 0 ? data[0] : null;
     }
-    
+
     if (!existingCustomer) {
       // Fall back to email match
       const { data } = await supabase
         .from('customers')
-        .select('id')
+        .select('id, email')
         .eq('email', clientEmail)
         .eq('user_id', user.id)
         .single();
@@ -512,13 +512,29 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     }
 
     if (existingCustomer) {
-      // Update existing customer
+      // Append email if it's new for this customer; never overwrite existing emails.
+      const existingEmails = (existingCustomer.email || '')
+        .split(',')
+        .map(e => e.trim())
+        .filter(Boolean);
+      const newEmailLc = clientEmail.trim().toLowerCase();
+      const alreadyPresent = existingEmails.some(e => e.toLowerCase() === newEmailLc);
+
+      let nextEmailField = existingCustomer.email;
+      if (!alreadyPresent) {
+        const candidate = [...existingEmails, clientEmail.trim()].join(', ');
+        // 500-char cap from customer-management memory
+        if (candidate.length <= 500) {
+          nextEmailField = candidate;
+        }
+      }
+
       const { error } = await supabase
         .from('customers')
-        .update({ 
-          name: clientName, 
-          email: clientEmail, 
-          address: clientAddress || null 
+        .update({
+          name: clientName,
+          email: nextEmailField,
+          address: clientAddress || null,
         })
         .eq('id', existingCustomer.id);
 
@@ -527,7 +543,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
       } else {
         toast({
           title: 'Customer Updated',
-          description: 'Customer details updated.',
+          description: alreadyPresent
+            ? 'Customer details updated.'
+            : 'New email added to customer card.',
         });
         fetchCustomers();
       }

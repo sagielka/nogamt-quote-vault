@@ -203,7 +203,9 @@ export const useQuotations = () => {
       const newQuotation = dbRowToQuotation(newRow);
       setQuotations((prev) => [newQuotation, ...prev]);
 
-      // Auto-sync client to customers table
+      // Auto-sync client to customers table — insert only; never overwrite an
+      // existing customer's email (QuotationForm.saveCustomerToDatabase handles
+      // appending new emails to existing customer cards).
       try {
         await supabase.from('customers').upsert(
           {
@@ -212,7 +214,7 @@ export const useQuotations = () => {
             email: data.clientEmail.trim(),
             address: data.clientAddress?.trim() || null,
           },
-          { onConflict: 'user_id,email', ignoreDuplicates: false }
+          { onConflict: 'user_id,email', ignoreDuplicates: true }
         );
       } catch {
         // Non-critical — don't block quotation creation
@@ -302,7 +304,7 @@ export const useQuotations = () => {
                 email: clientEmail.trim(),
                 address: clientAddress?.trim() || null,
               },
-              { onConflict: 'user_id,email', ignoreDuplicates: false }
+              { onConflict: 'user_id,email', ignoreDuplicates: true }
             );
           } catch {
             // Non-critical

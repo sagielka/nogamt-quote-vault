@@ -304,7 +304,7 @@ export const useQuotations = () => {
                 email: clientEmail.trim(),
                 address: clientAddress?.trim() || null,
               },
-              { onConflict: 'user_id,email', ignoreDuplicates: false }
+              { onConflict: 'user_id,email', ignoreDuplicates: true }
             );
           } catch {
             // Non-critical

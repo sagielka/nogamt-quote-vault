@@ -155,21 +155,35 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
       );
 
       const successEmails: string[] = [];
-      const failedEmails: string[] = [];
+      const failedEmails: { email: string; reason: string }[] = [];
       const unsubscribedEmails: string[] = [];
 
-      results.forEach((r, i) => {
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
         const email = emailsToSend[i];
         if (r.status === 'rejected') {
-          failedEmails.push(email);
+          const reason = (r.reason as any)?.message || String(r.reason) || 'Unknown error';
+          console.error(`Reminder failed for ${email}:`, r.reason);
+          failedEmails.push({ email, reason });
         } else if (r.value.error) {
-          failedEmails.push(email);
+          let reason = r.value.error.message || 'Unknown error';
+          try {
+            const ctx: any = (r.value.error as any).context;
+            if (ctx && typeof ctx.json === 'function') {
+              const body = await ctx.json();
+              if (body?.error) reason = body.error;
+            } else if (ctx?.body) {
+              reason = typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body);
+            }
+          } catch {}
+          console.error(`Reminder failed for ${email}:`, reason, r.value.error);
+          failedEmails.push({ email, reason });
         } else if (r.value.data?.unsubscribed) {
           unsubscribedEmails.push(email);
         } else {
           successEmails.push(email);
         }
-      });
+      }
 
       if (unsubscribedEmails.length > 0) {
         toast({
@@ -182,13 +196,13 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
       if (failedEmails.length > 0 && failedEmails.length < emailsToSend.length) {
         toast({
           title: 'Partial Failure',
-          description: `Failed to send to: ${failedEmails.join(', ')}`,
+          description: failedEmails.map(f => `${f.email}: ${f.reason}`).join(' | '),
           variant: 'destructive',
         });
       }
 
       if (failedEmails.length === emailsToSend.length) {
-        throw new Error('All emails failed to send');
+        throw new Error(failedEmails.map(f => `${f.email}: ${f.reason}`).join(' | '));
       }
 
       if (successEmails.length > 0) {
@@ -226,11 +240,11 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
       } catch (persistErr) {
         console.error('Failed to persist new emails to customer:', persistErr);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to send reminder:', err);
       toast({
         title: 'Error',
-        description: 'Failed to send reminder email. Please try again.',
+        description: err?.message ? `Failed to send reminder: ${err.message}` : 'Failed to send reminder email. Please try again.',
         variant: 'destructive',
       });
     } finally {

@@ -131,11 +131,6 @@ export const LineItemImageEditor = ({ open, imageSrc, onClose, onSave }: LineIte
               onRotationChange={setRotation}
               onCropComplete={onCropComplete}
               restrictPosition={false}
-              style={{
-                mediaStyle: {
-                  transform: `scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
-                },
-              }}
             />
           )}
         </div>

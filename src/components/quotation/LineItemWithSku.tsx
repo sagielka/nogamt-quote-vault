@@ -661,7 +661,7 @@ export const LineItemWithSku = ({
                 ) : (
                   <>
                     <ImagePlus className="h-5 w-5" />
-                    <span className="text-xs">Add image</span>
+                    <span className="text-xs">Add / drop / paste</span>
                   </>
                 )}
               </Button>

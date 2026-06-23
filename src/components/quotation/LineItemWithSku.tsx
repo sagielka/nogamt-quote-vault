@@ -255,24 +255,72 @@ export const LineItemWithSku = ({
     [item.id, toast],
   );
 
+  const uploadFiles = useCallback(
+    async (files: File[]) => {
+      const imageFiles = files.filter((f) => f.type.startsWith('image/'));
+      if (imageFiles.length === 0) return;
+      setUploading(true);
+      try {
+        const uploaded: string[] = [];
+        for (const file of imageFiles) {
+          const path = await uploadBlob(file);
+          if (path) uploaded.push(path);
+        }
+        if (uploaded.length) {
+          onUpdate(item.id, { images: [...(item.images || []), ...uploaded] });
+          setShowNotes(true);
+          toast({ title: `Added ${uploaded.length} image${uploaded.length > 1 ? 's' : ''}` });
+        }
+      } finally {
+        setUploading(false);
+      }
+    },
+    [uploadBlob, item.id, item.images, onUpdate, toast],
+  );
+
   const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
-    if (files.length === 0) return;
-    setUploading(true);
-    try {
-      const uploaded: string[] = [];
-      for (const file of files) {
-        const path = await uploadBlob(file);
-        if (path) uploaded.push(path);
-      }
-      if (uploaded.length) {
-        onUpdate(item.id, { images: [...(item.images || []), ...uploaded] });
-      }
-    } finally {
-      setUploading(false);
+    await uploadFiles(files);
+  };
+
+  const [dragOver, setDragOver] = useState(false);
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOver(true);
     }
   };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files || []);
+    await uploadFiles(files);
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const it of Array.from(items)) {
+      if (it.kind === 'file') {
+        const f = it.getAsFile();
+        if (f && f.type.startsWith('image/')) files.push(f);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      await uploadFiles(files);
+    }
+  };
+
 
   const removeImage = async (path: string) => {
     onUpdate(item.id, { images: (item.images || []).filter((p) => p !== path) });

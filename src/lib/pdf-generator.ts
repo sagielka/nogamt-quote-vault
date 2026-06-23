@@ -3,6 +3,7 @@ import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateT
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
+import { supabase } from '@/integrations/supabase/client';
 
 export type GeneratedPdf = {
   blob: Blob;
@@ -10,7 +11,7 @@ export type GeneratedPdf = {
 };
 
 // Resolve storage paths to data URLs for embedding in the PDF
-import { supabase } from '@/integrations/supabase/client';
+
 const resolveLineItemImage = async (path: string): Promise<{ data: string; width: number; height: number } | null> => {
   try {
     const { data, error } = await supabase.storage

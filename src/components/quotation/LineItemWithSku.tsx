@@ -197,6 +197,123 @@ export const LineItemWithSku = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // ---------- Image handling ----------
+  const getSignedUrl = useCallback(async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from('line-item-images')
+      .createSignedUrl(path, 60 * 60);
+    if (error || !data) return null;
+    return data.signedUrl;
+  }, []);
+
+  // Fetch signed URLs for all images on mount / when list changes
+  useEffect(() => {
+    const paths = item.images || [];
+    const missing = paths.filter((p) => !signedUrls[p]);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries: [string, string][] = [];
+      for (const p of missing) {
+        const url = await getSignedUrl(p);
+        if (url) entries.push([p, url]);
+      }
+      if (!cancelled && entries.length) {
+        setSignedUrls((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [item.images, getSignedUrl, signedUrls]);
+
+  const uploadBlob = useCallback(
+    async (blob: Blob, replacePath?: string): Promise<string | null> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Not signed in', variant: 'destructive' });
+        return null;
+      }
+      const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+      const path = `${user.id}/${item.id}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from('line-item-images')
+        .upload(path, blob, { contentType: blob.type, upsert: false });
+      if (error) {
+        toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+        return null;
+      }
+      if (replacePath) {
+        await supabase.storage.from('line-item-images').remove([replacePath]);
+        setSignedUrls((prev) => {
+          const { [replacePath]: _, ...rest } = prev;
+          return rest;
+        });
+      }
+      return path;
+    },
+    [item.id, toast],
+  );
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const path = await uploadBlob(file);
+        if (path) uploaded.push(path);
+      }
+      if (uploaded.length) {
+        onUpdate(item.id, { images: [...(item.images || []), ...uploaded] });
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = async (path: string) => {
+    onUpdate(item.id, { images: (item.images || []).filter((p) => p !== path) });
+    await supabase.storage.from('line-item-images').remove([path]);
+    setSignedUrls((prev) => {
+      const { [path]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const openEditExisting = async (path: string) => {
+    const url = signedUrls[path] || (await getSignedUrl(path));
+    if (!url) return;
+    // Fetch as blob then objectURL so cropper can read pixels (cross-origin safe)
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      setEditorSrc(URL.createObjectURL(blob));
+      setEditingPath(path);
+      setEditorOpen(true);
+    } catch {
+      toast({ title: 'Could not load image', variant: 'destructive' });
+    }
+  };
+
+  const handleEditorSave = async (blob: Blob) => {
+    const newPath = await uploadBlob(blob, editingPath || undefined);
+    if (!newPath) return;
+    if (editingPath) {
+      onUpdate(item.id, {
+        images: (item.images || []).map((p) => (p === editingPath ? newPath : p)),
+      });
+    } else {
+      onUpdate(item.id, { images: [...(item.images || []), newPath] });
+    }
+    setEditorOpen(false);
+    if (editorSrc) URL.revokeObjectURL(editorSrc);
+    setEditorSrc(null);
+    setEditingPath(null);
+  };
+
   return (
     <div
       ref={setNodeRef}

@@ -9,6 +9,20 @@ export type GeneratedPdf = {
   fileName: string;
 };
 
+// Resolve storage paths to data URLs for embedding in the PDF
+import { supabase } from '@/integrations/supabase/client';
+const resolveLineItemImage = async (path: string): Promise<{ data: string; width: number; height: number } | null> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from('line-item-images')
+      .createSignedUrl(path, 60 * 10);
+    if (error || !data) return null;
+    return await loadImageAsBase64(data.signedUrl);
+  } catch {
+    return null;
+  }
+};
+
 // Helper to load image as base64
 const loadImageAsBase64 = (src: string): Promise<{ data: string; width: number; height: number }> => {
   return new Promise((resolve, reject) => {

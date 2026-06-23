@@ -31,7 +31,7 @@ async function renderEdited(
   outputMaxWidth: number,
 ): Promise<Blob> {
   const image = await loadImage(src);
-  // Step 1: render rotated+flipped image onto an intermediate canvas
+  // Step 1: rotate image into a bounding-box canvas (matches what react-easy-crop sees)
   const rad = (rotation * Math.PI) / 180;
   const sin = Math.abs(Math.sin(rad));
   const cos = Math.abs(Math.cos(rad));
@@ -44,28 +44,22 @@ async function renderEdited(
   const ictx = inter.getContext('2d')!;
   ictx.translate(bBoxW / 2, bBoxH / 2);
   ictx.rotate(rad);
-  ictx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
   ictx.drawImage(image, -image.width / 2, -image.height / 2);
 
-  // Step 2: crop from intermediate. react-easy-crop returns crop in original image
-  // coordinate space (post-rotation bounding box).
-  const cropCanvas = document.createElement('canvas');
+  // Step 2: crop area is in this rotated space.
   const targetW = Math.min(outputMaxWidth, crop.width);
   const scale = targetW / crop.width;
-  cropCanvas.width = Math.round(crop.width * scale);
-  cropCanvas.height = Math.round(crop.height * scale);
+  const outW = Math.round(crop.width * scale);
+  const outH = Math.round(crop.height * scale);
+
+  const cropCanvas = document.createElement('canvas');
+  cropCanvas.width = outW;
+  cropCanvas.height = outH;
   const cctx = cropCanvas.getContext('2d')!;
-  cctx.drawImage(
-    inter,
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
-    0,
-    0,
-    cropCanvas.width,
-    cropCanvas.height,
-  );
+  // Apply flips on the output canvas so what the user cropped is preserved, just mirrored
+  cctx.translate(flipH ? outW : 0, flipV ? outH : 0);
+  cctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+  cctx.drawImage(inter, crop.x, crop.y, crop.width, crop.height, 0, 0, outW, outH);
 
   return new Promise<Blob>((resolve, reject) => {
     cropCanvas.toBlob(

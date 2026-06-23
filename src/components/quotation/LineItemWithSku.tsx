@@ -37,11 +37,18 @@ export const LineItemWithSku = ({
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [showNotes, setShowNotes] = useState(!!item.notes);
+  const [showNotes, setShowNotes] = useState(!!item.notes || !!(item.images && item.images.length));
   const [priceExpr, setPriceExpr] = useState(String(item.unitPrice || ''));
   const skuInputRef = useRef<HTMLInputElement>(null);
   const descInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSrc, setEditorSrc] = useState<string | null>(null);
+  const [editingPath, setEditingPath] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   // Sync priceExpr when unitPrice changes externally (e.g. from catalog selection)
   const lastExternalPrice = useRef(item.unitPrice);

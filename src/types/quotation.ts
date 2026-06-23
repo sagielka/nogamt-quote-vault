@@ -26,6 +26,7 @@ export interface LineItem {
   costPrice?: number;
   discountPercent: number;
   notes?: string;
+  images?: string[]; // storage paths in line-item-images bucket
 }
 
 export interface Quotation {

@@ -3,12 +3,15 @@ import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy } from 'lucide-react';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2 } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { Currency } from '@/types/quotation';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { LineItemImageEditor } from './LineItemImageEditor';
 
 interface LineItemWithSkuProps {
   item: LineItem;
@@ -34,11 +37,18 @@ export const LineItemWithSku = ({
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [showNotes, setShowNotes] = useState(!!item.notes);
+  const [showNotes, setShowNotes] = useState(!!item.notes || !!(item.images && item.images.length));
   const [priceExpr, setPriceExpr] = useState(String(item.unitPrice || ''));
   const skuInputRef = useRef<HTMLInputElement>(null);
   const descInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSrc, setEditorSrc] = useState<string | null>(null);
+  const [editingPath, setEditingPath] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   // Sync priceExpr when unitPrice changes externally (e.g. from catalog selection)
   const lastExternalPrice = useRef(item.unitPrice);
@@ -185,6 +195,123 @@ export const LineItemWithSku = ({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  // ---------- Image handling ----------
+  const getSignedUrl = useCallback(async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from('line-item-images')
+      .createSignedUrl(path, 60 * 60);
+    if (error || !data) return null;
+    return data.signedUrl;
+  }, []);
+
+  // Fetch signed URLs for all images on mount / when list changes
+  useEffect(() => {
+    const paths = item.images || [];
+    const missing = paths.filter((p) => !signedUrls[p]);
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const entries: [string, string][] = [];
+      for (const p of missing) {
+        const url = await getSignedUrl(p);
+        if (url) entries.push([p, url]);
+      }
+      if (!cancelled && entries.length) {
+        setSignedUrls((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [item.images, getSignedUrl, signedUrls]);
+
+  const uploadBlob = useCallback(
+    async (blob: Blob, replacePath?: string): Promise<string | null> => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Not signed in', variant: 'destructive' });
+        return null;
+      }
+      const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+      const path = `${user.id}/${item.id}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from('line-item-images')
+        .upload(path, blob, { contentType: blob.type, upsert: false });
+      if (error) {
+        toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+        return null;
+      }
+      if (replacePath) {
+        await supabase.storage.from('line-item-images').remove([replacePath]);
+        setSignedUrls((prev) => {
+          const { [replacePath]: _, ...rest } = prev;
+          return rest;
+        });
+      }
+      return path;
+    },
+    [item.id, toast],
+  );
+
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const path = await uploadBlob(file);
+        if (path) uploaded.push(path);
+      }
+      if (uploaded.length) {
+        onUpdate(item.id, { images: [...(item.images || []), ...uploaded] });
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = async (path: string) => {
+    onUpdate(item.id, { images: (item.images || []).filter((p) => p !== path) });
+    await supabase.storage.from('line-item-images').remove([path]);
+    setSignedUrls((prev) => {
+      const { [path]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const openEditExisting = async (path: string) => {
+    const url = signedUrls[path] || (await getSignedUrl(path));
+    if (!url) return;
+    // Fetch as blob then objectURL so cropper can read pixels (cross-origin safe)
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      setEditorSrc(URL.createObjectURL(blob));
+      setEditingPath(path);
+      setEditorOpen(true);
+    } catch {
+      toast({ title: 'Could not load image', variant: 'destructive' });
+    }
+  };
+
+  const handleEditorSave = async (blob: Blob) => {
+    const newPath = await uploadBlob(blob, editingPath || undefined);
+    if (!newPath) return;
+    if (editingPath) {
+      onUpdate(item.id, {
+        images: (item.images || []).map((p) => (p === editingPath ? newPath : p)),
+      });
+    } else {
+      onUpdate(item.id, { images: [...(item.images || []), newPath] });
+    }
+    setEditorOpen(false);
+    if (editorSrc) URL.revokeObjectURL(editorSrc);
+    setEditorSrc(null);
+    setEditingPath(null);
   };
 
   return (
@@ -416,9 +543,9 @@ export const LineItemWithSku = ({
         </div>
       </div>
 
-      {/* Notes Section */}
+      {/* Notes & Images Section */}
       {showNotes && (
-        <div className="px-3 pb-3 pt-0">
+        <div className="px-3 pb-3 pt-0 space-y-3">
           <div className="flex items-start gap-2 pl-0 md:pl-12">
             <StickyNote className="h-4 w-4 text-muted-foreground mt-2 flex-shrink-0" />
             <Textarea
@@ -429,8 +556,84 @@ export const LineItemWithSku = ({
               className="input-focus resize-none bg-background/50 border-primary/20 text-sm flex-1"
             />
           </div>
+
+          {/* Images */}
+          <div className="pl-0 md:pl-12">
+            <div className="flex flex-wrap gap-2 items-start">
+              {(item.images || []).map((path) => (
+                <div key={path} className="relative group w-24 h-24 rounded-md overflow-hidden border border-primary/20 bg-background/50">
+                  {signedUrls[path] ? (
+                    <img src={signedUrls[path]} alt="line item" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:bg-white/20"
+                      onClick={() => openEditExisting(path)}
+                      title="Edit image"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:bg-destructive/40"
+                      onClick={() => removeImage(path)}
+                      title="Remove image"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-24 w-24 flex-col gap-1 border-dashed border-primary/30 text-muted-foreground hover:text-primary hover:border-primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <ImagePlus className="h-5 w-5" />
+                    <span className="text-xs">Add image</span>
+                  </>
+                )}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFilesSelected}
+              />
+            </div>
+          </div>
         </div>
       )}
+
+      <LineItemImageEditor
+        open={editorOpen}
+        imageSrc={editorSrc}
+        onClose={() => {
+          setEditorOpen(false);
+          setEditorSrc(null);
+          setEditingPath(null);
+        }}
+        onSave={handleEditorSave}
+      />
     </div>
   );
 };

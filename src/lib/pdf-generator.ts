@@ -3,10 +3,25 @@ import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateT
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
+import { supabase } from '@/integrations/supabase/client';
 
 export type GeneratedPdf = {
   blob: Blob;
   fileName: string;
+};
+
+// Resolve storage paths to data URLs for embedding in the PDF
+
+const resolveLineItemImage = async (path: string): Promise<{ data: string; width: number; height: number } | null> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from('line-item-images')
+      .createSignedUrl(path, 60 * 10);
+    if (error || !data) return null;
+    return await loadImageAsBase64(data.signedUrl);
+  } catch {
+    return null;
+  }
 };
 
 // Helper to load image as base64
@@ -305,6 +320,19 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   setFont(pdf, 'normal');
   pdf.setFontSize(8);
 
+  // Pre-load all line item images
+  const itemImages: Record<number, { data: string; width: number; height: number }[]> = {};
+  for (let i = 0; i < quotation.items.length; i++) {
+    const imgs = quotation.items[i].images || [];
+    if (imgs.length === 0) continue;
+    const loaded: { data: string; width: number; height: number }[] = [];
+    for (const p of imgs) {
+      const res = await resolveLineItemImage(p);
+      if (res) loaded.push(res);
+    }
+    if (loaded.length) itemImages[i] = loaded;
+  }
+
   for (let i = 0; i < quotation.items.length; i++) {
     const item = quotation.items[i];
     const lineTotal = calculateLineTotal(item);
@@ -317,8 +345,17 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       8
     );
 
+    // Calculate image block height (thumbnails, 3 per row, each ~28mm)
+    const imgs = itemImages[i] || [];
+    const thumbW = 28;
+    const thumbH = 28;
+    const thumbGap = 2;
+    const thumbsPerRow = 3;
+    const imgRows = imgs.length > 0 ? Math.ceil(imgs.length / thumbsPerRow) : 0;
+    const imgBlockH = imgRows > 0 ? imgRows * (thumbH + thumbGap) + 2 : 0;
+
     // Check for page break
-    if (y + rowHeight > contentBottom) {
+    if (y + rowHeight + imgBlockH > contentBottom) {
       pdf.addPage();
       y = margin;
     }
@@ -359,6 +396,39 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     setFont(pdf, 'normal');
 
     y += rowHeight + 1.5;
+
+    // Render image thumbnails below row, aligned with description column
+    if (imgs.length > 0) {
+      let imgX = colX.desc;
+      let imgY = y;
+      let colIdx = 0;
+      for (const img of imgs) {
+        // fit within thumb box preserving aspect
+        const ratio = img.width / img.height;
+        let drawW = thumbW;
+        let drawH = thumbW / ratio;
+        if (drawH > thumbH) {
+          drawH = thumbH;
+          drawW = thumbH * ratio;
+        }
+        const offsetX = (thumbW - drawW) / 2;
+        const offsetY = (thumbH - drawH) / 2;
+        try {
+          pdf.addImage(img.data, 'PNG', imgX + offsetX, imgY + offsetY, drawW, drawH);
+        } catch (e) {
+          console.warn('Could not embed line item image:', e);
+        }
+        colIdx++;
+        if (colIdx >= thumbsPerRow) {
+          colIdx = 0;
+          imgX = colX.desc;
+          imgY += thumbH + thumbGap;
+        } else {
+          imgX += thumbW + thumbGap;
+        }
+      }
+      y += imgBlockH;
+    }
 
     // Row separator
     pdf.setDrawColor(229, 229, 229);

@@ -426,9 +426,9 @@ export const LineItemWithSku = ({
         </div>
       </div>
 
-      {/* Notes Section */}
+      {/* Notes & Images Section */}
       {showNotes && (
-        <div className="px-3 pb-3 pt-0">
+        <div className="px-3 pb-3 pt-0 space-y-3">
           <div className="flex items-start gap-2 pl-0 md:pl-12">
             <StickyNote className="h-4 w-4 text-muted-foreground mt-2 flex-shrink-0" />
             <Textarea
@@ -439,8 +439,84 @@ export const LineItemWithSku = ({
               className="input-focus resize-none bg-background/50 border-primary/20 text-sm flex-1"
             />
           </div>
+
+          {/* Images */}
+          <div className="pl-0 md:pl-12">
+            <div className="flex flex-wrap gap-2 items-start">
+              {(item.images || []).map((path) => (
+                <div key={path} className="relative group w-24 h-24 rounded-md overflow-hidden border border-primary/20 bg-background/50">
+                  {signedUrls[path] ? (
+                    <img src={signedUrls[path]} alt="line item" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:bg-white/20"
+                      onClick={() => openEditExisting(path)}
+                      title="Edit image"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-white hover:bg-destructive/40"
+                      onClick={() => removeImage(path)}
+                      title="Remove image"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-24 w-24 flex-col gap-1 border-dashed border-primary/30 text-muted-foreground hover:text-primary hover:border-primary"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <ImagePlus className="h-5 w-5" />
+                    <span className="text-xs">Add image</span>
+                  </>
+                )}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFilesSelected}
+              />
+            </div>
+          </div>
         </div>
       )}
+
+      <LineItemImageEditor
+        open={editorOpen}
+        imageSrc={editorSrc}
+        onClose={() => {
+          setEditorOpen(false);
+          setEditorSrc(null);
+          setEditingPath(null);
+        }}
+        onSave={handleEditorSave}
+      />
     </div>
   );
 };

@@ -333,25 +333,71 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     if (loaded.length) itemImages[i] = loaded;
   }
 
+  // ===== Auto-fit to one page =====
+  // Estimate space needed for totals + notes + tail spacing
+  const totalsBlockH =
+    5 + (discount > 0 ? 5 : 0) + (quotation.taxRate > 0 ? 5 : 0) + 5 + 10 + 4;
+  let notesBlockH = 0;
+  if (quotation.notes) {
+    const nLines = wrapText(pdf, quotation.notes, contentWidth);
+    notesBlockH = 5 + 4 + nLines.length * 3.2 + 4 + 5;
+  }
+  const reservedBelow = totalsBlockH + notesBlockH;
+  const availableForRows = contentBottom - y - reservedBelow;
+
+  // Measure natural rows height at scale 1
+  type RowMeta = { descLines: string[]; noteLines: string[]; rowH: number; imgRows: number };
+  const measure = (lineH: number, thumbH: number, gapAfter: number, sepGap: number) => {
+    let total = 0;
+    const metas: RowMeta[] = [];
+    for (let i = 0; i < quotation.items.length; i++) {
+      const item = quotation.items[i];
+      const dL = wrapText(pdf, item.description || '—', descWidth);
+      const nL = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
+      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0), 8);
+      const imgs = itemImages[i] || [];
+      const imgRows = imgs.length > 0 ? Math.ceil(imgs.length / 3) : 0;
+      const imgBlockH = imgRows > 0 ? imgRows * (thumbH + 2) + 2 : 0;
+      metas.push({ descLines: dL, noteLines: nL, rowH, imgRows });
+      total += rowH + gapAfter + imgBlockH + sepGap;
+    }
+    return { total, metas };
+  };
+
+  // Try descending density presets until rows fit; otherwise use smallest (overflow handled by paging)
+  const presets = [
+    { lineH: 4, thumbH: 28, gapAfter: 1.5, sepGap: 3, fontSize: 8, noteFontSize: 7 },
+    { lineH: 3.6, thumbH: 24, gapAfter: 1, sepGap: 2, fontSize: 8, noteFontSize: 7 },
+    { lineH: 3.2, thumbH: 20, gapAfter: 0.8, sepGap: 1.5, fontSize: 7.5, noteFontSize: 6.5 },
+    { lineH: 2.9, thumbH: 16, gapAfter: 0.5, sepGap: 1, fontSize: 7, noteFontSize: 6 },
+  ];
+  let chosen = presets[0];
+  let measured = measure(chosen.lineH, chosen.thumbH, chosen.gapAfter, chosen.sepGap);
+  for (const p of presets) {
+    const m = measure(p.lineH, p.thumbH, p.gapAfter, p.sepGap);
+    chosen = p;
+    measured = m;
+    if (m.total <= availableForRows) break;
+  }
+  const { lineH, thumbH: thumbHsel, gapAfter, sepGap, fontSize, noteFontSize } = chosen;
+  const metas = measured.metas;
+
+  pdf.setFontSize(fontSize);
+
   for (let i = 0; i < quotation.items.length; i++) {
     const item = quotation.items[i];
     const lineTotal = calculateLineTotal(item);
+    const meta = metas[i];
+    const descLines = meta.descLines;
+    const noteLines = meta.noteLines;
+    const rowHeight = meta.rowH;
 
-    // Calculate row height based on description wrapping
-    const descLines = wrapText(pdf, item.description || '—', descWidth);
-    const noteLines = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
-    const rowHeight = Math.max(
-      (descLines.length + noteLines.length) * 4 + (noteLines.length > 0 ? 4 : 0),
-      8
-    );
-
-    // Calculate image block height (thumbnails, 3 per row, each ~28mm)
     const imgs = itemImages[i] || [];
-    const thumbW = 28;
-    const thumbH = 28;
+    const thumbW = thumbHsel;
+    const thumbH = thumbHsel;
     const thumbGap = 2;
     const thumbsPerRow = 3;
-    const imgRows = imgs.length > 0 ? Math.ceil(imgs.length / thumbsPerRow) : 0;
+    const imgRows = meta.imgRows;
     const imgBlockH = imgRows > 0 ? imgRows * (thumbH + thumbGap) + 2 : 0;
 
     // Check for page break
@@ -366,20 +412,18 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(String(i + 1), colX.num, rowY);
 
     setFont(pdf, 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(fontSize);
     pdf.text(item.sku || '—', colX.sku, rowY);
 
-    setFont(pdf, 'normal');
-    pdf.setFontSize(8);
     pdf.setTextColor(...black);
-    pdf.text(descLines, colX.desc, rowY);
+    descLines.forEach((ln, idx) => pdf.text(ln, colX.desc, rowY + idx * lineH));
 
     if (noteLines.length > 0) {
-      const noteY = rowY + descLines.length * 4 + 2;
-      pdf.setFontSize(7);
+      const noteY = rowY + descLines.length * lineH + lineH * 0.5;
+      pdf.setFontSize(noteFontSize);
       pdf.setTextColor(...gray);
-      pdf.text(noteLines, colX.desc, noteY);
-      pdf.setFontSize(8);
+      noteLines.forEach((ln, idx) => pdf.text(ln, colX.desc, noteY + idx * lineH));
+      pdf.setFontSize(fontSize);
     }
 
     pdf.setTextColor(...gray);
@@ -395,7 +439,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
     setFont(pdf, 'normal');
 
-    y += rowHeight + 1.5;
+    y += rowHeight + gapAfter;
 
     // Render image thumbnails below row, aligned with description column
     if (imgs.length > 0) {
@@ -403,7 +447,6 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       let imgY = y;
       let colIdx = 0;
       for (const img of imgs) {
-        // fit within thumb box preserving aspect
         const ratio = img.width / img.height;
         let drawW = thumbW;
         let drawH = thumbW / ratio;
@@ -434,7 +477,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.setDrawColor(229, 229, 229);
     pdf.setLineWidth(0.2);
     pdf.line(margin, y, pageWidth - margin, y);
-    y += 3;
+    y += sepGap;
   }
 
   y += 4;

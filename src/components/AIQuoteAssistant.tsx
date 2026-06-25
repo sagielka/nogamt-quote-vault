@@ -165,8 +165,12 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
     }
   };
 
-  const findProduct = (sku: string): ProductItem | undefined =>
-    productCatalog.find((p) => p.sku.toLowerCase() === sku.toLowerCase());
+  const findProduct = (sku: string): ProductItem | undefined => {
+    const target = sku.trim().toLowerCase();
+    if (!target) return undefined;
+    return getProductCatalog().find((p) => p.sku.toLowerCase() === target)
+      || productCatalog.find((p) => p.sku.toLowerCase() === target);
+  };
 
   const handleUseExtraction = () => {
     if (!extracted) return;
@@ -182,12 +186,13 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
     const baseCurrency = getPriceListBaseCurrency(priceList);
     const items = extracted.items.map((it, i) => {
       const empty = createEmptyLineItem();
-      const finalSku = chosenSkus[i] || it.sku || it.suggestedSku || '';
+      const finalSku = (chosenSkus[i] || it.sku || it.suggestedSku || '').trim();
       const product = finalSku ? findProduct(finalSku) : undefined;
       const description = product?.description || it.description || it.rawText || '';
       let unitPrice = 0;
       if (finalSku) {
-        const basePrice = getProductPrice(finalSku, priceList, description);
+        const basePrice = getProductPrice(product?.sku || finalSku, priceList, description);
+        console.log('[AI Quote] price lookup', { sku: finalSku, matched: product?.sku, priceList, basePrice });
         if (basePrice != null) {
           unitPrice = convertPrice(basePrice, baseCurrency, extracted.currency);
         }

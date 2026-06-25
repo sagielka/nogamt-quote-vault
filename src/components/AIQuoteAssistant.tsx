@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, Upload, Loader2, FileText, X, ArrowRight, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { productCatalog, ProductItem, PriceList, getProductPrice, convertPrice, getPriceListBaseCurrency } from '@/data/product-catalog';
+import { productCatalog, getProductCatalog, ProductItem, PriceList, getProductPrice, convertPrice, getPriceListBaseCurrency } from '@/data/product-catalog';
 import { QuotationFormData, Currency } from '@/types/quotation';
 import { createEmptyLineItem } from '@/lib/quotation-utils';
 

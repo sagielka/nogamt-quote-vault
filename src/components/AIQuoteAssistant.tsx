@@ -170,16 +170,34 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
 
   const handleUseExtraction = () => {
     if (!extracted) return;
+    const currencyToPriceList: Record<string, PriceList> = {
+      USD: 'DOLLAR',
+      EUR: 'EURO',
+      ILS: 'SHEKEL',
+      GBP: 'EURO',
+      JPY: 'DOLLAR',
+      CNY: 'CHINA_DOLLAR',
+    };
+    const priceList: PriceList = currencyToPriceList[extracted.currency] || 'DOLLAR';
+    const baseCurrency = getPriceListBaseCurrency(priceList);
     const items = extracted.items.map((it, i) => {
       const empty = createEmptyLineItem();
       const finalSku = chosenSkus[i] || it.sku || it.suggestedSku || '';
       const product = finalSku ? findProduct(finalSku) : undefined;
+      const description = product?.description || it.description || it.rawText || '';
+      let unitPrice = 0;
+      if (finalSku) {
+        const basePrice = getProductPrice(finalSku, priceList, description);
+        if (basePrice != null) {
+          unitPrice = convertPrice(basePrice, baseCurrency, extracted.currency);
+        }
+      }
       return {
         ...empty,
         sku: product?.sku || finalSku || '',
-        description: product?.description || it.description || it.rawText || '',
+        description,
         moq: it.quantity || 1,
-        unitPrice: 0, // user fills pricing
+        unitPrice,
         notes: it.notes || '',
       };
     });

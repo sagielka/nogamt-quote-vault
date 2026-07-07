@@ -639,3 +639,41 @@ export const getProductCost = (sku: string, currency: Currency = "USD"): number 
   const converted = convertPrice(usd, "USD", currency);
   return Math.round(converted * 100) / 100;
 };
+
+// For US-... custom SKUs without an exact p/n cost, derive cost from the group
+// letter (B-G) found in the description, e.g. "US-d140-D300-D-R04-PL-NCT" -> GROUP D.
+export const getGroupCostFromDescription = (
+  description: string,
+  currency: Currency = "USD",
+): number | null => {
+  if (!description) return null;
+  const upper = description.toUpperCase();
+  const letters = ["B", "C", "D", "E", "F", "G"];
+  let found: string | null = null;
+  const parts = upper.split("-");
+  if (parts.length >= 4 && parts[3].length === 1 && letters.includes(parts[3])) {
+    found = parts[3];
+  } else {
+    for (const l of letters) {
+      if (upper.includes(`-${l}-`)) { found = l; break; }
+    }
+  }
+  if (!found) return null;
+  const usd = PRODUCT_COSTS_USD[`GROUP ${found}`];
+  if (usd == null || usd <= 0) return null;
+  const converted = convertPrice(usd, "USD", currency);
+  return Math.round(converted * 100) / 100;
+};
+
+export const getAutoCost = (
+  sku: string,
+  description: string,
+  currency: Currency = "USD",
+): number | null => {
+  const direct = getProductCost(sku, currency);
+  if (direct != null) return direct;
+  if (sku && sku.trim().toUpperCase().startsWith("US")) {
+    return getGroupCostFromDescription(description, currency);
+  }
+  return null;
+};

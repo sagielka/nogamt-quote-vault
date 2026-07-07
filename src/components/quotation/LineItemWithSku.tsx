@@ -105,7 +105,7 @@ export const LineItemWithSku = ({
   } = useSortable({ id: item.id });
 
   const handleSkuChange = (value: string) => {
-    const cost = getProductCost(value, currency);
+    const cost = getAutoCost(value, item.description || '', currency);
     const updates: Partial<LineItem> = { sku: value };
     if (cost != null) updates.costPrice = cost;
     onUpdate(item.id, updates);
@@ -126,7 +126,10 @@ export const LineItemWithSku = ({
   };
 
   const handleDescriptionChange = (value: string) => {
-    onUpdate(item.id, { description: value });
+    const updates: Partial<LineItem> = { description: value };
+    const cost = getAutoCost(item.sku || '', value, currency);
+    if (cost != null) updates.costPrice = cost;
+    onUpdate(item.id, updates);
     const results = searchProducts(value);
     setSuggestions(results);
     setActiveField(results.length > 0 ? 'description' : null);
@@ -136,7 +139,9 @@ export const LineItemWithSku = ({
     if (item.sku?.toUpperCase().startsWith('US')) {
       const usPrice = getUSSkuPrice(item.sku, value, priceList);
       if (usPrice !== null) {
-        onUpdate(item.id, { description: value, unitPrice: usPrice });
+        const u: Partial<LineItem> = { description: value, unitPrice: usPrice };
+        if (cost != null) u.costPrice = cost;
+        onUpdate(item.id, u);
       }
     }
   };

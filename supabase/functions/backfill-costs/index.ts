@@ -37,11 +37,13 @@ async function backfillTable(supabase: any, table: string) {
       const newItems = items.map((it: any) => {
         const sku = (it?.sku ?? "").toString().trim().toUpperCase();
         const desc = (it?.description ?? "").toString().toUpperCase();
-        const current = Number(it?.costPrice) || 0;
-        if (current > 0) return it;
+        const currentRaw = it?.costPrice;
+        const current = Number(currentRaw);
+        if (Number.isFinite(current) && current > 0) return it;
 
         // 1) direct SKU cost
         let usd = COSTS[sku];
+        let src = "direct";
 
         // 2) US-... custom SKUs: derive from GROUP letter (B-G) in description
         if ((!usd || usd <= 0) && sku.startsWith("US")) {
@@ -55,12 +57,13 @@ async function backfillTable(supabase: any, table: string) {
               if (desc.includes(`-${l}-`)) { found = l; break; }
             }
           }
-          if (found) usd = COSTS[`GROUP ${found}`];
+          if (found) { usd = COSTS[`GROUP ${found}`]; src = `GROUP ${found}`; }
         }
 
         if (usd && usd > 0) {
           changed = true;
           itemsFilled++;
+          console.log(`fill ${sku} via ${src} -> ${usd} USD`);
           return { ...it, costPrice: convert(usd, row.currency || "USD") };
         }
         return it;

@@ -1,33 +1,48 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Quotation, QuotationFormData } from '@/types/quotation';
+import { Quotation, QuotationFormData, LineItem, Currency } from '@/types/quotation';
 import { generateQuoteNumber } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getAutoCost } from '@/data/product-costs';
 
 const STORAGE_KEY = 'quotations';
 
+// Fill missing costPrice on each line item using the cost table when possible.
+const enrichItemsWithCost = (items: any[], currency: Currency): LineItem[] => {
+  if (!Array.isArray(items)) return [];
+  return items.map((it) => {
+    const current = Number(it?.costPrice);
+    if (Number.isFinite(current) && current > 0) return it as LineItem;
+    const cost = getAutoCost(it?.sku || '', it?.description || '', currency);
+    return cost != null && cost > 0 ? { ...it, costPrice: cost } : (it as LineItem);
+  });
+};
+
 // Helper to convert database row to Quotation type
-const dbRowToQuotation = (row: any): Quotation => ({
-  id: row.id,
-  userId: row.user_id,
-  quoteNumber: row.quote_number,
-  clientName: row.client_name,
-  clientEmail: row.client_email,
-  clientAddress: row.client_address || '',
-  items: row.items || [],
-  taxRate: parseFloat(row.tax_rate) || 0,
-  discountType: row.discount_type || 'percentage',
-  discountValue: parseFloat(row.discount_value) || 0,
-  notes: row.notes || '',
-  currency: row.currency || 'USD',
-  status: row.status || 'draft',
-  attachments: row.attachments || [],
-  orderedItems: row.ordered_items || null,
-  createdAt: new Date(row.created_at),
-  validUntil: new Date(row.valid_until),
-  reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,
-  followUpNotifiedAt: row.follow_up_notified_at ? new Date(row.follow_up_notified_at) : null,
-});
+const dbRowToQuotation = (row: any): Quotation => {
+  const currency: Currency = row.currency || 'USD';
+  return {
+    id: row.id,
+    userId: row.user_id,
+    quoteNumber: row.quote_number,
+    clientName: row.client_name,
+    clientEmail: row.client_email,
+    clientAddress: row.client_address || '',
+    items: enrichItemsWithCost(row.items || [], currency),
+    taxRate: parseFloat(row.tax_rate) || 0,
+    discountType: row.discount_type || 'percentage',
+    discountValue: parseFloat(row.discount_value) || 0,
+    notes: row.notes || '',
+    currency,
+    status: row.status || 'draft',
+    attachments: row.attachments || [],
+    orderedItems: row.ordered_items || null,
+    createdAt: new Date(row.created_at),
+    validUntil: new Date(row.valid_until),
+    reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,
+    followUpNotifiedAt: row.follow_up_notified_at ? new Date(row.follow_up_notified_at) : null,
+  };
+};
 
 // Helper to convert QuotationFormData to database insert format
 const quotationToDbRow = (data: QuotationFormData, userId: string, quoteNumber: string) => ({
@@ -36,7 +51,7 @@ const quotationToDbRow = (data: QuotationFormData, userId: string, quoteNumber: 
   client_name: data.clientName,
   client_email: data.clientEmail,
   client_address: data.clientAddress || null,
-  items: data.items,
+  items: enrichItemsWithCost(data.items, data.currency),
   tax_rate: data.taxRate,
   discount_type: data.discountType,
   discount_value: data.discountValue,

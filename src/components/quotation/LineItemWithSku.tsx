@@ -61,14 +61,22 @@ export const LineItemWithSku = ({
   }, [item.unitPrice]);
 
   // Auto-recalculate cost whenever SKU / description / currency change.
-  // Always overwrites with the latest auto-cost when one is found so edits reflect the new SKU.
+  // Guard: only overwrite when the current cost is empty OR the current cost
+  // was itself auto-filled (never clobber a manual edit). Also skip no-op writes
+  // when the computed value matches what's already stored.
   useEffect(() => {
     if (!item.sku && !item.description) return;
     const cost = getAutoCost(item.sku || '', item.description || '', currency);
-    if (cost != null && cost > 0 && cost !== item.costPrice) {
+    const currentIsEmpty = !item.costPrice || item.costPrice <= 0;
+    const currentIsAuto = item.costPriceAutoFilled === true;
+    const canOverwrite = currentIsEmpty || currentIsAuto;
+
+    if (cost != null && cost > 0) {
+      if (!canOverwrite) return; // preserve manual value
+      if (cost === item.costPrice && currentIsAuto) return; // no-op
       onUpdate(item.id, { costPrice: cost, costPriceAutoFilled: true });
-    } else if ((cost == null || cost <= 0) && item.costPriceAutoFilled) {
-      // Previous auto-cost no longer applies to this SKU/description.
+    } else if (currentIsAuto && currentIsEmpty) {
+      // Previously auto-filled but no longer resolvable — clear the auto flag.
       onUpdate(item.id, { costPriceAutoFilled: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

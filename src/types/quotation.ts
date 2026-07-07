@@ -24,6 +24,7 @@ export interface LineItem {
   moq: number;
   unitPrice: number;
   costPrice?: number;
+  costPriceAutoFilled?: boolean;
   discountPercent: number;
   notes?: string;
   images?: string[]; // storage paths in line-item-images bucket

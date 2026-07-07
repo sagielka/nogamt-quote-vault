@@ -234,6 +234,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UC9421": 294.416,
   "UC9621": 323.5824,
   "UC9721": 339.5527,
+  "UF1106": 11.3889,
   "UF1115": 22.998,
   "UF1115GT": 22.9796,
   "UF1125": 51.4153,

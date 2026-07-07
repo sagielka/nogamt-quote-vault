@@ -672,7 +672,9 @@ export const getAutoCost = (
 ): number | null => {
   const direct = getProductCost(sku, currency);
   if (direct != null) return direct;
-  if (sku && sku.trim().toUpperCase().startsWith("US")) {
+  const skuU = (sku || "").trim().toUpperCase();
+  const descU = (description || "").trim().toUpperCase();
+  if (skuU.startsWith("US") || descU.startsWith("US-") || descU.startsWith("US ")) {
     return getGroupCostFromDescription(description, currency);
   }
   return null;

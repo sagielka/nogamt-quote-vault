@@ -45,8 +45,9 @@ async function backfillTable(supabase: any, table: string) {
         let usd = COSTS[sku];
         let src = "direct";
 
-        // 2) US-... custom SKUs: derive from GROUP letter (B-G) in description
-        if ((!usd || usd <= 0) && sku.startsWith("US")) {
+        // 2) US-... custom SKUs OR description starting with US-: derive from GROUP letter (B-G) in description
+        const descIsUS = desc.startsWith("US-") || desc.startsWith("US ");
+        if ((!usd || usd <= 0) && (sku.startsWith("US") || descIsUS)) {
           const letters = ["B", "C", "D", "E", "F", "G"];
           let found: string | null = null;
           const parts = desc.split("-");

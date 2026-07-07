@@ -105,7 +105,10 @@ export const LineItemWithSku = ({
   } = useSortable({ id: item.id });
 
   const handleSkuChange = (value: string) => {
-    onUpdate(item.id, { sku: value });
+    const cost = getProductCost(value, currency);
+    const updates: Partial<LineItem> = { sku: value };
+    if (cost != null) updates.costPrice = cost;
+    onUpdate(item.id, updates);
     const results = searchProducts(value);
     setSuggestions(results);
     setActiveField(results.length > 0 ? 'sku' : null);
@@ -115,7 +118,9 @@ export const LineItemWithSku = ({
     if (value.toUpperCase().startsWith('US')) {
       const usPrice = getUSSkuPrice(value, item.description, priceList);
       if (usPrice !== null) {
-        onUpdate(item.id, { sku: value, unitPrice: usPrice });
+        const u: Partial<LineItem> = { sku: value, unitPrice: usPrice };
+        if (cost != null) u.costPrice = cost;
+        onUpdate(item.id, u);
       }
     }
   };
@@ -138,11 +143,14 @@ export const LineItemWithSku = ({
 
   const handleSelectSuggestion = (product: ProductItem) => {
     const price = getProductPrice(product.sku, priceList, product.description);
-    onUpdate(item.id, { 
-      sku: product.sku, 
+    const cost = getProductCost(product.sku, currency);
+    const updates: Partial<LineItem> = {
+      sku: product.sku,
       description: product.description,
-      unitPrice: price ?? 0
-    });
+      unitPrice: price ?? 0,
+    };
+    if (cost != null) updates.costPrice = cost;
+    onUpdate(item.id, updates);
     setActiveField(null);
     setSuggestions([]);
   };

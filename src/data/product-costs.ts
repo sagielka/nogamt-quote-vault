@@ -686,7 +686,11 @@ export const getAutoCost = (
   if (direct != null) return direct;
   const skuU = (sku || "").trim().toUpperCase();
   const descU = (description || "").trim().toUpperCase();
-  if (skuU.startsWith("US") || descU.startsWith("US-") || descU.startsWith("US ")) {
+  if (
+    skuU.startsWith("US") || skuU.startsWith("UC") ||
+    descU.startsWith("US-") || descU.startsWith("US ") ||
+    descU.startsWith("UC-") || descU.startsWith("UC ")
+  ) {
     return getGroupCostFromDescription(description, currency);
   }
   return null;

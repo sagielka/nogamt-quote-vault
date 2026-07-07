@@ -194,7 +194,10 @@ export const LineItemWithSku = ({
       description: product.description,
       unitPrice: price ?? 0,
     };
-    if (cost != null) updates.costPrice = cost;
+    if (cost != null) {
+      updates.costPrice = cost;
+      updates.costPriceAutoFilled = true;
+    }
     onUpdate(item.id, updates);
     setActiveField(null);
     setSuggestions([]);

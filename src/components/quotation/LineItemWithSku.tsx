@@ -559,19 +559,31 @@ export const LineItemWithSku = ({
             step="0.01"
             placeholder="Cost"
             value={item.costPrice || ''}
-            onChange={(e) => onUpdate(item.id, { costPrice: parseFloat(e.target.value) || 0 })}
+            onChange={(e) =>
+              onUpdate(item.id, {
+                costPrice: parseFloat(e.target.value) || 0,
+                costPriceAutoFilled: false,
+              })
+            }
             className={`input-focus text-right bg-background/50 border-primary/20 font-mono text-sm ${
-              hasCostWarning ? 'border-warning/60 pr-7' : ''
+              hasCostWarning ? 'border-warning/60 pr-7' : isAutoFilled ? 'border-primary/60 pr-7' : ''
             }`}
           />
-          {hasCostWarning && (
+          {hasCostWarning ? (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
               title="No cost found for this SKU/description"
             >
               <AlertTriangle className="h-4 w-4 text-warning" />
             </span>
-          )}
+          ) : isAutoFilled ? (
+            <span
+              className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+              title="Cost auto-filled from catalog"
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </span>
+          ) : null}
         </div>
 
         {/* Unit Price - supports expressions like 56.75*2 */}

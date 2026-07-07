@@ -533,17 +533,15 @@ export const LineItemWithSku = ({
             value={item.costPrice || ''}
             onChange={(e) => onUpdate(item.id, { costPrice: parseFloat(e.target.value) || 0 })}
             className={`input-focus text-right bg-background/50 border-primary/20 font-mono text-sm ${
-              (item.sku?.trim() || item.description?.trim()) && (!item.costPrice || item.costPrice <= 0)
-                ? 'border-destructive/60 pr-7'
-                : ''
+              hasCostWarning ? 'border-warning/60 pr-7' : ''
             }`}
           />
-          {(item.sku?.trim() || item.description?.trim()) && (!item.costPrice || item.costPrice <= 0) && (
+          {hasCostWarning && (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
               title="No cost found for this SKU/description"
             >
-              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
             </span>
           )}
         </div>

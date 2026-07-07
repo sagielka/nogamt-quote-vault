@@ -340,7 +340,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UF2350GT": 14.8718,
   "UF2370": 21.4517,
   "UF2370GT": 21.4333,
-  "UF2411": 63.0367,
+  "UF2411": 57.99,
   "UF2415": 8.3256,
   "UF2415GT": 8.3072,
   "UF2430": 11.1376,

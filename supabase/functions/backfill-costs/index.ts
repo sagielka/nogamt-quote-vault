@@ -36,9 +36,29 @@ async function backfillTable(supabase: any, table: string) {
       let changed = false;
       const newItems = items.map((it: any) => {
         const sku = (it?.sku ?? "").toString().trim().toUpperCase();
-        const usd = COSTS[sku];
+        const desc = (it?.description ?? "").toString().toUpperCase();
         const current = Number(it?.costPrice) || 0;
-        if (usd && usd > 0 && current === 0) {
+        if (current > 0) return it;
+
+        // 1) direct SKU cost
+        let usd = COSTS[sku];
+
+        // 2) US-... custom SKUs: derive from GROUP letter (B-G) in description
+        if ((!usd || usd <= 0) && sku.startsWith("US")) {
+          const letters = ["B", "C", "D", "E", "F", "G"];
+          let found: string | null = null;
+          const parts = desc.split("-");
+          if (parts.length >= 4 && parts[3].length === 1 && letters.includes(parts[3])) {
+            found = parts[3];
+          } else {
+            for (const l of letters) {
+              if (desc.includes(`-${l}-`)) { found = l; break; }
+            }
+          }
+          if (found) usd = COSTS[`GROUP ${found}`];
+        }
+
+        if (usd && usd > 0) {
           changed = true;
           itemsFilled++;
           return { ...it, costPrice: convert(usd, row.currency || "USD") };

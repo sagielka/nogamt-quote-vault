@@ -601,6 +601,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UX2080GT": 195.1812,
   "UX2090": 204.6446,
   "UX2090GT": 200.8812,
+  "UX2091": 204.6446,
   "UX2100": 210.4446,
   "UX2100GT": 206.6812,
   "UX2121": 239.1649,

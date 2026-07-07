@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2 } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
-import { getProductCost } from '@/data/product-costs';
+import { getProductCost, getAutoCost } from '@/data/product-costs';
 import { Currency } from '@/types/quotation';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';

@@ -158,7 +158,12 @@ export const LineItemWithSku = ({
   const handleDescriptionChange = (value: string) => {
     const updates: Partial<LineItem> = { description: value };
     const cost = getAutoCost(item.sku || '', value, currency);
-    if (cost != null) updates.costPrice = cost;
+    if (cost != null) {
+      updates.costPrice = cost;
+      updates.costPriceAutoFilled = true;
+    } else {
+      updates.costPriceAutoFilled = false;
+    }
     onUpdate(item.id, updates);
     const results = searchProducts(value);
     setSuggestions(results);
@@ -170,7 +175,12 @@ export const LineItemWithSku = ({
       const usPrice = getUSSkuPrice(item.sku, value, priceList);
       if (usPrice !== null) {
         const u: Partial<LineItem> = { description: value, unitPrice: usPrice };
-        if (cost != null) u.costPrice = cost;
+        if (cost != null) {
+          u.costPrice = cost;
+          u.costPriceAutoFilled = true;
+        } else {
+          u.costPriceAutoFilled = false;
+        }
         onUpdate(item.id, u);
       }
     }

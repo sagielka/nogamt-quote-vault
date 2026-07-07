@@ -366,10 +366,10 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
   // Try descending density presets until rows fit; otherwise use smallest (overflow handled by paging)
   const presets = [
-    { lineH: 4, thumbH: 28, gapAfter: 1.5, sepGap: 3, fontSize: 8, noteFontSize: 7 },
-    { lineH: 3.6, thumbH: 24, gapAfter: 1, sepGap: 2, fontSize: 8, noteFontSize: 7 },
-    { lineH: 3.2, thumbH: 20, gapAfter: 0.8, sepGap: 1.5, fontSize: 7.5, noteFontSize: 6.5 },
-    { lineH: 2.9, thumbH: 16, gapAfter: 0.5, sepGap: 1, fontSize: 7, noteFontSize: 6 },
+    { lineH: 4, thumbH: 28, gapAfter: 1.5, sepGap: 4, fontSize: 8, noteFontSize: 7 },
+    { lineH: 3.6, thumbH: 24, gapAfter: 1, sepGap: 3.5, fontSize: 8, noteFontSize: 7 },
+    { lineH: 3.2, thumbH: 20, gapAfter: 0.8, sepGap: 3.2, fontSize: 7.5, noteFontSize: 6.5 },
+    { lineH: 2.9, thumbH: 16, gapAfter: 0.5, sepGap: 3, fontSize: 7, noteFontSize: 6 },
   ];
   let chosen = presets[0];
   let measured = measure(chosen.lineH, chosen.thumbH, chosen.gapAfter, chosen.sepGap);

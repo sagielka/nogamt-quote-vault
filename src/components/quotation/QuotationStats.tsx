@@ -309,7 +309,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     const byCustomer: Record<string, { clientName: string; revenue: number; cost: number; quoteCount: number }> = {};
 
     filteredQuotations.forEach(q => {
-      const revenue = calculateSubtotal(q.items);
+      const gross = calculateSubtotal(q.items);
+      const revenue = gross - calculateDiscount(gross, q.discountType, q.discountValue);
       const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
       const hasCost = q.items.some(item => (item.costPrice || 0) > 0);
 

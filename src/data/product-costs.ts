@@ -103,6 +103,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UB1240": 71.413,
   "UB1245": 71.3547,
   "UB1250": 71.3547,
+  "UB1280": 71.3547,
   "UB2020": 7.7055,
   "UB2020GT": 7.7007,
   "UB2021": 7.7065,

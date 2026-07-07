@@ -71,6 +71,10 @@ export const LineItemWithSku = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.sku, item.description, currency]);
 
+  const hasCostWarning =
+    (item.sku?.trim() || item.description?.trim()) &&
+    (!item.costPrice || item.costPrice <= 0);
+
   const evaluateExpression = useCallback((expr: string): number | null => {
     try {
       const sanitized = expr.replace(/[^0-9+\-*/.() ]/g, '');

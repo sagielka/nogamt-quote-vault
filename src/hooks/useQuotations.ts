@@ -14,7 +14,9 @@ const enrichItemsWithCost = (items: any[], currency: Currency): LineItem[] => {
     const current = Number(it?.costPrice);
     if (Number.isFinite(current) && current > 0) return it as LineItem;
     const cost = getAutoCost(it?.sku || '', it?.description || '', currency);
-    return cost != null && cost > 0 ? { ...it, costPrice: cost } : (it as LineItem);
+    return cost != null && cost > 0
+      ? ({ ...it, costPrice: cost, costPriceAutoFilled: true } as LineItem)
+      : (it as LineItem);
   });
 };
 

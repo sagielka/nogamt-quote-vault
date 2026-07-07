@@ -3,7 +3,7 @@ import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle } from 'lucide-react';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';

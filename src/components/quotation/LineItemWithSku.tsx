@@ -66,7 +66,10 @@ export const LineItemWithSku = ({
     if (!item.sku && !item.description) return;
     const cost = getAutoCost(item.sku || '', item.description || '', currency);
     if (cost != null && cost > 0 && cost !== item.costPrice) {
-      onUpdate(item.id, { costPrice: cost });
+      onUpdate(item.id, { costPrice: cost, costPriceAutoFilled: true });
+    } else if ((cost == null || cost <= 0) && item.costPriceAutoFilled) {
+      // Previous auto-cost no longer applies to this SKU/description.
+      onUpdate(item.id, { costPriceAutoFilled: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.sku, item.description, currency]);
@@ -74,6 +77,8 @@ export const LineItemWithSku = ({
   const hasCostWarning =
     (item.sku?.trim() || item.description?.trim()) &&
     (!item.costPrice || item.costPrice <= 0);
+
+  const isAutoFilled = item.costPriceAutoFilled === true && item.costPrice && item.costPrice > 0;
 
   const evaluateExpression = useCallback((expr: string): number | null => {
     try {

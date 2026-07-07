@@ -3,7 +3,7 @@ import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle } from 'lucide-react';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
@@ -66,7 +66,10 @@ export const LineItemWithSku = ({
     if (!item.sku && !item.description) return;
     const cost = getAutoCost(item.sku || '', item.description || '', currency);
     if (cost != null && cost > 0 && cost !== item.costPrice) {
-      onUpdate(item.id, { costPrice: cost });
+      onUpdate(item.id, { costPrice: cost, costPriceAutoFilled: true });
+    } else if ((cost == null || cost <= 0) && item.costPriceAutoFilled) {
+      // Previous auto-cost no longer applies to this SKU/description.
+      onUpdate(item.id, { costPriceAutoFilled: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.sku, item.description, currency]);
@@ -74,6 +77,8 @@ export const LineItemWithSku = ({
   const hasCostWarning =
     (item.sku?.trim() || item.description?.trim()) &&
     (!item.costPrice || item.costPrice <= 0);
+
+  const isAutoFilled = item.costPriceAutoFilled === true && item.costPrice && item.costPrice > 0;
 
   const evaluateExpression = useCallback((expr: string): number | null => {
     try {
@@ -122,7 +127,12 @@ export const LineItemWithSku = ({
   const handleSkuChange = (value: string) => {
     const cost = getAutoCost(value, item.description || '', currency);
     const updates: Partial<LineItem> = { sku: value };
-    if (cost != null) updates.costPrice = cost;
+    if (cost != null) {
+      updates.costPrice = cost;
+      updates.costPriceAutoFilled = true;
+    } else {
+      updates.costPriceAutoFilled = false;
+    }
     onUpdate(item.id, updates);
     const results = searchProducts(value);
     setSuggestions(results);
@@ -134,7 +144,12 @@ export const LineItemWithSku = ({
       const usPrice = getUSSkuPrice(value, item.description, priceList);
       if (usPrice !== null) {
         const u: Partial<LineItem> = { sku: value, unitPrice: usPrice };
-        if (cost != null) u.costPrice = cost;
+        if (cost != null) {
+          u.costPrice = cost;
+          u.costPriceAutoFilled = true;
+        } else {
+          u.costPriceAutoFilled = false;
+        }
         onUpdate(item.id, u);
       }
     }
@@ -143,7 +158,12 @@ export const LineItemWithSku = ({
   const handleDescriptionChange = (value: string) => {
     const updates: Partial<LineItem> = { description: value };
     const cost = getAutoCost(item.sku || '', value, currency);
-    if (cost != null) updates.costPrice = cost;
+    if (cost != null) {
+      updates.costPrice = cost;
+      updates.costPriceAutoFilled = true;
+    } else {
+      updates.costPriceAutoFilled = false;
+    }
     onUpdate(item.id, updates);
     const results = searchProducts(value);
     setSuggestions(results);
@@ -155,7 +175,12 @@ export const LineItemWithSku = ({
       const usPrice = getUSSkuPrice(item.sku, value, priceList);
       if (usPrice !== null) {
         const u: Partial<LineItem> = { description: value, unitPrice: usPrice };
-        if (cost != null) u.costPrice = cost;
+        if (cost != null) {
+          u.costPrice = cost;
+          u.costPriceAutoFilled = true;
+        } else {
+          u.costPriceAutoFilled = false;
+        }
         onUpdate(item.id, u);
       }
     }
@@ -169,7 +194,10 @@ export const LineItemWithSku = ({
       description: product.description,
       unitPrice: price ?? 0,
     };
-    if (cost != null) updates.costPrice = cost;
+    if (cost != null) {
+      updates.costPrice = cost;
+      updates.costPriceAutoFilled = true;
+    }
     onUpdate(item.id, updates);
     setActiveField(null);
     setSuggestions([]);
@@ -531,19 +559,31 @@ export const LineItemWithSku = ({
             step="0.01"
             placeholder="Cost"
             value={item.costPrice || ''}
-            onChange={(e) => onUpdate(item.id, { costPrice: parseFloat(e.target.value) || 0 })}
+            onChange={(e) =>
+              onUpdate(item.id, {
+                costPrice: parseFloat(e.target.value) || 0,
+                costPriceAutoFilled: false,
+              })
+            }
             className={`input-focus text-right bg-background/50 border-primary/20 font-mono text-sm ${
-              hasCostWarning ? 'border-warning/60 pr-7' : ''
+              hasCostWarning ? 'border-warning/60 pr-7' : isAutoFilled ? 'border-primary/60 pr-7' : ''
             }`}
           />
-          {hasCostWarning && (
+          {hasCostWarning ? (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
               title="No cost found for this SKU/description"
             >
               <AlertTriangle className="h-4 w-4 text-warning" />
             </span>
-          )}
+          ) : isAutoFilled ? (
+            <span
+              className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+              title="Cost auto-filled from catalog"
+            >
+              <Sparkles className="h-4 w-4 text-primary" />
+            </span>
+          ) : null}
         </div>
 
         {/* Unit Price - supports expressions like 56.75*2 */}

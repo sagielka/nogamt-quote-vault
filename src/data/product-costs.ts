@@ -358,6 +358,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UF2570": 21.4517,
   "UF2570GT": 21.4333,
   "UF2611": 78.6593,
+  "UF2612": 98.00,
   "UF2615": 8.3256,
   "UF2615GT": 8.3072,
   "UF2630": 11.1376,

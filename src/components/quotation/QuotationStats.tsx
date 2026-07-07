@@ -368,7 +368,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
 
       if (!months[key]) months[key] = { month: label, revenue: 0, cost: 0, profit: 0 };
 
-      const revenue = calculateSubtotal(q.items);
+      const gross = calculateSubtotal(q.items);
+      const revenue = gross - calculateDiscount(gross, q.discountType, q.discountValue);
       const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
       months[key].revenue += revenue;
       months[key].cost += cost;

@@ -103,6 +103,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UB1240": 71.413,
   "UB1245": 71.3547,
   "UB1250": 71.3547,
+  "UB1280": 71.3547,
   "UB2020": 7.7055,
   "UB2020GT": 7.7007,
   "UB2021": 7.7065,
@@ -600,6 +601,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
   "UX2080GT": 195.1812,
   "UX2090": 204.6446,
   "UX2090GT": 200.8812,
+  "UX2091": 204.6446,
   "UX2100": 210.4446,
   "UX2100GT": 206.6812,
   "UX2121": 239.1649,
@@ -686,7 +688,11 @@ export const getAutoCost = (
   if (direct != null) return direct;
   const skuU = (sku || "").trim().toUpperCase();
   const descU = (description || "").trim().toUpperCase();
-  if (skuU.startsWith("US") || descU.startsWith("US-") || descU.startsWith("US ")) {
+  if (
+    skuU.startsWith("US") || skuU.startsWith("UC") ||
+    descU.startsWith("US-") || descU.startsWith("US ") ||
+    descU.startsWith("UC-") || descU.startsWith("UC ")
+  ) {
     return getGroupCostFromDescription(description, currency);
   }
   return null;

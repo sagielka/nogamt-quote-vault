@@ -60,12 +60,12 @@ export const LineItemWithSku = ({
     }
   }, [item.unitPrice]);
 
-  // Auto-fill missing cost when SKU/description/currency are known but costPrice is empty
+  // Auto-recalculate cost whenever SKU / description / currency change.
+  // Always overwrites with the latest auto-cost when one is found so edits reflect the new SKU.
   useEffect(() => {
-    if (item.costPrice && item.costPrice > 0) return;
     if (!item.sku && !item.description) return;
     const cost = getAutoCost(item.sku || '', item.description || '', currency);
-    if (cost != null && cost > 0) {
+    if (cost != null && cost > 0 && cost !== item.costPrice) {
       onUpdate(item.id, { costPrice: cost });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

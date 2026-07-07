@@ -3,7 +3,7 @@ import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2 } from 'lucide-react';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
@@ -520,7 +520,7 @@ export const LineItemWithSku = ({
         </div>
         
         {/* Cost Price */}
-        <div>
+        <div className="relative">
           <Input
             type="number"
             min="0"
@@ -528,8 +528,20 @@ export const LineItemWithSku = ({
             placeholder="Cost"
             value={item.costPrice || ''}
             onChange={(e) => onUpdate(item.id, { costPrice: parseFloat(e.target.value) || 0 })}
-            className="input-focus text-right bg-background/50 border-primary/20 font-mono text-sm"
+            className={`input-focus text-right bg-background/50 border-primary/20 font-mono text-sm ${
+              (item.sku?.trim() || item.description?.trim()) && (!item.costPrice || item.costPrice <= 0)
+                ? 'border-destructive/60 pr-7'
+                : ''
+            }`}
           />
+          {(item.sku?.trim() || item.description?.trim()) && (!item.costPrice || item.costPrice <= 0) && (
+            <span
+              className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+              title="No cost found for this SKU/description"
+            >
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </span>
+          )}
         </div>
 
         {/* Unit Price - supports expressions like 56.75*2 */}

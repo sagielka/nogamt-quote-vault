@@ -60,6 +60,17 @@ export const LineItemWithSku = ({
     }
   }, [item.unitPrice]);
 
+  // Auto-fill missing cost when SKU/description/currency are known but costPrice is empty
+  useEffect(() => {
+    if (item.costPrice && item.costPrice > 0) return;
+    if (!item.sku && !item.description) return;
+    const cost = getAutoCost(item.sku || '', item.description || '', currency);
+    if (cost != null && cost > 0) {
+      onUpdate(item.id, { costPrice: cost });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.sku, item.description, currency]);
+
   const evaluateExpression = useCallback((expr: string): number | null => {
     try {
       const sanitized = expr.replace(/[^0-9+\-*/.() ]/g, '');

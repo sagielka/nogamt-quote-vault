@@ -473,11 +473,12 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       y += imgBlockH;
     }
 
-    // Row separator
+    // Row separator — centered in the inter-row gap so it never crosses text
+    y += sepGap / 2;
     pdf.setDrawColor(229, 229, 229);
     pdf.setLineWidth(0.2);
     pdf.line(margin, y, pageWidth - margin, y);
-    y += sepGap;
+    y += sepGap / 2;
   }
 
   y += 4;

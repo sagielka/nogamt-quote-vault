@@ -21,3 +21,7 @@ verify_jwt = false
 [functions.ai-extract-quote]
 verify_jwt = false
 
+[functions.backfill-costs]
+verify_jwt = false
+
+

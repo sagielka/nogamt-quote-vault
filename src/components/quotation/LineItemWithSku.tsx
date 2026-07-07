@@ -544,11 +544,15 @@ export const LineItemWithSku = ({
 
         {/* Margin % */}
         <div className="text-center font-mono text-sm whitespace-nowrap">
-          {item.costPrice && item.unitPrice > 0 ? (
-            <span className={((item.unitPrice - item.costPrice) / item.unitPrice * 100) >= 0 ? 'text-emerald-500' : 'text-destructive'}>
-              {((item.unitPrice - item.costPrice) / item.unitPrice * 100).toFixed(1)}%
-            </span>
-          ) : (
+          {item.costPrice && item.unitPrice > 0 ? (() => {
+            const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+            const margin = netUnit > 0 ? ((netUnit - item.costPrice) / netUnit) * 100 : 0;
+            return (
+              <span className={margin >= 0 ? 'text-emerald-500' : 'text-destructive'}>
+                {margin.toFixed(1)}%
+              </span>
+            );
+          })() : (
             <span className="text-muted-foreground">—</span>
           )}
         </div>

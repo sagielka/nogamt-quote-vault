@@ -975,7 +975,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
             {/* Profit Margin Summary */}
             {(() => {
               const totalCost = items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
-              const totalRevenue = subtotal;
+              const totalRevenue = afterDiscount;
               const totalProfit = totalRevenue - totalCost;
               const marginPercent = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
               const hasCostData = items.some(item => item.costPrice && item.costPrice > 0);

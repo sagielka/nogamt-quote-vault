@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format, subDays, subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval } from 'date-fns';
 import { Quotation } from '@/types/quotation';
-import { calculateTotal, calculateLineTotal, calculateSubtotal, formatCurrency } from '@/lib/quotation-utils';
+import { calculateTotal, calculateLineTotal, calculateSubtotal, calculateDiscount, formatCurrency } from '@/lib/quotation-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FileText, DollarSign, Clock, CheckCircle, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, Users, Package, Layers, CalendarIcon, X, Download, Percent } from 'lucide-react';
@@ -309,7 +309,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
     const byCustomer: Record<string, { clientName: string; revenue: number; cost: number; quoteCount: number }> = {};
 
     filteredQuotations.forEach(q => {
-      const revenue = calculateSubtotal(q.items);
+      const gross = calculateSubtotal(q.items);
+      const revenue = gross - calculateDiscount(gross, q.discountType, q.discountValue);
       const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
       const hasCost = q.items.some(item => (item.costPrice || 0) > 0);
 
@@ -367,7 +368,8 @@ export const QuotationStats = ({ quotations, isAdmin, userNameMap = {}, onFilter
 
       if (!months[key]) months[key] = { month: label, revenue: 0, cost: 0, profit: 0 };
 
-      const revenue = calculateSubtotal(q.items);
+      const gross = calculateSubtotal(q.items);
+      const revenue = gross - calculateDiscount(gross, q.discountType, q.discountValue);
       const cost = q.items.reduce((sum, item) => sum + (item.costPrice || 0) * item.moq, 0);
       months[key].revenue += revenue;
       months[key].cost += cost;

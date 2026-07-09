@@ -11,6 +11,7 @@ const corsHeaders = {
 interface SendQuotationRequest {
   to: string;
   recipients?: string[];
+  recipientName?: string;
   clientName: string;
   quoteNumber: string;
   total: string;
@@ -18,6 +19,17 @@ interface SendQuotationRequest {
   pdfBase64: string;
   isReminder?: boolean;
 }
+
+const deriveNameFromEmail = (email: string): string => {
+  const local = email.split('@')[0] || '';
+  const cleaned = local.replace(/[._\-+]+/g, ' ').trim();
+  if (!cleaned) return '';
+  return cleaned
+    .split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
 
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, recipients, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+    const { to, recipients, recipientName, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
 
     // For reminders with multiple recipients, send one email with all in TO
     const toList: { email: string; name?: string }[] = [];
@@ -123,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify quotation exists and get handler user_id + reminder/status state
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
-      .select('id, user_id, status, reminder_sent_at')
+      .select('id, user_id, status, reminder_sent_at, client_email')
       .eq('quote_number', quoteNumber)
       .single();
 
@@ -204,7 +216,16 @@ const handler = async (req: Request): Promise<Response> => {
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #0891b2;">${isReminder ? 'Reminder: ' : ''}Quotation ${quoteNumber}</h2>
-        <p>Dear ${clientName},</p>
+        <p>Dear ${(() => {
+          if (recipientName && recipientName.trim()) return recipientName.trim();
+          const primaryEmails = String(quotation.client_email || '')
+            .split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean);
+          const toLower = to.toLowerCase();
+          if (primaryEmails.length > 0 && primaryEmails[0] === toLower) return clientName;
+          const derived = deriveNameFromEmail(to);
+          return derived || clientName;
+        })()},</p>
+
         ${introText}
         <table style="margin: 20px 0; border-collapse: collapse;">
           <tr>

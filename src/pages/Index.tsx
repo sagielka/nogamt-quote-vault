@@ -846,25 +846,23 @@ const Index = () => {
                       )}
                     </div>
                   )}
-                  {filteredQuotations.map((quotation, index) => (
-                    <QuotationCard
-                      key={quotation.id}
-                      quotation={quotation}
-                      index={filteredQuotations.length - index}
-                      creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
-                      userList={userList}
-                      emailReadAt={getLatestRead(quotation.id)?.read_at ?? null}
-                      isSelected={selectedIds.includes(quotation.id)}
-                      onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
-                      onView={handleViewQuotation}
-                      onEdit={handleEditQuotation}
-                      onDelete={handleDeleteQuotation}
-                      onDuplicate={handleDuplicateQuotation}
-                       onStatusChange={handleStatusChange}
-                       onCreatorChange={handleCreatorChange}
-                       onEditCustomer={handleEditCustomer}
-                     />
-                  ))}
+                  <QuotationViews
+                    mode={quotationsViewMode}
+                    quotations={filteredQuotations}
+                    selectedIds={selectedIds}
+                    userNameMap={userNameMap}
+                    userList={userList}
+                    getEmailReadAt={(id) => getLatestRead(id)?.read_at ?? null}
+                    onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                    onView={handleViewQuotation}
+                    onEdit={handleEditQuotation}
+                    onDelete={handleDeleteQuotation}
+                    onDuplicate={handleDuplicateQuotation}
+                    onStatusChange={handleStatusChange}
+                    onCreatorChange={handleCreatorChange}
+                    onEditCustomer={handleEditCustomer}
+                  />
+
                   {filteredQuotations.length === 0 && searchQuery && (
                     <p className="text-center text-sm text-muted-foreground py-8">
                       No quotations match "{searchQuery}"

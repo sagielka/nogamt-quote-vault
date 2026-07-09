@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import CustomerPortal from "./pages/CustomerPortal";
 import NotFound from "./pages/NotFound";
+import DesktopUpdater from "./components/DesktopUpdater";
 
 const queryClient = new QueryClient();
 
@@ -18,6 +19,7 @@ const App = () => (
       <GitHubCatalogProvider>
         <Toaster />
         <Sonner />
+        <DesktopUpdater />
         <HashRouter>
           <Routes>
             <Route path="/" element={<Index />} />

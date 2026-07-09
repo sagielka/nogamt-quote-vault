@@ -18,5 +18,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
       body,
     });
   },
+
+  // Auto-updater
+  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+  installUpdateNow: () => ipcRenderer.invoke("install-update-now"),
+  onUpdateStatus: (cb) => {
+    const listener = (_e, payload) => cb(payload);
+    ipcRenderer.on("update-status", listener);
+    return () => ipcRenderer.removeListener("update-status", listener);
+  },
 });
 

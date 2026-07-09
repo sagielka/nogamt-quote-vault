@@ -32,23 +32,7 @@ import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog'
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
 
-// Declare electron API types
-declare global {
-  interface Window {
-    electronAPI?: {
-      platform: string;
-      isElectron: boolean;
-      getAppVersion?: () => Promise<string>;
-      emailWithAttachment: (
-        pdfData: string,
-        fileName: string,
-        recipientEmail: string,
-        subject: string,
-        body: string
-      ) => Promise<{ success: boolean; fallback?: boolean; pdfPath?: string; error?: string }>;
-    };
-  }
-}
+// electronAPI types are declared globally in src/vite-env.d.ts
 
 interface QuotationPreviewProps {
   quotation: Quotation;

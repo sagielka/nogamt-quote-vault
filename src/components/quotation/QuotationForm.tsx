@@ -655,6 +655,17 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
       return;
     }
     
+    // Remind user to attach correspondence before saving a NEW quotation
+    if (!isEditing && pendingEmailFiles.length === 0 && emailAttachments.length === 0) {
+      setPendingValidation(validationResult);
+      setShowAttachReminder(true);
+      return;
+    }
+
+    await proceedSubmit(validationResult);
+  };
+
+  const proceedSubmit = async (validationResult: any) => {
     if (saveCustomer) {
       await saveCustomerToDatabase();
     }
@@ -674,6 +685,23 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
 
     onSubmit(submitData);
   };
+
+  const handleReminderContinue = async () => {
+    const v = pendingValidation;
+    setShowAttachReminder(false);
+    setPendingValidation(null);
+    if (v) await proceedSubmit(v);
+  };
+
+  const handleReminderAttachClick = () => {
+    reminderFileInputRef.current?.click();
+  };
+
+  const handleReminderFilesSelected = async (files: FileList | null) => {
+    await handleUploadEmailFile(files);
+    // Reset input so same file can be re-selected later
+    if (reminderFileInputRef.current) reminderFileInputRef.current.value = '';
+    await handleReminderContinue();
 
   const handleConfirmDuplicate = () => {
     if (pendingSubmitData) {

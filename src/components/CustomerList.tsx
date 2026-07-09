@@ -702,7 +702,9 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             <TooltipContent>Show only customers with unread emails</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} storageKey="customers-view-mode" />
       </div>
+
 
       {filtered.length > 0 && (
         <div className="flex items-center gap-3 text-sm text-muted-foreground">

@@ -46,6 +46,9 @@ import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 import { ItemPricesView } from '@/components/ItemPricesView';
+import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
+import { QuotationViews } from '@/components/quotation/QuotationViews';
+
 
 type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports';
 

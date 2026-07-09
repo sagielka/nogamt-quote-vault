@@ -216,7 +216,16 @@ const handler = async (req: Request): Promise<Response> => {
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #0891b2;">${isReminder ? 'Reminder: ' : ''}Quotation ${quoteNumber}</h2>
-        <p>Dear ${(recipientName && recipientName.trim()) || (isReminder ? (deriveNameFromEmail(to) || clientName) : clientName)},</p>
+        <p>Dear ${(() => {
+          if (recipientName && recipientName.trim()) return recipientName.trim();
+          const primaryEmails = String(quotation.client_email || '')
+            .split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean);
+          const toLower = to.toLowerCase();
+          if (primaryEmails.length > 0 && primaryEmails[0] === toLower) return clientName;
+          const derived = deriveNameFromEmail(to);
+          return derived || clientName;
+        })()},</p>
+
         ${introText}
         <table style="margin: 20px 0; border-collapse: collapse;">
           <tr>

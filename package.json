@@ -30,7 +30,8 @@
         { "target": "nsis", "arch": ["x64"] }
       ],
       "icon": "public/favicon.ico",
-      "publisherName": "Noga Engineering"
+      "publisherName": "Noga Engineering",
+      "artifactName": "NogaQuotation-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -40,7 +41,8 @@
       "deleteAppDataOnUninstall": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Noga Quotation"
+      "shortcutName": "Noga Quotation",
+      "artifactName": "NogaQuotation-Setup-${version}.${ext}"
     },
     "publish": [
       {

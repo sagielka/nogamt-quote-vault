@@ -340,24 +340,31 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
 
   const handleDownloadPdf = async () => {
     toast({
-      title: 'Generating PDF...',
-      description: 'Please wait while the PDF is being created.',
+      title: 'Preparing Email...',
+      description: 'Generating PDF and opening your mail client.',
     });
 
     const result = await downloadQuotationPdf(quotation);
 
-    if (result.success) {
-      toast({
-        title: 'PDF Downloaded',
-        description: `${result.fileName} has been saved.`,
-      });
-    } else {
+    if (!result.success) {
       toast({
         title: 'Error',
         description: 'Failed to generate PDF. Please try again or use print.',
         variant: 'destructive',
       });
+      return;
     }
+
+    const to = (selectedRecipients.length > 0 ? selectedRecipients.join(',') : quotation.clientEmail || '');
+    const subject = `Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`;
+    const body = `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nNOTE: The PDF (${result.fileName}) has been downloaded to your computer — please attach it to this email before sending.\n\nBest regards,\nNoga Engineering & Technology Ltd.`;
+
+    window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    toast({
+      title: 'PDF Downloaded',
+      description: `${result.fileName} saved — attach it to the opened email.`,
+    });
   };
 
   const handleEmailQuote = async () => {

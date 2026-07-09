@@ -95,7 +95,7 @@ const CompactList = ({ quotations, selectedIds, onToggleSelect, onView, userName
             <span className="text-xs text-muted-foreground w-20 text-right shrink-0 hidden md:inline">
               {userNameMap[q.userId]?.split(' ')[0] || '—'}
             </span>
-            {readAt && <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" title={`Read ${formatDate(readAt)}`} />}
+            {readAt && <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" title={`Read ${formatDate(new Date(readAt))}`} />}
           </div>
         );
       })}

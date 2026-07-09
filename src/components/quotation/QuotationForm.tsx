@@ -702,6 +702,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     // Reset input so same file can be re-selected later
     if (reminderFileInputRef.current) reminderFileInputRef.current.value = '';
     await handleReminderContinue();
+  };
+
+
 
   const handleConfirmDuplicate = () => {
     if (pendingSubmitData) {

@@ -11,6 +11,7 @@ const corsHeaders = {
 interface SendQuotationRequest {
   to: string;
   recipients?: string[];
+  recipientName?: string;
   clientName: string;
   quoteNumber: string;
   total: string;
@@ -18,6 +19,17 @@ interface SendQuotationRequest {
   pdfBase64: string;
   isReminder?: boolean;
 }
+
+const deriveNameFromEmail = (email: string): string => {
+  const local = email.split('@')[0] || '';
+  const cleaned = local.replace(/[._\-+]+/g, ' ').trim();
+  if (!cleaned) return '';
+  return cleaned
+    .split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
 
 const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LineItemWithSku } from './LineItemWithSku';
-import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search, Paperclip, Upload, ExternalLink, Loader2 } from 'lucide-react';
+import { Plus, FileText, Users, Zap, CircuitBoard, Database, Terminal, Pencil, Trash2, ChevronsUpDown, Search, Paperclip, Upload, ExternalLink, Loader2, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -731,36 +731,73 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
             </div>
           )}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="clientName" className="text-muted-foreground uppercase text-xs tracking-wider">Client Name</Label>
-              <Input
-                id="clientName"
-                placeholder="Company or client name"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                required
-                className="input-focus bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clientEmail" className="text-muted-foreground uppercase text-xs tracking-wider">Email(s)</Label>
-              <Input
-                id="clientEmail"
-                placeholder="client@example.com, another@example.com"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-                required
-                className="input-focus bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
-              />
-              <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
-              {clientEmail && (() => {
-                const invalid = clientEmail.split(',').map(e => e.trim()).filter(e => e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
-                return invalid.length > 0 ? (
-                  <p className="text-xs text-destructive">Invalid: {invalid.join(', ')}</p>
-                ) : null;
-              })()}
-            </div>
+          {(() => {
+            const trimmedName = clientName.trim().toLowerCase();
+            const matchedCustomer = trimmedName
+              ? customers.find(c => c.name.trim().toLowerCase() === trimmedName)
+              : null;
+            const existingEmails = matchedCustomer
+              ? (matchedCustomer.email || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+              : [];
+            const currentEmails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+            const newEmails = matchedCustomer
+              ? currentEmails.filter(e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !existingEmails.includes(e.toLowerCase()))
+              : [];
+            return (
+              <>
+                {matchedCustomer && (
+                  <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+                    <div className="space-y-1">
+                      <div>
+                        <strong>Existing customer:</strong> {matchedCustomer.name} — {existingEmails.length} email{existingEmails.length === 1 ? '' : 's'} on file.
+                      </div>
+                      {newEmails.length > 0 && (
+                        <div>
+                          {newEmails.length} new email{newEmails.length === 1 ? '' : 's'} ({newEmails.join(', ')}) will be <strong>added</strong> to the customer card. Existing contacts will be kept.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="clientName" className="text-muted-foreground uppercase text-xs tracking-wider flex items-center gap-2">
+                      Client Name
+                      {matchedCustomer && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium normal-case tracking-normal text-amber-200">
+                          <AlertTriangle className="w-3 h-3" /> Existing
+                        </span>
+                      )}
+                    </Label>
+                    <Input
+                      id="clientName"
+                      placeholder="Company or client name"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      required
+                      className={`input-focus bg-secondary/50 placeholder:text-muted-foreground/50 ${matchedCustomer ? 'border-amber-500/60' : 'border-primary/20'}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="clientEmail" className="text-muted-foreground uppercase text-xs tracking-wider">Email(s)</Label>
+                    <Input
+                      id="clientEmail"
+                      placeholder="client@example.com, another@example.com"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      required
+                      className="input-focus bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
+                    />
+                    <p className="text-xs text-muted-foreground">Separate multiple emails with commas</p>
+                    {clientEmail && (() => {
+                      const invalid = clientEmail.split(',').map(e => e.trim()).filter(e => e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+                      return invalid.length > 0 ? (
+                        <p className="text-xs text-destructive">Invalid: {invalid.join(', ')}</p>
+                      ) : null;
+                    })()}
+                  </div>
+
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="clientAddress" className="text-muted-foreground uppercase text-xs tracking-wider">Address</Label>
               <Textarea
@@ -772,7 +809,11 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
                 className="input-focus resize-none bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
               />
             </div>
-          </div>
+                </div>
+              </>
+            );
+          })()}
+
 
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2">

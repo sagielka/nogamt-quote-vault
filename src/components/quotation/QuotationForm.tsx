@@ -857,34 +857,53 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
           })()}
 
 
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="saveCustomer"
-                checked={saveCustomer}
-                onChange={(e) => setSaveCustomer(e.target.checked)}
-                className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
-              />
-              <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
-                Save customer for future quotations
-              </Label>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!clientName || !clientEmail || (() => {
-                const emails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
-                return emails.length === 0 || emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
-              })()}
-              onClick={async () => {
-                await saveCustomerToDatabase();
-              }}
-            >
-              Save Customer
-            </Button>
-          </div>
+          {(() => {
+            const trimmedName = clientName.trim().toLowerCase();
+            const matchedCustomer = trimmedName
+              ? customers.find(c => c.name.trim().toLowerCase() === trimmedName)
+              : null;
+            const existingEmails = matchedCustomer
+              ? (matchedCustomer.email || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+              : [];
+            const currentEmails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+            const hasNewEmail = matchedCustomer && currentEmails.some(
+              e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !existingEmails.includes(e.toLowerCase())
+            );
+            const emailsInvalid = (() => {
+              const emails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+              return emails.length === 0 || emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+            })();
+            return (
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="saveCustomer"
+                    checked={saveCustomer}
+                    onChange={(e) => setSaveCustomer(e.target.checked)}
+                    disabled={!!matchedCustomer}
+                    className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30 disabled:opacity-50"
+                  />
+                  <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
+                    {matchedCustomer
+                      ? 'Customer already saved — new emails will be appended'
+                      : 'Save customer for future quotations'}
+                  </Label>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!clientName || !clientEmail || emailsInvalid || (!!matchedCustomer && !hasNewEmail)}
+                  onClick={async () => { await saveCustomerToDatabase(); }}
+                  title={matchedCustomer && !hasNewEmail ? 'No new emails to add' : undefined}
+                >
+                  {matchedCustomer ? (hasNewEmail ? 'Add Email(s) to Customer' : 'No changes to save') : 'Save Customer'}
+                </Button>
+              </div>
+            );
+          })()}
+
         </CardContent>
       </Card>
 

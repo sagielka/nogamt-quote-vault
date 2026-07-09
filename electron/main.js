@@ -182,9 +182,16 @@ ipcMain.handle(
 app.whenReady().then(() => {
   createWindow();
 
-  // Check for updates after window is created
+  // Check for updates on launch and then every hour
   if (app.isPackaged) {
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdatesAndNotify().catch((e) =>
+      console.error("Initial update check failed:", e)
+    );
+    setInterval(() => {
+      autoUpdater
+        .checkForUpdatesAndNotify()
+        .catch((e) => console.error("Periodic update check failed:", e));
+    }, 60 * 60 * 1000);
   }
 });
 

@@ -680,8 +680,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
             Print
           </Button>
           <Button variant="accent" onClick={handleDownloadPdf}>
-            <Download className="w-4 h-4 mr-2" />
-            Download PDF
+            <Mail className="w-4 h-4 mr-2" />
+            Email PDF
           </Button>
           <Button variant="outline" onClick={handleGeneratePortalLink} disabled={portalLoading}>
             {portalLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}

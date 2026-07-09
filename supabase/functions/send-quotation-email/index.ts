@@ -216,7 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #0891b2;">${isReminder ? 'Reminder: ' : ''}Quotation ${quoteNumber}</h2>
-        <p>Dear ${clientName},</p>
+        <p>Dear ${(recipientName && recipientName.trim()) || (isReminder ? (deriveNameFromEmail(to) || clientName) : clientName)},</p>
         ${introText}
         <table style="margin: 20px 0; border-collapse: collapse;">
           <tr>

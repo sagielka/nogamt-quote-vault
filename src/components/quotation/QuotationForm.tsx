@@ -193,6 +193,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
   const [similarQuotes, setSimilarQuotes] = useState<SimilarQuotation[]>([]);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<QuotationFormData | null>(null);
+  const [showAttachReminder, setShowAttachReminder] = useState(false);
+  const [pendingValidation, setPendingValidation] = useState<any>(null);
+  const reminderFileInputRef = React.useRef<HTMLInputElement>(null);
   const quotationId = initialData?.id;
 
   useEffect(() => {

@@ -13,6 +13,11 @@ declare global {
         subject: string,
         body: string
       ) => Promise<{ success: boolean; fallback?: boolean; pdfPath?: string; error?: string }>;
+      checkForUpdates?: () => Promise<{ ok?: boolean; skipped?: boolean; version?: string; error?: string; reason?: string }>;
+      installUpdateNow?: () => Promise<void>;
+      onUpdateStatus?: (
+        cb: (payload: { status: "checking" | "available" | "up-to-date" | "downloading" | "downloaded" | "error"; data?: any }) => void
+      ) => () => void;
     };
   }
 }

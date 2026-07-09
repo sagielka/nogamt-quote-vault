@@ -11,7 +11,45 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:dev": "npm run build && electron .",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && electron-builder --win --publish never",
+    "electron:publish": "npm run build && electron-builder --win --publish always"
+  },
+  "build": {
+    "appId": "com.noga.quotation",
+    "productName": "NogaQuotation",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "electron-release"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "public/favicon.ico",
+      "publisherName": "Noga Engineering"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Noga Quotation"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "REPLACE_WITH_GITHUB_OWNER",
+        "repo": "REPLACE_WITH_GITHUB_REPO",
+        "releaseType": "release"
+      }
+    ]
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -746,20 +746,62 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
             return (
               <>
                 {matchedCustomer && (
-                  <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
-                    <div className="space-y-1">
-                      <div>
-                        <strong>Existing customer:</strong> {matchedCustomer.name} — {existingEmails.length} email{existingEmails.length === 1 ? '' : 's'} on file.
-                      </div>
-                      {newEmails.length > 0 && (
+                  <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-400" />
+                      <div className="space-y-1 flex-1">
                         <div>
-                          {newEmails.length} new email{newEmails.length === 1 ? '' : 's'} ({newEmails.join(', ')}) will be <strong>added</strong> to the customer card. Existing contacts will be kept.
+                          <strong>Existing customer:</strong> {matchedCustomer.name} — no new customer will be created. Pick a contact below, or type a new email to add it to this card.
                         </div>
-                      )}
+                        {matchedCustomer.address && !clientAddress && (
+                          <div className="text-amber-200/80">
+                            Address on file: {matchedCustomer.address}
+                            <button
+                              type="button"
+                              className="ml-2 underline hover:text-amber-100"
+                              onClick={() => setClientAddress(matchedCustomer.address || '')}
+                            >
+                              Use it
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <div className="flex flex-wrap gap-1.5 pl-6">
+                      {existingEmails.map((em) => {
+                        const active = currentEmails.some(c => c.toLowerCase() === em);
+                        return (
+                          <button
+                            key={em}
+                            type="button"
+                            onClick={() => {
+                              if (active) {
+                                const next = currentEmails.filter(c => c.toLowerCase() !== em);
+                                setClientEmail(next.join(', '));
+                              } else {
+                                const next = [...currentEmails, em];
+                                setClientEmail(next.join(', '));
+                              }
+                            }}
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] border transition-colors ${
+                              active
+                                ? 'bg-amber-500/40 border-amber-400 text-amber-50'
+                                : 'bg-amber-500/10 border-amber-500/40 text-amber-200 hover:bg-amber-500/20'
+                            }`}
+                          >
+                            {active ? '✓ ' : '+ '}{em}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {newEmails.length > 0 && (
+                      <div className="pl-6 text-amber-200/90">
+                        {newEmails.length} new email{newEmails.length === 1 ? '' : 's'} ({newEmails.join(', ')}) will be <strong>added</strong> to this customer card on save. Existing contacts are kept.
+                      </div>
+                    )}
                   </div>
                 )}
+
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="clientName" className="text-muted-foreground uppercase text-xs tracking-wider flex items-center gap-2">
@@ -815,34 +857,53 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
           })()}
 
 
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="saveCustomer"
-                checked={saveCustomer}
-                onChange={(e) => setSaveCustomer(e.target.checked)}
-                className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30"
-              />
-              <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
-                Save customer for future quotations
-              </Label>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!clientName || !clientEmail || (() => {
-                const emails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
-                return emails.length === 0 || emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
-              })()}
-              onClick={async () => {
-                await saveCustomerToDatabase();
-              }}
-            >
-              Save Customer
-            </Button>
-          </div>
+          {(() => {
+            const trimmedName = clientName.trim().toLowerCase();
+            const matchedCustomer = trimmedName
+              ? customers.find(c => c.name.trim().toLowerCase() === trimmedName)
+              : null;
+            const existingEmails = matchedCustomer
+              ? (matchedCustomer.email || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+              : [];
+            const currentEmails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+            const hasNewEmail = matchedCustomer && currentEmails.some(
+              e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !existingEmails.includes(e.toLowerCase())
+            );
+            const emailsInvalid = (() => {
+              const emails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
+              return emails.length === 0 || emails.some(e => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+            })();
+            return (
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="saveCustomer"
+                    checked={saveCustomer}
+                    onChange={(e) => setSaveCustomer(e.target.checked)}
+                    disabled={!!matchedCustomer}
+                    className="rounded border-primary/30 bg-secondary/50 text-primary focus:ring-primary/30 disabled:opacity-50"
+                  />
+                  <Label htmlFor="saveCustomer" className="text-sm text-muted-foreground cursor-pointer">
+                    {matchedCustomer
+                      ? 'Customer already saved — new emails will be appended'
+                      : 'Save customer for future quotations'}
+                  </Label>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!clientName || !clientEmail || emailsInvalid || (!!matchedCustomer && !hasNewEmail)}
+                  onClick={async () => { await saveCustomerToDatabase(); }}
+                  title={matchedCustomer && !hasNewEmail ? 'No new emails to add' : undefined}
+                >
+                  {matchedCustomer ? (hasNewEmail ? 'Add Email(s) to Customer' : 'No changes to save') : 'Save Customer'}
+                </Button>
+              </div>
+            );
+          })()}
+
         </CardContent>
       </Card>
 

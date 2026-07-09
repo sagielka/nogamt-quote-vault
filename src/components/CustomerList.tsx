@@ -153,6 +153,8 @@ interface CustomerListProps {
 export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => loadViewMode('customers-view-mode', 'grid'));
+
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

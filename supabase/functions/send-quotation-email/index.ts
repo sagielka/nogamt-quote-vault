@@ -135,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify quotation exists and get handler user_id + reminder/status state
     const { data: quotation, error: quotationError } = await supabase
       .from('quotations')
-      .select('id, user_id, status, reminder_sent_at')
+      .select('id, user_id, status, reminder_sent_at, client_email')
       .eq('quote_number', quoteNumber)
       .single();
 

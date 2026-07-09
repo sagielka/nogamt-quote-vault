@@ -809,7 +809,11 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
                 className="input-focus resize-none bg-secondary/50 border-primary/20 placeholder:text-muted-foreground/50"
               />
             </div>
-          </div>
+                </div>
+              </>
+            );
+          })()}
+
 
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2">

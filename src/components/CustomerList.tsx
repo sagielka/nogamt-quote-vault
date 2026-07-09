@@ -68,6 +68,9 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
+import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
+import { Badge } from '@/components/ui/badge';
+
 
 const EMAIL_TEMPLATES = [
   {

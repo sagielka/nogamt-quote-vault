@@ -339,32 +339,45 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
   };
 
   const handleDownloadPdf = async () => {
-    toast({
-      title: 'Preparing Email...',
-      description: 'Generating PDF and opening your mail client.',
-    });
-
-    const result = await downloadQuotationPdf(quotation);
-
-    if (!result.success) {
-      toast({
-        title: 'Error',
-        description: 'Failed to generate PDF. Please try again or use print.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const to = (selectedRecipients.length > 0 ? selectedRecipients.join(',') : quotation.clientEmail || '');
     const subject = `Quotation ${quotation.quoteNumber} from Noga Engineering & Technology Ltd.`;
-    const body = `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nNOTE: The PDF (${result.fileName}) has been downloaded to your computer — please attach it to this email before sending.\n\nBest regards,\nNoga Engineering & Technology Ltd.`;
+    const body = `Dear ${quotation.clientName},\n\nPlease find attached our quotation ${quotation.quoteNumber} for your review.\n\nTotal: ${formatCurrency(total, quotation.currency)}\nValid Until: ${formatDate(quotation.validUntil)}\n\nNOTE: The PDF (Quotation_${quotation.quoteNumber}.pdf) has been downloaded to your computer — please attach it to this email before sending. (Browsers cannot attach files to mailto links automatically.)\n\nBest regards,\nNoga Engineering & Technology Ltd.`;
+    const mailtoUrl = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-    window.location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Open Outlook FIRST (must be inside the click's user-gesture window,
+    // and before the download navigation which can suppress the protocol handler).
+    const mailWin = window.open(mailtoUrl, '_self');
+    // Fallback if popup/protocol handler was blocked
+    if (!mailWin) {
+      const a = document.createElement('a');
+      a.href = mailtoUrl;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
 
     toast({
-      title: 'PDF Downloaded',
-      description: `${result.fileName} saved — attach it to the opened email.`,
+      title: 'Opening Outlook...',
+      description: 'Generating PDF — attach it to the opened email.',
     });
+
+    // Kick off the PDF download slightly after so it doesn't cancel the mailto handler
+    setTimeout(async () => {
+      const result = await downloadQuotationPdf(quotation);
+      if (result.success) {
+        toast({
+          title: 'PDF Ready',
+          description: `${result.fileName} saved — attach it to the Outlook email.`,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to generate PDF. Please try again or use print.',
+          variant: 'destructive',
+        });
+      }
+    }, 400);
   };
 
   const handleEmailQuote = async () => {

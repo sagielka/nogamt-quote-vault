@@ -95,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, recipients, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
+    const { to, recipients, recipientName, clientName, quoteNumber, total, validUntil, pdfBase64, isReminder }: SendQuotationRequest = requestData;
 
     // For reminders with multiple recipients, send one email with all in TO
     const toList: { email: string; name?: string }[] = [];

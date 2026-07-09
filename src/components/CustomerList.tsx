@@ -744,8 +744,9 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             </p>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+
           {filtered.map((customer) => (
             <Card 
               key={customer.id} 

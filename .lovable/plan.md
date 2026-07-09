@@ -1,25 +1,30 @@
-## Problem
 
-In the generated PDF, a thin horizontal line runs through the middle of every line item's text (SKU, description, LT, MOQ, Unit, Disc %, Net columns). It looks like a strikethrough on every row.
+## Goal
+When sending a reminder to multiple recipients, greet each person by their own name instead of sending one shared email with the quotation's client name.
 
-## Root cause
+## Current behavior
+`supabase/functions/send-quotation-email/index.ts` puts all reminder recipients into a single Brevo `to` array and uses one `htmlContent` with `Dear ${clientName}` — so every recipient sees the same generic greeting.
 
-In `src/lib/pdf-generator.ts` the row separator is drawn at the bottom of each row, and then `y` is only advanced by `sepGap` mm before the next row's text is drawn with its baseline at that new `y`. Because `pdf.text()` uses the baseline as the anchor, the text ascender extends ~2.5–2.8 mm above the baseline (for 7–8 pt).
+## Plan
 
-When the auto-fit picks a denser preset (`sepGap` of 1.5 or 1 mm), the separator ends up inside the next row's text — visually cutting through it.
+1. **Frontend (reminder trigger)** — where reminders are dispatched, pass a `recipientsWithNames: [{ email, name }]` array alongside/instead of `recipients: string[]`. Names come from the customer record (customers table already stores multiple emails; pair each email with the customer contact name where available, fall back to the email's local-part, then to `clientName`).
 
-## Fix
+2. **Edge function `send-quotation-email`**
+   - Extend request schema to accept `recipientsWithNames?: { email: string; name?: string }[]` (keep `recipients` for backward compatibility).
+   - For reminders: instead of one Brevo call with N recipients, loop and send one email per recipient. Each call:
+     - `to: [{ email, name }]`
+     - Greeting rendered as `Dear ${recipientName}` (fallback to `clientName` if name missing).
+     - Same CC (handler), same attachment, same tracking pixel logic (one tracking row per recipient — already the pattern).
+   - Keep unsubscribe filtering, 7-day cooldown, and `reminder_sent_at` update (set once after the batch).
+   - Save one `sent_emails` row per recipient (or one aggregated row — keep current aggregated behavior but list all recipients).
 
-Adjust `src/lib/pdf-generator.ts` in the line-items rendering block so the separator sits cleanly between rows:
+3. **Non-reminder path** — unchanged (already single recipient using `clientName`).
 
-1. Increase `sepGap` in every density preset to at least ~3 mm so the separator is always below one row's descender and above the next row's ascender. Rebalance `gapAfter` / `lineH` slightly so total density is preserved for the auto-fit path.
-2. Draw the separator in the middle of the inter-row gap instead of flush at the end of the row: after `y += rowHeight + gapAfter`, advance `y` by `sepGap / 2`, draw the line, then advance `y` by the remaining `sepGap / 2`. This guarantees the line is centered in the whitespace between rows regardless of preset.
+## Technical notes
+- Name resolution priority: explicit `name` from payload → capitalized local-part of email → `clientName`.
+- Preserve existing cooldown grace window so the per-recipient loop doesn't trip the 7-day guard mid-batch.
+- No DB schema changes required.
 
-No other files change. Behavior of totals, notes, page-break logic, and thumbnails is untouched.
-
-## Verification
-
-Regenerate the same quotation PDF (30 line items, 2 pages) and confirm:
-- No line crosses through any row's text on either page.
-- Rows still fit within 2 pages (auto-fit still works).
-- Totals block and footer positions look unchanged.
+## Files
+- `supabase/functions/send-quotation-email/index.ts`
+- Reminder dispatch site in the frontend (locate in `useQuotations.ts` / reminder UI component) to pass names.

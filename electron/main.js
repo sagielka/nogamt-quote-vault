@@ -58,17 +58,44 @@ function createWindow() {
 // Auto-updater configuration
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.allowPrerelease = false;
 
-autoUpdater.on("update-available", () => {
-  console.log("Update available");
+function sendStatus(status, data) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("update-status", { status, data });
+  }
+}
+
+autoUpdater.on("checking-for-update", () => sendStatus("checking"));
+autoUpdater.on("update-available", (info) => {
+  console.log("Update available:", info?.version);
+  sendStatus("available", { version: info?.version });
 });
-
-autoUpdater.on("update-downloaded", () => {
+autoUpdater.on("update-not-available", () => sendStatus("up-to-date"));
+autoUpdater.on("download-progress", (p) =>
+  sendStatus("downloading", { percent: Math.round(p.percent) })
+);
+autoUpdater.on("update-downloaded", (info) => {
   console.log("Update downloaded - will install on quit");
+  sendStatus("downloaded", { version: info?.version });
 });
-
 autoUpdater.on("error", (error) => {
   console.error("Auto-updater error:", error);
+  sendStatus("error", { message: error?.message });
+});
+
+ipcMain.handle("check-for-updates", async () => {
+  if (!app.isPackaged) return { skipped: true, reason: "dev-mode" };
+  try {
+    const r = await autoUpdater.checkForUpdates();
+    return { ok: true, version: r?.updateInfo?.version };
+  } catch (e) {
+    return { ok: false, error: e?.message };
+  }
+});
+
+ipcMain.handle("install-update-now", () => {
+  autoUpdater.quitAndInstall();
 });
 
 ipcMain.handle("get-app-version", () => {

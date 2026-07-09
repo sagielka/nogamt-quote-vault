@@ -193,6 +193,9 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
   const [similarQuotes, setSimilarQuotes] = useState<SimilarQuotation[]>([]);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<QuotationFormData | null>(null);
+  const [showAttachReminder, setShowAttachReminder] = useState(false);
+  const [pendingValidation, setPendingValidation] = useState<any>(null);
+  const reminderFileInputRef = useRef<HTMLInputElement>(null);
   const quotationId = initialData?.id;
 
   useEffect(() => {
@@ -652,6 +655,17 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
       return;
     }
     
+    // Remind user to attach correspondence before saving a NEW quotation
+    if (!isEditing && pendingEmailFiles.length === 0 && emailAttachments.length === 0) {
+      setPendingValidation(validationResult);
+      setShowAttachReminder(true);
+      return;
+    }
+
+    await proceedSubmit(validationResult);
+  };
+
+  const proceedSubmit = async (validationResult: any) => {
     if (saveCustomer) {
       await saveCustomerToDatabase();
     }
@@ -671,6 +685,26 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
 
     onSubmit(submitData);
   };
+
+  const handleReminderContinue = async () => {
+    const v = pendingValidation;
+    setShowAttachReminder(false);
+    setPendingValidation(null);
+    if (v) await proceedSubmit(v);
+  };
+
+  const handleReminderAttachClick = () => {
+    reminderFileInputRef.current?.click();
+  };
+
+  const handleReminderFilesSelected = async (files: FileList | null) => {
+    await handleUploadEmailFile(files);
+    // Reset input so same file can be re-selected later
+    if (reminderFileInputRef.current) reminderFileInputRef.current.value = '';
+    await handleReminderContinue();
+  };
+
+
 
   const handleConfirmDuplicate = () => {
     if (pendingSubmitData) {
@@ -1452,6 +1486,47 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelDuplicate}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDuplicate}>Create Anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Attach Correspondence Reminder Dialog */}
+      <AlertDialog open={showAttachReminder} onOpenChange={(open) => { if (!open) { setShowAttachReminder(false); setPendingValidation(null); } }}>
+        <AlertDialogContent className="bg-card border-primary/20">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-primary flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Attach Customer Correspondence?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium">
+                  ⚠ Important: Please save any correspondence (emails, requests) related to this quotation. It protects you and the company in case of disputes.
+                </div>
+                <p className="text-sm">
+                  Attach the customer's original request email (.eml or .msg) now, or continue without attaching.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            ref={reminderFileInputRef}
+            type="file"
+            accept=".eml,.msg"
+            multiple
+            className="hidden"
+            onChange={(e) => handleReminderFilesSelected(e.target.files)}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setShowAttachReminder(false); setPendingValidation(null); }}>
+              Cancel
+            </AlertDialogCancel>
+            <Button type="button" variant="outline" onClick={handleReminderAttachClick}>
+              Attach Email
+            </Button>
+            <AlertDialogAction onClick={handleReminderContinue}>
+              Continue Without
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

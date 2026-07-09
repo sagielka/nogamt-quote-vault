@@ -141,6 +141,8 @@ const Index = () => {
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const [editOrderPickerOpen, setEditOrderPickerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [quotationsViewMode, setQuotationsViewMode] = useState<ViewMode>(() => loadViewMode('quotations-view-mode', 'grid'));
+
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiPrefillData, setAiPrefillData] = useState<Partial<QuotationFormData> | null>(null);
   const { logActivity } = useActivityLog();

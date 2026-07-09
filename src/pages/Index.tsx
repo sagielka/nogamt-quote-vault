@@ -46,6 +46,9 @@ import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 import { ItemPricesView } from '@/components/ItemPricesView';
+import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
+import { QuotationViews } from '@/components/quotation/QuotationViews';
+
 
 type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports';
 
@@ -138,6 +141,8 @@ const Index = () => {
   const [onlineUsers, setOnlineUsers] = useState<{ email: string; lastSeen: string }[]>([]);
   const [editOrderPickerOpen, setEditOrderPickerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [quotationsViewMode, setQuotationsViewMode] = useState<ViewMode>(() => loadViewMode('quotations-view-mode', 'grid'));
+
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiPrefillData, setAiPrefillData] = useState<Partial<QuotationFormData> | null>(null);
   const { logActivity } = useActivityLog();
@@ -720,14 +725,22 @@ const Index = () => {
                   expiringSoonActive={expiringSoonFilter}
                 />
                 <ItemPricesView compact />
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations
                   </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {filteredQuotations.length} of {quotations.length} quotation{quotations.length !== 1 ? 's' : ''}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      {filteredQuotations.length} of {quotations.length} quotation{quotations.length !== 1 ? 's' : ''}
+                    </p>
+                    <ViewModeToggle
+                      value={quotationsViewMode}
+                      onChange={setQuotationsViewMode}
+                      storageKey="quotations-view-mode"
+                    />
+                  </div>
                 </div>
+
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -833,25 +846,23 @@ const Index = () => {
                       )}
                     </div>
                   )}
-                  {filteredQuotations.map((quotation, index) => (
-                    <QuotationCard
-                      key={quotation.id}
-                      quotation={quotation}
-                      index={filteredQuotations.length - index}
-                      creatorName={userNameMap[quotation.userId] || quotation.userId?.slice(0, 6)}
-                      userList={userList}
-                      emailReadAt={getLatestRead(quotation.id)?.read_at ?? null}
-                      isSelected={selectedIds.includes(quotation.id)}
-                      onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
-                      onView={handleViewQuotation}
-                      onEdit={handleEditQuotation}
-                      onDelete={handleDeleteQuotation}
-                      onDuplicate={handleDuplicateQuotation}
-                       onStatusChange={handleStatusChange}
-                       onCreatorChange={handleCreatorChange}
-                       onEditCustomer={handleEditCustomer}
-                     />
-                  ))}
+                  <QuotationViews
+                    mode={quotationsViewMode}
+                    quotations={filteredQuotations}
+                    selectedIds={selectedIds}
+                    userNameMap={userNameMap}
+                    userList={userList}
+                    getEmailReadAt={(id) => getLatestRead(id)?.read_at ?? null}
+                    onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                    onView={handleViewQuotation}
+                    onEdit={handleEditQuotation}
+                    onDelete={handleDeleteQuotation}
+                    onDuplicate={handleDuplicateQuotation}
+                    onStatusChange={handleStatusChange}
+                    onCreatorChange={handleCreatorChange}
+                    onEditCustomer={handleEditCustomer}
+                  />
+
                   {filteredQuotations.length === 0 && searchQuery && (
                     <p className="text-center text-sm text-muted-foreground py-8">
                       No quotations match "{searchQuery}"

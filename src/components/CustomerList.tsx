@@ -68,6 +68,9 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
+import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
+import { Badge } from '@/components/ui/badge';
+
 
 const EMAIL_TEMPLATES = [
   {
@@ -150,6 +153,8 @@ interface CustomerListProps {
 export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListProps) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => loadViewMode('customers-view-mode', 'grid'));
+
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -697,7 +702,9 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             <TooltipContent>Show only customers with unread emails</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        <ViewModeToggle value={viewMode} onChange={setViewMode} storageKey="customers-view-mode" />
       </div>
+
 
       {filtered.length > 0 && (
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -737,8 +744,9 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             </p>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+
           {filtered.map((customer) => (
             <Card 
               key={customer.id} 
@@ -863,7 +871,123 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
             </Card>
           ))}
         </div>
+      ) : viewMode === 'list' ? (
+        <div className="flex flex-col divide-y divide-primary/10 rounded-lg border border-primary/10 overflow-hidden bg-card">
+          {filtered.map((customer) => {
+            const emailCount = (customer.email || '').split(',').filter((e: string) => e.trim()).length;
+            const stats = getCustomerTrackingStats(customer.email);
+            return (
+              <div
+                key={customer.id}
+                className={`flex items-center gap-3 px-3 py-2 hover:bg-primary/5 cursor-pointer ${selectedIds.has(customer.id) ? 'bg-primary/5' : ''}`}
+                onClick={() => onSelectCustomer?.(customer.name)}
+              >
+                <Checkbox
+                  checked={selectedIds.has(customer.id)}
+                  onCheckedChange={() => toggleSelect(customer.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <span className="text-sm font-medium flex-1 min-w-0 truncate">{customer.name}</span>
+                <span className="text-xs text-muted-foreground truncate hidden sm:inline flex-1 min-w-0">{customer.email}</span>
+                <Badge variant="outline" className="text-[10px] shrink-0">{emailCount} email{emailCount === 1 ? '' : 's'}</Badge>
+                <span className="text-xs text-muted-foreground w-24 text-right shrink-0">{customer.quotation_count} quote{customer.quotation_count === 1 ? '' : 's'}</span>
+                {stats.sent > 0 && (
+                  <span className="text-xs text-muted-foreground w-20 text-right shrink-0 hidden md:inline">
+                    {stats.read}/{stats.sent} read
+                  </span>
+                )}
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(customer); }}>
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      ) : viewMode === 'table' ? (
+        <div className="overflow-x-auto rounded-lg border border-primary/10 bg-card">
+          <table className="min-w-full text-sm">
+            <thead className="bg-secondary/30 border-b border-primary/10">
+              <tr>
+                <th className="px-3 py-2 w-10"></th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Emails</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Address</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Quotes</th>
+                <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Read</th>
+                <th className="px-3 py-2 w-10"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-primary/10">
+              {filtered.map((customer) => {
+                const stats = getCustomerTrackingStats(customer.email);
+                const emailCount = (customer.email || '').split(',').filter((e: string) => e.trim()).length;
+                return (
+                  <tr
+                    key={customer.id}
+                    onClick={() => onSelectCustomer?.(customer.name)}
+                    className={`cursor-pointer hover:bg-primary/5 ${selectedIds.has(customer.id) ? 'bg-primary/5' : ''}`}
+                  >
+                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={selectedIds.has(customer.id)} onCheckedChange={() => toggleSelect(customer.id)} />
+                    </td>
+                    <td className="px-3 py-2 font-medium">{customer.name}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      <div className="max-w-xs truncate">{customer.email}</div>
+                      {emailCount > 1 && <span className="text-[10px]">({emailCount} contacts)</span>}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground max-w-xs truncate">{customer.address || '—'}</td>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">{customer.quotation_count}</td>
+                    <td className="px-3 py-2 text-right text-xs text-muted-foreground whitespace-nowrap">
+                      {stats.sent > 0 ? `${stats.read}/${stats.sent}` : '—'}
+                    </td>
+                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(customer)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        (() => {
+          const groups: Record<string, typeof filtered> = {};
+          filtered.forEach((c) => {
+            const letter = (c.name.trim()[0] || '#').toUpperCase();
+            const key = /[A-Z]/.test(letter) ? letter : '#';
+            (groups[key] ||= []).push(c);
+          });
+          const letters = Object.keys(groups).sort();
+          return (
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+              {letters.map((letter) => (
+                <div key={letter} className="rounded-lg border border-primary/10 bg-card p-2 min-h-[200px]">
+                  <div className="flex items-center justify-between px-1 py-1 mb-2">
+                    <Badge variant="outline" className="text-[10px]">{letter}</Badge>
+                    <span className="text-xs text-muted-foreground">{groups[letter].length}</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {groups[letter].map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => onSelectCustomer?.(c.name)}
+                        className={`rounded-md border border-primary/10 bg-background p-2 cursor-pointer hover:border-primary/40 ${selectedIds.has(c.id) ? 'border-primary/50' : ''}`}
+                      >
+                        <div className="text-xs font-medium truncate">{c.name}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{c.email}</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">{c.quotation_count} quote{c.quotation_count === 1 ? '' : 's'}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()
       )}
+
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

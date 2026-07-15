@@ -648,13 +648,12 @@ import type { Currency } from "@/types/quotation";
 
 export const getProductCost = (sku: string, currency: Currency = "USD"): number | null => {
   if (!sku) return null;
-  // Sanitize: strip invisible chars (zero-width, BOM, NBSP) and non-alphanumerics
-  // so pasted SKUs with hidden characters still match the catalog.
+  // Sanitize: strip invisible chars (zero-width, BOM, NBSP) so pasted SKUs
+  // with hidden characters still match the catalog.
   const key = sku
     .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '')
     .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '');
+    .toUpperCase();
   const usd = PRODUCT_COSTS_USD[key];
   if (usd == null || usd <= 0) return null;
   const converted = convertPrice(usd, "USD", currency);

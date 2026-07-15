@@ -80,7 +80,7 @@ export const LineItemWithSku = ({
       onUpdate(item.id, { costPriceAutoFilled: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.sku, item.description, currency]);
+  }, [item.sku, item.description, currency, item.costPrice]);
 
   const hasCostWarning =
     (item.sku?.trim() || item.description?.trim()) &&

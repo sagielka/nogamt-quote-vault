@@ -619,6 +619,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     currency: currency,
     attachments: [],
     orderedItems: null,
+    orderedQuantities: null,
     quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
     pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
   }), [items, currency, isEditing, quoteNumber, pendingEmailFiles]);

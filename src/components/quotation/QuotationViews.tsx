@@ -19,7 +19,7 @@ interface Props {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
-  onStatusChange: (id: string, status: Quotation['status'], orderedItems?: string[]) => void;
+  onStatusChange: (id: string, status: Quotation['status'], orderedItems?: string[], orderedQuantities?: Record<string, number>) => void;
   onCreatorChange: (id: string, newUserId: string) => void;
   onEditCustomer: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }

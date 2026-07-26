@@ -221,6 +221,7 @@ export const AIQuoteAssistant = ({ open, onOpenChange, onPrefill }: AIQuoteAssis
       validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       attachments: [],
       orderedItems: null,
+      orderedQuantities: null,
     };
     onPrefill(initial);
     reset();

@@ -48,6 +48,7 @@ export interface Quotation {
   currency: Currency;
   attachments: LineItemAttachment[];
   orderedItems: string[] | null;
+  orderedQuantities: Record<string, number> | null;
   reminderSentAt: Date | null;
   followUpNotifiedAt: Date | null;
 }

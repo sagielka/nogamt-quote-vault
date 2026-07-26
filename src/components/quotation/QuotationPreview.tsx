@@ -40,7 +40,7 @@ interface QuotationPreviewProps {
   onBack: () => void;
   onEdit?: () => void;
   onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
-  onStatusChange?: (id: string, status: string, orderedItems?: string[]) => void;
+  onStatusChange?: (id: string, status: string, orderedItems?: string[], orderedQuantities?: Record<string, number>) => void;
 }
 
 export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit, onEditCustomer, onStatusChange }: QuotationPreviewProps) => {
@@ -627,7 +627,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 quoteNumber={quotation.quoteNumber}
                 currency={quotation.currency}
                 initialSelectedIds={quotation.orderedItems}
-                onConfirm={(selectedIds) => onStatusChange(quotation.id, 'accepted', selectedIds)}
+                initialQuantities={quotation.orderedQuantities}
+                onConfirm={(selectedIds, qty) => onStatusChange(quotation.id, 'accepted', selectedIds, qty)}
               />
 
               {/* Mark as Finished */}
@@ -825,6 +826,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground print:text-gray-500">Description</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">LT (wks)</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">MOQ</th>
+                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Qty</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Unit Price ({quotation.currency})</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Net Unit ({quotation.currency})</th>
@@ -854,6 +856,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     </td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.leadTime || '—'}</td>
                     <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.moq || 1}</td>
+                    <td className={`py-4 text-center align-top ${isOrdered ? 'text-green-600 font-medium' : 'text-muted-foreground print:text-gray-600'}`}>
+                      {isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)}
+                    </td>
                     <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">
                       {formatCurrency(item.unitPrice, quotation.currency)}
                     </td>

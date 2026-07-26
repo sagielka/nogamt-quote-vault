@@ -48,7 +48,7 @@ interface QuotationCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
-  onStatusChange?: (id: string, status: Quotation['status'], orderedItems?: string[]) => void;
+  onStatusChange?: (id: string, status: Quotation['status'], orderedItems?: string[], orderedQuantities?: Record<string, number>) => void;
   onCreatorChange?: (id: string, newUserId: string) => void;
   onEditCustomer?: (id: string, data: { clientName: string; clientEmail: string; clientAddress: string }) => void;
 }
@@ -385,7 +385,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                         className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md border border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
                       >
                         <CheckCircle className="w-3 h-3" />
-                        {item.sku || 'No SKU'}
+                        {item.sku || 'No SKU'} × {quotation.orderedQuantities?.[item.id] ?? item.moq}
                       </span>
                     ))}
                 </div>
@@ -489,8 +489,9 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                 items={quotation.items}
                 quoteNumber={quotation.quoteNumber}
                 currency={quotation.currency}
-                onConfirm={(selectedIds) => onStatusChange?.(quotation.id, 'accepted', selectedIds)}
+                onConfirm={(selectedIds, qty) => onStatusChange?.(quotation.id, 'accepted', selectedIds, qty)}
                 initialSelectedIds={quotation.orderedItems ?? undefined}
+                initialQuantities={quotation.orderedQuantities}
               />
                {/* Mark as finished (no order) */}
                <AlertDialog>

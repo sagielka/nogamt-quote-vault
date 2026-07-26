@@ -444,13 +444,15 @@ const Index = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, status: string, orderedItems?: string[]) => {
+  const handleStatusChange = async (id: string, status: string, orderedItems?: string[], orderedQuantities?: Record<string, number>) => {
     const updateData: any = { status: status as any };
     if (status === 'accepted' && orderedItems) {
       updateData.orderedItems = orderedItems;
+      if (orderedQuantities) updateData.orderedQuantities = orderedQuantities;
     }
     if (status === 'sent') {
       updateData.orderedItems = null;
+      updateData.orderedQuantities = null;
     }
     await updateQuotation(id, updateData);
     toast({
@@ -934,7 +936,8 @@ const Index = () => {
                   quoteNumber={selectedQuotation.quoteNumber}
                   currency={selectedQuotation.currency}
                   initialSelectedIds={selectedQuotation.orderedItems}
-                  onConfirm={(selectedIds) => handleStatusChange(selectedQuotation.id, 'accepted', selectedIds)}
+                  initialQuantities={selectedQuotation.orderedQuantities}
+                  onConfirm={(selectedIds, qty) => handleStatusChange(selectedQuotation.id, 'accepted', selectedIds, qty)}
                 />
 
                 {/* Mark as Finished */}

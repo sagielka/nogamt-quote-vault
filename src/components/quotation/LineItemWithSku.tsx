@@ -796,6 +796,26 @@ export const LineItemWithSku = ({
         }}
         onSave={handleEditorSave}
       />
+
+      <AlertDialog open={approveOpen} onOpenChange={setApproveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save this cost for {item.sku?.trim().toUpperCase()}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You entered a manual cost of {formatCurrency(pendingCost || 0, currency)}. Approving
+              saves it as the cost for this item code, so it will auto-fill on future quotes for
+              everyone. You can always override it manually again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={savingCost}>Keep for this quote only</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApproveCost} disabled={savingCost}>
+              {savingCost ? 'Saving…' : 'Approve & save'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 };

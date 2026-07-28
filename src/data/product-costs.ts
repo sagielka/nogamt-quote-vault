@@ -644,6 +644,7 @@ export const PRODUCT_COSTS_USD: Record<string, number> = {
 };
 
 import { convertPrice } from "./product-catalog";
+import { getCostOverrideUsd } from "./cost-overrides";
 import type { Currency } from "@/types/quotation";
 
 export const getProductCost = (sku: string, currency: Currency = "USD"): number | null => {
@@ -654,7 +655,8 @@ export const getProductCost = (sku: string, currency: Currency = "USD"): number 
     .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '')
     .trim()
     .toUpperCase();
-  const usd = PRODUCT_COSTS_USD[key];
+  // User-approved manual overrides win over the static table.
+  const usd = getCostOverrideUsd(key) ?? PRODUCT_COSTS_USD[key];
   if (usd == null || usd <= 0) return null;
   const converted = convertPrice(usd, "USD", currency);
   return Math.round(converted * 100) / 100;

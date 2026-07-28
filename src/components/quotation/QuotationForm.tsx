@@ -1010,7 +1010,17 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
               <div className="text-center">SKU</div>
               <div className="text-center">Description</div>
               <div className="text-center">LT</div>
-              <div className="text-center">MOQ</div>
+              <div className="flex justify-center">
+                <Select value={quantityLabel} onValueChange={(v) => setQuantityLabel(v as 'MOQ' | 'QTY')}>
+                  <SelectTrigger className="h-6 w-[70px] px-1.5 text-xs uppercase tracking-wider font-medium text-primary bg-transparent border-primary/30">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[100]">
+                    <SelectItem value="MOQ">MOQ</SelectItem>
+                    <SelectItem value="QTY">QTY</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="text-center">Cost</div>
               <div className="text-center">Price ({currency})</div>
               <div className="text-center">Disc%</div>

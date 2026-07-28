@@ -549,12 +549,14 @@ export const LineItemWithSku = ({
           />
         </div>
         
-        {/* MOQ */}
+        {/* MOQ / QTY */}
         <div>
-          <QuantityInput
-            placeholder="MOQ"
-            value={item.moq}
-            onChange={(v) => onUpdate(item.id, { moq: v })}
+          <Input
+            type="number"
+            min={1}
+            placeholder={quantityLabel}
+            value={item.moq || ''}
+            onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
             className="input-focus text-center bg-background/50 border-primary/20"
           />
         </div>

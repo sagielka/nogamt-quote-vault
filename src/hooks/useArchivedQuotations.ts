@@ -28,6 +28,7 @@ const dbRowToArchivedQuotation = (row: any): ArchivedQuotation => ({
   attachments: row.attachments || [],
   orderedItems: null,
   orderedQuantities: null,
+  quantityLabel: (row.quantity_label as 'MOQ' | 'QTY') || 'MOQ',
   createdAt: new Date(row.created_at),
   validUntil: new Date(row.valid_until),
   reminderSentAt: null,

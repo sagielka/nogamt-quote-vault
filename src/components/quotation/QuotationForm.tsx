@@ -174,6 +174,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     initialData?.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   );
   const [currency, setCurrency] = useState<Currency>(initialData?.currency || 'USD');
+  const [quantityLabel, setQuantityLabel] = useState<'MOQ' | 'QTY'>(initialData?.quantityLabel || 'MOQ');
   const [previousCurrency, setPreviousCurrency] = useState<Currency>(initialData?.currency || 'USD');
   const [priceList, setPriceList] = useState<PriceList>('DOLLAR');
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -620,9 +621,10 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
     attachments: [],
     orderedItems: null,
     orderedQuantities: null,
+    quantityLabel,
     quoteNumber: isEditing && quoteNumber ? quoteNumber : undefined,
     pendingEmailFiles: pendingEmailFiles.length > 0 ? pendingEmailFiles : undefined,
-  }), [items, currency, isEditing, quoteNumber, pendingEmailFiles]);
+  }), [items, currency, isEditing, quoteNumber, pendingEmailFiles, quantityLabel]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

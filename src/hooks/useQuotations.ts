@@ -63,6 +63,7 @@ const quotationToDbRow = (data: QuotationFormData, userId: string, quoteNumber: 
   currency: data.currency,
   status: data.status || 'sent',
   attachments: data.attachments || [],
+  quantity_label: data.quantityLabel || 'MOQ',
   valid_until: data.validUntil.toISOString(),
 });
 
@@ -288,7 +289,9 @@ export const useQuotations = () => {
     if (data.attachments !== undefined) updateData.attachments = data.attachments;
     if ((data as any).orderedItems !== undefined) updateData.ordered_items = (data as any).orderedItems;
     if ((data as any).orderedQuantities !== undefined) updateData.ordered_quantities = (data as any).orderedQuantities;
+    if ((data as any).quantityLabel !== undefined) updateData.quantity_label = (data as any).quantityLabel;
     if (data.validUntil !== undefined) updateData.valid_until = data.validUntil.toISOString();
+
 
     try {
       const { error } = await supabase

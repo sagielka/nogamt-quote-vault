@@ -40,6 +40,7 @@ const dbRowToQuotation = (row: any): Quotation => {
     attachments: row.attachments || [],
     orderedItems: row.ordered_items || null,
     orderedQuantities: row.ordered_quantities || null,
+    quantityLabel: (row.quantity_label as 'MOQ' | 'QTY') || 'MOQ',
     createdAt: new Date(row.created_at),
     validUntil: new Date(row.valid_until),
     reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,
@@ -62,6 +63,7 @@ const quotationToDbRow = (data: QuotationFormData, userId: string, quoteNumber: 
   currency: data.currency,
   status: data.status || 'sent',
   attachments: data.attachments || [],
+  quantity_label: data.quantityLabel || 'MOQ',
   valid_until: data.validUntil.toISOString(),
 });
 
@@ -287,7 +289,9 @@ export const useQuotations = () => {
     if (data.attachments !== undefined) updateData.attachments = data.attachments;
     if ((data as any).orderedItems !== undefined) updateData.ordered_items = (data as any).orderedItems;
     if ((data as any).orderedQuantities !== undefined) updateData.ordered_quantities = (data as any).orderedQuantities;
+    if ((data as any).quantityLabel !== undefined) updateData.quantity_label = (data as any).quantityLabel;
     if (data.validUntil !== undefined) updateData.valid_until = data.validUntil.toISOString();
+
 
     try {
       const { error } = await supabase

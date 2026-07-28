@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
-import QuantityInput from '@/components/quotation/QuantityInput';
+
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ interface LineItemWithSkuProps {
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
   canRemove: boolean;
+  quantityLabel?: 'MOQ' | 'QTY';
 }
 
 export const LineItemWithSku = ({
@@ -36,6 +37,7 @@ export const LineItemWithSku = ({
   onRemove,
   onDuplicate,
   canRemove,
+  quantityLabel = 'MOQ',
 }: LineItemWithSkuProps) => {
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);
@@ -549,12 +551,14 @@ export const LineItemWithSku = ({
           />
         </div>
         
-        {/* MOQ */}
+        {/* MOQ / QTY */}
         <div>
-          <QuantityInput
-            placeholder="MOQ"
-            value={item.moq}
-            onChange={(v) => onUpdate(item.id, { moq: v })}
+          <Input
+            type="number"
+            min={1}
+            placeholder={quantityLabel}
+            value={item.moq || ''}
+            onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
             className="input-focus text-center bg-background/50 border-primary/20"
           />
         </div>

@@ -1,0 +1,2 @@
+ALTER TABLE public.quotations ADD COLUMN IF NOT EXISTS quantity_label text NOT NULL DEFAULT 'MOQ';
+ALTER TABLE public.archived_quotations ADD COLUMN IF NOT EXISTS quantity_label text NOT NULL DEFAULT 'MOQ';

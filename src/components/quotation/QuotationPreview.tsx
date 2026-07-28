@@ -825,7 +825,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">SKU</th>
                   <th className="text-left py-3 text-sm font-medium text-muted-foreground print:text-gray-500">Description</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">LT (wks)</th>
-                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">MOQ</th>
+                  <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">{quotation.quantityLabel || 'MOQ'}</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Qty</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Unit Price ({quotation.currency})</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>

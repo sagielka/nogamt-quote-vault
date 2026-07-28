@@ -49,6 +49,7 @@ export interface Quotation {
   attachments: LineItemAttachment[];
   orderedItems: string[] | null;
   orderedQuantities: Record<string, number> | null;
+  quantityLabel: 'MOQ' | 'QTY';
   reminderSentAt: Date | null;
   followUpNotifiedAt: Date | null;
 }

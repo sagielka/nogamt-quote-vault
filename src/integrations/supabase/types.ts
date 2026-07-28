@@ -63,6 +63,7 @@ export type Database = {
           items: Json
           notes: string | null
           original_id: string
+          quantity_label: string
           quote_number: string
           status: string | null
           tax_rate: number
@@ -85,6 +86,7 @@ export type Database = {
           items: Json
           notes?: string | null
           original_id: string
+          quantity_label?: string
           quote_number: string
           status?: string | null
           tax_rate?: number
@@ -107,6 +109,7 @@ export type Database = {
           items?: Json
           notes?: string | null
           original_id?: string
+          quantity_label?: string
           quote_number?: string
           status?: string | null
           tax_rate?: number
@@ -437,6 +440,7 @@ export type Database = {
           notes: string | null
           ordered_items: Json | null
           ordered_quantities: Json | null
+          quantity_label: string
           quote_number: string
           reminder_sent_at: string | null
           status: string | null
@@ -460,6 +464,7 @@ export type Database = {
           notes?: string | null
           ordered_items?: Json | null
           ordered_quantities?: Json | null
+          quantity_label?: string
           quote_number: string
           reminder_sent_at?: string | null
           status?: string | null
@@ -483,6 +488,7 @@ export type Database = {
           notes?: string | null
           ordered_items?: Json | null
           ordered_quantities?: Json | null
+          quantity_label?: string
           quote_number?: string
           reminder_sent_at?: string | null
           status?: string | null

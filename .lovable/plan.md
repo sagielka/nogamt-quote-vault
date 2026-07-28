@@ -1,30 +1,22 @@
-
 ## Goal
-When sending a reminder to multiple recipients, greet each person by their own name instead of sending one shared email with the quotation's client name.
 
-## Current behavior
-`supabase/functions/send-quotation-email/index.ts` puts all reminder recipients into a single Brevo `to` array and uses one `htmlContent` with `Dear ${clientName}` — so every recipient sees the same generic greeting.
+The line-items table should have **one** quantity column whose *header* is a dropdown letting you pick whether this quote uses **MOQ** or **QTY**. The cell values go back to plain number inputs (no per-row dropdown).
 
-## Plan
+## Changes
 
-1. **Frontend (reminder trigger)** — where reminders are dispatched, pass a `recipientsWithNames: [{ email, name }]` array alongside/instead of `recipients: string[]`. Names come from the customer record (customers table already stores multiple emails; pair each email with the customer contact name where available, fall back to the email's local-part, then to `clientName`).
+1. **Database**: add a `quantity_label` text column on `quotations` (default `'MOQ'`), so the choice is saved per quote.
 
-2. **Edge function `send-quotation-email`**
-   - Extend request schema to accept `recipientsWithNames?: { email: string; name?: string }[]` (keep `recipients` for backward compatibility).
-   - For reminders: instead of one Brevo call with N recipients, loop and send one email per recipient. Each call:
-     - `to: [{ email, name }]`
-     - Greeting rendered as `Dear ${recipientName}` (fallback to `clientName` if name missing).
-     - Same CC (handler), same attachment, same tracking pixel logic (one tracking row per recipient — already the pattern).
-   - Keep unsubscribe filtering, 7-day cooldown, and `reminder_sent_at` update (set once after the batch).
-   - Save one `sent_emails` row per recipient (or one aggregated row — keep current aggregated behavior but list all recipients).
+2. **Form header** (`QuotationForm.tsx`): replace the static `MOQ` header cell with a small dropdown (MOQ / QTY) styled to fit the grid header. Changing it updates the quote field only — the underlying per-line `moq` numbers are untouched.
 
-3. **Non-reminder path** — unchanged (already single recipient using `clientName`).
+3. **Line item cells** (`LineItemWithSku.tsx`): revert the MOQ field to a plain number input (drop the `QuantityInput` chevron/preset popover there). Placeholder follows the chosen label.
 
-## Technical notes
-- Name resolution priority: explicit `name` from payload → capitalized local-part of email → `clientName`.
-- Preserve existing cooldown grace window so the per-recipient loop doesn't trip the 7-day guard mid-batch.
-- No DB schema changes required.
+4. **Order picker** (`OrderLinePickerDialog.tsx`): keep the ordered-quantity field, also reverted to a plain number input for consistency.
 
-## Files
-- `supabase/functions/send-quotation-email/index.ts`
-- Reminder dispatch site in the frontend (locate in `useQuotations.ts` / reminder UI component) to pass names.
+5. **Read-only surfaces**: `QuotationPreview.tsx`, `pdf-generator.ts`, `CustomerPortal.tsx`, and `VersionHistory.tsx` render the chosen label instead of the hardcoded "MOQ". Existing quotes without a value fall back to "MOQ".
+
+6. **Types & data flow**: add `quantityLabel` to the quotation type and map it in `useQuotations.ts` (load/save), plus recurring-quote templates if they carry it.
+
+## Notes
+
+- `QuantityInput.tsx` becomes unused and will be removed.
+- No change to totals, pricing, or cost logic.

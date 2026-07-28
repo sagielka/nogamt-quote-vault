@@ -161,7 +161,7 @@ const CustomerPortal = () => {
                   <th className="text-left py-2 text-sm text-muted-foreground">#</th>
                   <th className="text-left py-2 text-sm text-muted-foreground">SKU</th>
                   <th className="text-left py-2 text-sm text-muted-foreground">Description</th>
-                  <th className="text-center py-2 text-sm text-muted-foreground">MOQ</th>
+                  <th className="text-center py-2 text-sm text-muted-foreground">{quotation.quantity_label || 'MOQ'}</th>
                   <th className="text-right py-2 text-sm text-muted-foreground">Unit Price</th>
                   <th className="text-right py-2 text-sm text-muted-foreground">Total</th>
                 </tr>

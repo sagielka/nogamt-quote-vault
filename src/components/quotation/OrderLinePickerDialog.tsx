@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import QuantityInput from '@/components/quotation/QuantityInput';
+
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle } from 'lucide-react';

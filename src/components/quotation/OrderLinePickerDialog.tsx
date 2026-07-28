@@ -157,25 +157,15 @@ const OrderLinePickerDialog = ({
                       <label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor={`qty-${item.id}`}>
                         Qty ordered
                       </label>
-                      <Input
+                      <QuantityInput
                         id={`qty-${item.id}`}
-                        type="number"
-                        min={1}
-                        list={`qty-options-${item.id}`}
                         value={qty}
+                        presets={[item.moq ?? 1]}
                         disabled={!isSelected}
-                        onChange={(e) => setQty(item.id, e.target.value)}
+                        onChange={(v) => setQty(item.id, String(v))}
                         className="h-7 w-20 text-center text-xs"
                       />
-                      <datalist id={`qty-options-${item.id}`}>
-                        {Array.from(
-                          new Set([item.moq ?? 1, 1, 2, 5, 10, 20, 25, 50, 100, 200, 500])
-                        )
-                          .sort((a, b) => a - b)
-                          .map((n) => (
-                            <option key={n} value={n} />
-                          ))}
-                      </datalist>
+
 
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
                         × {formatCurrency(net, currency)}

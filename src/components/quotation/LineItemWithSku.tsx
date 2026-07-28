@@ -579,10 +579,21 @@ export const LineItemWithSku = ({
                 costPriceAutoFilled: false,
               })
             }
+            onBlur={(e) => {
+              const val = parseFloat(e.target.value);
+              const sku = item.sku?.trim();
+              if (!sku || !Number.isFinite(val) || val <= 0) return;
+              if (item.costPriceAutoFilled) return;
+              const catalog = getAutoCost(sku, item.description || '', currency);
+              if (catalog != null && Math.abs(catalog - val) < 0.005) return;
+              setPendingCost(val);
+              setApproveOpen(true);
+            }}
             className={`input-focus text-right bg-background/50 border-primary/20 font-mono text-sm ${
               hasCostWarning ? 'border-warning/60 pr-7' : isAutoFilled ? 'border-primary/60 pr-7' : ''
             }`}
           />
+
           {hasCostWarning ? (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"

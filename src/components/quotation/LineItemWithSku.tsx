@@ -65,7 +65,35 @@ export const LineItemWithSku = ({
   const [editorSrc, setEditorSrc] = useState<string | null>(null);
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [pendingCost, setPendingCost] = useState<number | null>(null);
+  const [savingCost, setSavingCost] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  useCostOverrides();
+
+  const handleApproveCost = async () => {
+    const sku = item.sku?.trim();
+    if (!sku || pendingCost == null || !user) {
+      setApproveOpen(false);
+      return;
+    }
+    setSavingCost(true);
+    // Store in USD so the value converts correctly for any quote currency.
+    const costUsd = Math.round(convertPrice(pendingCost, currency, 'USD') * 10000) / 10000;
+    const { error } = await saveCostOverride(sku, costUsd, user.id);
+    setSavingCost(false);
+    setApproveOpen(false);
+    if (error) {
+      toast({ title: 'Could not save cost', description: error, variant: 'destructive' });
+    } else {
+      toast({
+        title: 'Cost saved',
+        description: `${sku.toUpperCase()} will auto-fill with this cost from now on.`,
+      });
+    }
+  };
+
 
   // Sync priceExpr when unitPrice changes externally (e.g. from catalog selection)
   const lastExternalPrice = useRef(item.unitPrice);

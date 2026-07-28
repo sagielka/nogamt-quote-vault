@@ -1053,6 +1053,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
                     onRemove={handleRemoveItem}
                     onDuplicate={handleDuplicateItem}
                     canRemove={items.length > 1}
+                    quantityLabel={quantityLabel}
                   />
                 ))}
               </div>

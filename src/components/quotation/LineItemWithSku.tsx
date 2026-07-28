@@ -25,6 +25,7 @@ interface LineItemWithSkuProps {
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
   canRemove: boolean;
+  quantityLabel?: 'MOQ' | 'QTY';
 }
 
 export const LineItemWithSku = ({
@@ -36,6 +37,7 @@ export const LineItemWithSku = ({
   onRemove,
   onDuplicate,
   canRemove,
+  quantityLabel = 'MOQ',
 }: LineItemWithSkuProps) => {
   const [suggestions, setSuggestions] = useState<ProductItem[]>([]);
   const [activeField, setActiveField] = useState<'sku' | 'description' | null>(null);

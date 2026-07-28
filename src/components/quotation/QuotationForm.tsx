@@ -432,17 +432,18 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
   };
 
   const handleAddItem = () => {
-    setItems([...items, createEmptyLineItem()]);
+    setItems((prev) => [...prev, createEmptyLineItem()]);
   };
 
+  // Functional update: several rows may auto-fill their cost in the same render
+  // commit; using the stale `items` closure would make the last write win and
+  // silently drop the other rows' costs.
   const handleUpdateItem = (id: string, updates: Partial<LineItem>) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
   };
 
   const handleRemoveItem = (id: string) => {
-    if (items.length > 1) {
-      setItems(items.filter((item) => item.id !== id));
-    }
+    setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
   };
 
   const handleDuplicateItem = (id: string) => {

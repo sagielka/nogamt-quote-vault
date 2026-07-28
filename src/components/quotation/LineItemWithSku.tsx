@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
+import QuantityInput from '@/components/quotation/QuantityInput';
+
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';

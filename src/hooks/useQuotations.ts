@@ -40,6 +40,7 @@ const dbRowToQuotation = (row: any): Quotation => {
     attachments: row.attachments || [],
     orderedItems: row.ordered_items || null,
     orderedQuantities: row.ordered_quantities || null,
+    quantityLabel: (row.quantity_label as 'MOQ' | 'QTY') || 'MOQ',
     createdAt: new Date(row.created_at),
     validUntil: new Date(row.valid_until),
     reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : null,

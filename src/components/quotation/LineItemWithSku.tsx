@@ -7,13 +7,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
 import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
-import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, convertPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
+import { useCostOverrides, saveCostOverride } from '@/data/cost-overrides';
 import { Currency } from '@/types/quotation';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { LineItemImageEditor } from './LineItemImageEditor';
 
 interface LineItemWithSkuProps {
@@ -53,7 +65,35 @@ export const LineItemWithSku = ({
   const [editorSrc, setEditorSrc] = useState<string | null>(null);
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [pendingCost, setPendingCost] = useState<number | null>(null);
+  const [savingCost, setSavingCost] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  useCostOverrides();
+
+  const handleApproveCost = async () => {
+    const sku = item.sku?.trim();
+    if (!sku || pendingCost == null || !user) {
+      setApproveOpen(false);
+      return;
+    }
+    setSavingCost(true);
+    // Store in USD so the value converts correctly for any quote currency.
+    const costUsd = Math.round(convertPrice(pendingCost, currency, 'USD') * 10000) / 10000;
+    const { error } = await saveCostOverride(sku, costUsd, user.id);
+    setSavingCost(false);
+    setApproveOpen(false);
+    if (error) {
+      toast({ title: 'Could not save cost', description: error, variant: 'destructive' });
+    } else {
+      toast({
+        title: 'Cost saved',
+        description: `${sku.toUpperCase()} will auto-fill with this cost from now on.`,
+      });
+    }
+  };
+
 
   // Sync priceExpr when unitPrice changes externally (e.g. from catalog selection)
   const lastExternalPrice = useRef(item.unitPrice);
@@ -579,10 +619,21 @@ export const LineItemWithSku = ({
                 costPriceAutoFilled: false,
               })
             }
+            onBlur={(e) => {
+              const val = parseFloat(e.target.value);
+              const sku = item.sku?.trim();
+              if (!sku || !Number.isFinite(val) || val <= 0) return;
+              if (item.costPriceAutoFilled) return;
+              const catalog = getAutoCost(sku, item.description || '', currency);
+              if (catalog != null && Math.abs(catalog - val) < 0.005) return;
+              setPendingCost(val);
+              setApproveOpen(true);
+            }}
             className={`input-focus text-right bg-background/50 border-primary/20 font-mono text-sm ${
               hasCostWarning ? 'border-warning/60 pr-7' : isAutoFilled ? 'border-primary/60 pr-7' : ''
             }`}
           />
+
           {hasCostWarning ? (
             <span
               className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -785,6 +836,26 @@ export const LineItemWithSku = ({
         }}
         onSave={handleEditorSave}
       />
+
+      <AlertDialog open={approveOpen} onOpenChange={setApproveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save this cost for {item.sku?.trim().toUpperCase()}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You entered a manual cost of {formatCurrency(pendingCost || 0, currency)}. Approving
+              saves it as the cost for this item code, so it will auto-fill on future quotes for
+              everyone. You can always override it manually again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={savingCost}>Keep for this quote only</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApproveCost} disabled={savingCost}>
+              {savingCost ? 'Saving…' : 'Approve & save'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 };

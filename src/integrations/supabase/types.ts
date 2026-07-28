@@ -288,6 +288,33 @@ export type Database = {
         }
         Relationships: []
       }
+      product_cost_overrides: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          created_by: string
+          id: string
+          sku: string
+          updated_at: string
+        }
+        Insert: {
+          cost_usd: number
+          created_at?: string
+          created_by: string
+          id?: string
+          sku: string
+          updated_at?: string
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          sku?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

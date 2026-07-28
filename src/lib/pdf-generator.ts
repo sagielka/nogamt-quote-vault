@@ -304,7 +304,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   pdf.text('SKU', colX.sku, y);
   pdf.text('Description', colX.desc, y);
   pdf.text('LT (wks)', colX.lt, y, { align: 'center' });
-  pdf.text('MOQ', colX.moq, y, { align: 'center' });
+  pdf.text(quotation.quantityLabel || 'MOQ', colX.moq, y, { align: 'center' });
   pdf.text(`Unit (${quotation.currency})`, colX.price + 14, y, { align: 'right' });
   pdf.text('Disc %', colX.disc, y, { align: 'center' });
   pdf.text(`Net (${quotation.currency})`, colX.net + 14, y, { align: 'right' });

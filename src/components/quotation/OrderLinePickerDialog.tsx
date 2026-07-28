@@ -159,12 +159,13 @@ const OrderLinePickerDialog = ({
                       <label className="text-xs text-muted-foreground whitespace-nowrap" htmlFor={`qty-${item.id}`}>
                         Qty ordered
                       </label>
-                      <QuantityInput
+                      <Input
                         id={`qty-${item.id}`}
-                        value={qty}
-                        presets={[item.moq ?? 1]}
+                        type="number"
+                        min={1}
+                        value={qty || ''}
                         disabled={!isSelected}
-                        onChange={(v) => setQty(item.id, String(v))}
+                        onChange={(e) => setQty(item.id, e.target.value)}
                         className="h-7 w-20 text-center text-xs"
                       />
 

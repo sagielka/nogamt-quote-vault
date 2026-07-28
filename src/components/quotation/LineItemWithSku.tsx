@@ -549,21 +549,14 @@ export const LineItemWithSku = ({
         
         {/* MOQ */}
         <div>
-          <Input
-            type="number"
-            min="1"
-            list="qty-preset-options"
+          <QuantityInput
             placeholder="MOQ"
-            value={item.moq || ''}
-            onChange={(e) => onUpdate(item.id, { moq: parseInt(e.target.value) || 1 })}
+            value={item.moq}
+            onChange={(v) => onUpdate(item.id, { moq: v })}
             className="input-focus text-center bg-background/50 border-primary/20"
           />
-          <datalist id="qty-preset-options">
-            {[1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000].map((n) => (
-              <option key={n} value={n} />
-            ))}
-          </datalist>
         </div>
+
 
         
         {/* Cost Price */}

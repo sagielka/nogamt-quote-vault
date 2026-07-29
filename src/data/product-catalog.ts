@@ -440,6 +440,7 @@ const staticCatalogProducts: ProductItem[] = [
   { sku: "UF9220", description: 'UF-DS-S-D2-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
   { sku: "UF9320", description: 'UF-PS-V-D2-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
   { sku: "UF9420", description: 'UF-PS-O-D2-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
+  { sku: "UF9421", description: 'UF-DS-G-D2-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
   { sku: "UF9125", description: 'UF-DS-B-D2.5-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
   { sku: "UF9225", description: 'UF-DS-S-D2.5-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
   { sku: "UF9325", description: 'UF-DS-F-D2.5-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },

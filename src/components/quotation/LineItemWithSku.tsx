@@ -812,6 +812,35 @@ export const LineItemWithSku = ({
                   );
                 })}
               </div>
+
+              {/* Bold / highlight the quantity the customer asked for */}
+              <div className="mt-2 pt-2 border-t border-primary/10">
+                <div className="text-xs text-muted-foreground mb-1.5">
+                  Bold quantity (customer request)
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from(new Set([Number(item.moq) || 1, ...activeBreaks]))
+                    .sort((a, b) => a - b)
+                    .map((qty) => {
+                      const on = Number(item.highlightQty) === qty;
+                      return (
+                        <button
+                          key={`hl-${qty}`}
+                          type="button"
+                          onClick={() => setHighlightQty(qty)}
+                          className={`px-2 py-1 rounded border text-xs font-mono transition-colors ${
+                            on
+                              ? 'border-primary bg-primary/20 text-primary font-bold'
+                              : 'border-border bg-background/50 text-muted-foreground hover:border-primary/40'
+                          }`}
+                          title={on ? 'Remove emphasis' : `Bold the ${qty} pcs row in the quote`}
+                        >
+                          {qty} pcs
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

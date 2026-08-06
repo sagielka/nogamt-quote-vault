@@ -468,7 +468,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
         const tierNet = getTierNetUnitPrice(item, qty);
         const hl = isHighlightedQty(item, qty);
         setFont(pdf, hl ? 'bold' : 'normal');
-        pdf.setTextColor(...(hl ? black : gray));
+        if (hl) pdf.setTextColor(...black); else pdf.setTextColor(...gray);
         pdf.text(showLabel ? 'Price breaks:' : '', colX.desc, by);
         pdf.text(String(qty), colX.moq, by, { align: 'center' });
         pdf.text(formatCurrency(tierGross, quotation.currency), colX.price + 14, by, { align: 'right' });

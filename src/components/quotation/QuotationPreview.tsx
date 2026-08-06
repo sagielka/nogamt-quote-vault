@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -854,7 +854,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         <td className={`${cell} pl-4`}>
                           {showLabel ? 'Price breaks' : ''}
                         </td>
-                        <td />
+                        <td className={`${cell} text-center`}>{getTierLeadTime(item, qty)}</td>
                         <td className={`${cell} text-center`}>{qty}</td>
                         <td className={`${cell} text-center`}>{qty}</td>
                         <td className={`${cell} text-right`}>
@@ -893,7 +893,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         </div>
                       )}
                     </td>
-                    <td className={`${mainCell} text-center`}>{item.leadTime || '—'}</td>
+                    <td className={`${mainCell} text-center`}>{getTierLeadTime(item, Number(item.moq) || 1)}</td>
                     <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-center ${isOrdered ? 'text-green-600 font-medium' : mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`}>
                       {isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)}

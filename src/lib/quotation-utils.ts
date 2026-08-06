@@ -83,7 +83,7 @@ export const getActivePriceBreaks = (item: LineItem): number[] =>
 // For customer-facing output: skip the tier that duplicates the row's own quantity.
 export const getDisplayPriceBreaks = (item: LineItem): number[] =>
   getActivePriceBreaks(item)
-    .filter((q) => q > Number(item.moq))
+    .filter((q) => Number(q) !== Number(item.moq))
     .sort((a, b) => a - b);
 
 export const calculateLineTotal = (item: LineItem): number => {

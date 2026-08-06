@@ -442,6 +442,31 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
     setFont(pdf, 'normal');
 
+    // Quantity price breaks
+    if (meta.breaks.length > 0) {
+      const breakStartY =
+        rowY +
+        descLines.length * lineH +
+        (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0) +
+        lineH * 0.6;
+      pdf.setFontSize(noteFontSize);
+      pdf.setTextColor(...gray);
+      meta.breaks.forEach((qty, bIdx) => {
+        const by = breakStartY + bIdx * lineH;
+        const tierGross = getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty);
+        const tierNet = getTierNetUnitPrice(item, qty);
+        pdf.text(bIdx === 0 ? 'Price breaks:' : '', colX.desc, by);
+        pdf.text(String(qty), colX.moq, by, { align: 'center' });
+        pdf.text(formatCurrency(tierGross, quotation.currency), colX.price + 14, by, { align: 'right' });
+        pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, by, { align: 'center' });
+        pdf.text(item.discountPercent ? formatCurrency(tierNet, quotation.currency) : '—', colX.net + 14, by, { align: 'right' });
+        pdf.text(formatCurrency(tierNet * qty, quotation.currency), colX.total, by, { align: 'right' });
+      });
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(...black);
+    }
+
+
     y += rowHeight + gapAfter;
 
     // Render image thumbnails below row, aligned with description column

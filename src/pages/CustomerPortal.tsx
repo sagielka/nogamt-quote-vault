@@ -171,30 +171,36 @@ const CustomerPortal = () => {
                   const breaks = getDisplayPriceBreaks(item);
                   const lowerBreaks = breaks.filter((qty: number) => qty < Number(item.moq));
                   const upperBreaks = breaks.filter((qty: number) => qty > Number(item.moq));
-                  const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => (
-                    <tr key={`${idx}-b-${qty}`} className={isLast ? 'border-b' : ''}>
-                      <td />
-                      <td />
-                      <td className="py-1.5 pl-4 text-muted-foreground">{showLabel ? 'Price breaks' : ''}</td>
-                      <td className="py-1.5 text-center text-muted-foreground">{qty}</td>
-                      <td className="py-1.5 text-right text-muted-foreground">
-                        {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
-                      </td>
-                      <td className="py-1.5 text-right text-muted-foreground">
-                        {formatCurrency(getTierNetUnitPrice(item, qty) * qty, quotation.currency)}
-                      </td>
-                    </tr>
-                  );
+                  const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
+                    const hl = isHighlightedQty(item, qty);
+                    const cell = `py-2 align-top ${hl ? 'font-bold text-foreground' : 'text-muted-foreground'}`;
+                    return (
+                      <tr key={`${idx}-b-${qty}`} className={isLast ? 'border-b' : ''}>
+                        <td />
+                        <td />
+                        <td className={`${cell} pl-4`}>{showLabel ? 'Price breaks' : ''}</td>
+                        <td className={`${cell} text-center`}>{qty}</td>
+                        <td className={`${cell} text-right`}>
+                          {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
+                        </td>
+                        <td className={`${cell} text-right`}>
+                          {formatCurrency(getTierNetUnitPrice(item, qty) * qty, quotation.currency)}
+                        </td>
+                      </tr>
+                    );
+                  };
+                  const mainHl = isHighlightedQty(item, Number(item.moq) || 1);
+                  const mainCell = `py-2 align-top ${mainHl ? 'font-bold' : ''}`;
                   return (
                   <Fragment key={idx}>
                   {lowerBreaks.map((qty: number, bIdx: number) => renderBreakRow(qty, bIdx === 0, false))}
                   <tr className={upperBreaks.length > 0 ? '' : 'border-b'}>
-                    <td className="py-2 text-muted-foreground">{idx + 1}</td>
-                    <td className="py-2 font-mono text-sm">{item.sku || '—'}</td>
-                    <td className="py-2">{item.description || '—'}</td>
-                    <td className="py-2 text-center">{item.moq || 1}</td>
-                    <td className="py-2 text-right">{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
-                    <td className="py-2 text-right font-medium">{formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+                    <td className={`${mainCell} text-muted-foreground`}>{idx + 1}</td>
+                    <td className={`${mainCell} font-mono text-sm`}>{item.sku || '—'}</td>
+                    <td className={mainCell}>{item.description || '—'}</td>
+                    <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
+                    <td className={`${mainCell} text-right`}>{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
+                    <td className={`${mainCell} text-right font-medium`}>{formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
                   </tr>
                   {upperBreaks.map((qty: number, bIdx: number) =>
                     renderBreakRow(qty, lowerBreaks.length === 0 && bIdx === 0, bIdx === upperBreaks.length - 1)

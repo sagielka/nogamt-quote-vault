@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import DOMPurify from 'dompurify';
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';

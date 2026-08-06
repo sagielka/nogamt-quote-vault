@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
-import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles, Layers } from 'lucide-react';
+import { formatCurrency, calculateLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, getActivePriceBreaks } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, convertPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
 import { useCostOverrides, saveCostOverride } from '@/data/cost-overrides';
@@ -68,6 +68,22 @@ export const LineItemWithSku = ({
   const [approveOpen, setApproveOpen] = useState(false);
   const [pendingCost, setPendingCost] = useState<number | null>(null);
   const [savingCost, setSavingCost] = useState(false);
+
+  // Quantity price breaks (US... items only)
+  const supportsPriceBreaks = isUsPriceBreakItem(item);
+  const activeBreaks = getActivePriceBreaks(item);
+  const togglePriceBreaks = () => {
+    onUpdate(item.id, {
+      priceBreaks: activeBreaks.length > 0 ? [] : [...US_PRICE_TIERS],
+    });
+  };
+  const toggleTier = (qty: number) => {
+    const next = activeBreaks.includes(qty)
+      ? activeBreaks.filter((q) => q !== qty)
+      : [...activeBreaks, qty].sort((a, b) => a - b);
+    onUpdate(item.id, { priceBreaks: next });
+  };
+
   const { toast } = useToast();
   const { user } = useAuth();
   useCostOverrides();
@@ -708,6 +724,22 @@ export const LineItemWithSku = ({
         
         {/* Actions - moved to separate column with no overlap */}
         <div className="flex justify-end gap-0.5">
+          {supportsPriceBreaks && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={togglePriceBreaks}
+              className={`h-7 w-7 transition-colors ${
+                activeBreaks.length > 0
+                  ? 'text-primary hover:text-primary/80 hover:bg-primary/10'
+                  : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
+              }`}
+              title={activeBreaks.length > 0 ? 'Remove quantity price breaks' : 'Quote quantity price breaks (2/5/10/25/50/100)'}
+            >
+              <Layers className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -745,7 +777,45 @@ export const LineItemWithSku = ({
         </div>
       </div>
 
+      {/* Quantity price breaks (US... items) */}
+      {supportsPriceBreaks && activeBreaks.length > 0 && (
+        <div className="px-3 pb-3 pt-0">
+          <div className="pl-0 md:pl-12">
+            <div className="rounded-md border border-primary/20 bg-background/40 p-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Layers className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs text-muted-foreground">
+                  Quantity price breaks — base price is for 5 pcs
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {US_PRICE_TIERS.map((qty) => {
+                  const on = activeBreaks.includes(qty);
+                  const unit = getTierNetUnitPrice(item, qty);
+                  return (
+                    <button
+                      key={qty}
+                      type="button"
+                      onClick={() => toggleTier(qty)}
+                      className={`px-2 py-1 rounded border text-xs font-mono transition-colors ${
+                        on
+                          ? 'border-primary/60 bg-primary/10 text-primary'
+                          : 'border-border bg-background/50 text-muted-foreground hover:border-primary/40'
+                      }`}
+                      title={on ? 'Remove this quantity from the quote' : 'Add this quantity to the quote'}
+                    >
+                      {qty} pcs · {item.unitPrice > 0 ? formatCurrency(unit, currency) : '—'}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Notes & Images Section */}
+
       {showNotes && (
         <div className="px-3 pb-3 pt-0 space-y-3">
           <div className="flex items-start gap-2 pl-0 md:pl-12">

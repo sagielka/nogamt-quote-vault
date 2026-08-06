@@ -47,7 +47,41 @@ export const generateQuoteNumber = (
     : `${datePrefix}-${nextIndex}${suffix}`;
 };
 
+// ---- US... quantity price breaks -------------------------------------------
+// Base price (the unit price typed on the line) is the price for 5 pcs.
+// 2 pcs is 30% higher than 5; each step down in price:
+// 5 -> 10 = -28%, 10 -> 25 = -23%, 25 -> 50 = -10%, 50 -> 100 = -6%.
+export const US_PRICE_TIERS = [2, 5, 10, 25, 50, 100] as const;
+
+const TIER_MULTIPLIERS: Record<number, number> = (() => {
+  const m5 = 1;
+  const m10 = m5 * (1 - 0.28);
+  const m25 = m10 * (1 - 0.23);
+  const m50 = m25 * (1 - 0.10);
+  const m100 = m50 * (1 - 0.06);
+  return { 2: m5 * 1.3, 5: m5, 10: m10, 25: m25, 50: m50, 100: m100 };
+})();
+
+export const isUsPriceBreakItem = (item: Pick<LineItem, 'sku' | 'description'>): boolean => {
+  const test = (v?: string) => /^US[\s-]?\d|^US-/i.test((v || '').trim());
+  return test(item.sku) || test(item.description);
+};
+
+// Unit price for a given tier quantity, before line discount.
+export const getTierUnitPrice = (basePrice: number, qty: number): number => {
+  const mult = TIER_MULTIPLIERS[qty];
+  return mult != null ? basePrice * mult : basePrice;
+};
+
+// Unit price for a tier after the line discount.
+export const getTierNetUnitPrice = (item: LineItem, qty: number): number =>
+  getTierUnitPrice(item.unitPrice, qty) * (1 - (item.discountPercent || 0) / 100);
+
+export const getActivePriceBreaks = (item: LineItem): number[] =>
+  (item.priceBreaks || []).filter((q) => TIER_MULTIPLIERS[q] != null).sort((a, b) => a - b);
+
 export const calculateLineTotal = (item: LineItem): number => {
+
   const gross = item.moq * item.unitPrice;
   const lineDiscount = gross * ((item.discountPercent || 0) / 100);
   return gross - lineDiscount;

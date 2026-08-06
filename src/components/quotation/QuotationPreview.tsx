@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import DOMPurify from 'dompurify';
 import { Quotation } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getActivePriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -837,8 +837,10 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 {quotation.items.map((item, index) => {
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
                   const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+                  const breaks = getActivePriceBreaks(item);
                   return (
-                  <tr key={item.id} className="border-b border-border print:border-gray-200">
+                  <Fragment key={item.id}>
+                  <tr className={breaks.length > 0 ? '' : 'border-b border-border print:border-gray-200'}>
                     <td className="py-4 text-muted-foreground print:text-gray-600 align-top">
                       <div className="flex items-center gap-1.5">
                         {index + 1}
@@ -872,8 +874,41 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>
+                  {breaks.map((qty, bIdx) => {
+                    const tierNet = getTierNetUnitPrice(item, qty);
+                    const last = bIdx === breaks.length - 1;
+                    return (
+                      <tr
+                        key={`${item.id}-break-${qty}`}
+                        className={last ? 'border-b border-border print:border-gray-200' : ''}
+                      >
+                        <td />
+                        <td />
+                        <td className="pb-1 pl-4 text-xs text-muted-foreground print:text-gray-500">
+                          {bIdx === 0 ? 'Price breaks' : ''}
+                        </td>
+                        <td />
+                        <td className="pb-1 text-center text-xs text-muted-foreground print:text-gray-600">{qty}</td>
+                        <td className="pb-1 text-center text-xs text-muted-foreground print:text-gray-600">{qty}</td>
+                        <td className="pb-1 text-right text-xs text-muted-foreground print:text-gray-600">
+                          {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
+                        </td>
+                        <td className="pb-1 text-center text-xs text-muted-foreground print:text-gray-600">
+                          {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                        </td>
+                        <td className="pb-1 text-right text-xs text-muted-foreground print:text-gray-600">
+                          {item.discountPercent > 0 ? formatCurrency(tierNet, quotation.currency) : '—'}
+                        </td>
+                        <td className="pb-1 text-right text-xs text-muted-foreground print:text-gray-600">
+                          {formatCurrency(tierNet * qty, quotation.currency)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  </Fragment>
                   );
                 })}
+
               </tbody>
             </table>
           </div>

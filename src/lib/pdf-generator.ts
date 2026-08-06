@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getActivePriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
@@ -346,7 +346,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const availableForRows = contentBottom - y - reservedBelow;
 
   // Measure natural rows height at scale 1
-  type RowMeta = { descLines: string[]; noteLines: string[]; rowH: number; imgRows: number };
+  type RowMeta = { descLines: string[]; noteLines: string[]; rowH: number; imgRows: number; breaks: number[] };
   const measure = (lineH: number, thumbH: number, gapAfter: number, sepGap: number) => {
     let total = 0;
     const metas: RowMeta[] = [];
@@ -354,15 +354,18 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       const item = quotation.items[i];
       const dL = wrapText(pdf, item.description || '—', descWidth);
       const nL = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
-      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0), 8);
+      const brs = getActivePriceBreaks(item);
+      const breaksH = brs.length > 0 ? brs.length * lineH + lineH * 0.6 : 0;
+      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0) + breaksH, 8);
       const imgs = itemImages[i] || [];
       const imgRows = imgs.length > 0 ? Math.ceil(imgs.length / 3) : 0;
       const imgBlockH = imgRows > 0 ? imgRows * (thumbH + 2) + 2 : 0;
-      metas.push({ descLines: dL, noteLines: nL, rowH, imgRows });
+      metas.push({ descLines: dL, noteLines: nL, rowH, imgRows, breaks: brs });
       total += rowH + gapAfter + imgBlockH + sepGap;
     }
     return { total, metas };
   };
+
 
   // Try descending density presets until rows fit; otherwise use smallest (overflow handled by paging)
   const presets = [
@@ -438,6 +441,31 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     setFont(pdf, 'bold');
     pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
     setFont(pdf, 'normal');
+
+    // Quantity price breaks
+    if (meta.breaks.length > 0) {
+      const breakStartY =
+        rowY +
+        descLines.length * lineH +
+        (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0) +
+        lineH * 0.6;
+      pdf.setFontSize(noteFontSize);
+      pdf.setTextColor(...gray);
+      meta.breaks.forEach((qty, bIdx) => {
+        const by = breakStartY + bIdx * lineH;
+        const tierGross = getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty);
+        const tierNet = getTierNetUnitPrice(item, qty);
+        pdf.text(bIdx === 0 ? 'Price breaks:' : '', colX.desc, by);
+        pdf.text(String(qty), colX.moq, by, { align: 'center' });
+        pdf.text(formatCurrency(tierGross, quotation.currency), colX.price + 14, by, { align: 'right' });
+        pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, by, { align: 'center' });
+        pdf.text(item.discountPercent ? formatCurrency(tierNet, quotation.currency) : '—', colX.net + 14, by, { align: 'right' });
+        pdf.text(formatCurrency(tierNet * qty, quotation.currency), colX.total, by, { align: 'right' });
+      });
+      pdf.setFontSize(fontSize);
+      pdf.setTextColor(...black);
+    }
+
 
     y += rowHeight + gapAfter;
 

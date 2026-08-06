@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate } from '@/lib/quotation-utils';
+import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate, getActivePriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
 import { CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 
@@ -167,8 +167,11 @@ const CustomerPortal = () => {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item: any, idx: number) => (
-                  <tr key={idx} className="border-b">
+                {items.map((item: any, idx: number) => {
+                  const breaks = getActivePriceBreaks(item);
+                  return (
+                  <Fragment key={idx}>
+                  <tr className={breaks.length > 0 ? '' : 'border-b'}>
                     <td className="py-2 text-muted-foreground">{idx + 1}</td>
                     <td className="py-2 font-mono text-sm">{item.sku || '—'}</td>
                     <td className="py-2">{item.description || '—'}</td>
@@ -176,7 +179,24 @@ const CustomerPortal = () => {
                     <td className="py-2 text-right">{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
                     <td className="py-2 text-right font-medium">{formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
                   </tr>
-                ))}
+                  {breaks.map((qty: number, bIdx: number) => (
+                    <tr key={`${idx}-b-${qty}`} className={bIdx === breaks.length - 1 ? 'border-b' : ''}>
+                      <td />
+                      <td />
+                      <td className="pb-1 pl-4 text-xs text-muted-foreground">{bIdx === 0 ? 'Price breaks' : ''}</td>
+                      <td className="pb-1 text-center text-xs text-muted-foreground">{qty}</td>
+                      <td className="pb-1 text-right text-xs text-muted-foreground">
+                        {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
+                      </td>
+                      <td className="pb-1 text-right text-xs text-muted-foreground">
+                        {formatCurrency(getTierNetUnitPrice(item, qty) * qty, quotation.currency)}
+                      </td>
+                    </tr>
+                  ))}
+                  </Fragment>
+                  );
+                })}
+
               </tbody>
             </table>
 

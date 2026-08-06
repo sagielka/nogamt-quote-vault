@@ -346,7 +346,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   const availableForRows = contentBottom - y - reservedBelow;
 
   // Measure natural rows height at scale 1
-  type RowMeta = { descLines: string[]; noteLines: string[]; rowH: number; imgRows: number };
+  type RowMeta = { descLines: string[]; noteLines: string[]; rowH: number; imgRows: number; breaks: number[] };
   const measure = (lineH: number, thumbH: number, gapAfter: number, sepGap: number) => {
     let total = 0;
     const metas: RowMeta[] = [];
@@ -354,15 +354,18 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       const item = quotation.items[i];
       const dL = wrapText(pdf, item.description || '—', descWidth);
       const nL = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
-      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0), 8);
+      const brs = getActivePriceBreaks(item);
+      const breaksH = brs.length > 0 ? brs.length * lineH + lineH * 0.6 : 0;
+      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0) + breaksH, 8);
       const imgs = itemImages[i] || [];
       const imgRows = imgs.length > 0 ? Math.ceil(imgs.length / 3) : 0;
       const imgBlockH = imgRows > 0 ? imgRows * (thumbH + 2) + 2 : 0;
-      metas.push({ descLines: dL, noteLines: nL, rowH, imgRows });
+      metas.push({ descLines: dL, noteLines: nL, rowH, imgRows, breaks: brs });
       total += rowH + gapAfter + imgBlockH + sepGap;
     }
     return { total, metas };
   };
+
 
   // Try descending density presets until rows fit; otherwise use smallest (overflow handled by paging)
   const presets = [

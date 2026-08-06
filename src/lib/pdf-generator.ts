@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
@@ -438,7 +438,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     }
 
     pdf.setTextColor(...gray);
-    pdf.text(item.leadTime || '—', colX.lt, rowY, { align: 'center' });
+    pdf.text(getTierLeadTime(item, Number(item.moq) || 1), colX.lt, rowY, { align: 'center' });
     pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
     pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price + 14, rowY, { align: 'right' });
     pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
@@ -469,6 +469,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
         setFont(pdf, hl ? 'bold' : 'normal');
         if (hl) pdf.setTextColor(...black); else pdf.setTextColor(...gray);
         pdf.text(showLabel ? 'Price breaks:' : '', colX.desc, by);
+        pdf.text(getTierLeadTime(item, qty), colX.lt, by, { align: 'center' });
         pdf.text(String(qty), colX.moq, by, { align: 'center' });
         pdf.text(formatCurrency(tierGross, quotation.currency), colX.price + 14, by, { align: 'right' });
         pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, by, { align: 'center' });

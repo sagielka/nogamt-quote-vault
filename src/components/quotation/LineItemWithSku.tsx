@@ -83,6 +83,9 @@ export const LineItemWithSku = ({
       : [...activeBreaks, qty].sort((a, b) => a - b);
     onUpdate(item.id, { priceBreaks: next });
   };
+  const setHighlightQty = (qty: number) => {
+    onUpdate(item.id, { highlightQty: Number(item.highlightQty) === qty ? null : qty });
+  };
 
   const { toast } = useToast();
   const { user } = useAuth();

@@ -47,25 +47,76 @@ export const generateQuoteNumber = (
     : `${datePrefix}-${nextIndex}${suffix}`;
 };
 
-// ---- US... quantity price breaks -------------------------------------------
-// Base price (the unit price typed on the line) is the price for 5 pcs.
-// 2 pcs is 30% higher than 5; each step down in price:
-// 5 -> 10 = -28%, 10 -> 25 = -23%, 25 -> 50 = -10%, 50 -> 100 = -6%.
+// ---- US... / UC... quantity price breaks -----------------------------------
+// Base price (the unit price typed on the line) is always the price for 5 pcs.
+// 2 pcs is 30% higher than 5 pcs; the 10/25/50/100 columns are step discounts
+// applied to the previous tier, and they differ per family (US/UC) and per
+// insert group letter (B-G) taken from the description.
 export const US_PRICE_TIERS = [2, 5, 10, 25, 50, 100] as const;
 
-const TIER_MULTIPLIERS: Record<number, number> = (() => {
-  const m5 = 1;
-  const m10 = m5 * (1 - 0.28);
-  const m25 = m10 * (1 - 0.23);
-  const m50 = m25 * (1 - 0.10);
-  const m100 = m50 * (1 - 0.06);
-  return { 2: m5 * 1.3, 5: m5, 10: m10, 25: m25, 50: m50, 100: m100 };
-})();
+type StepSet = { s10: number; s25: number; s50: number; s100: number };
 
-export const isUsPriceBreakItem = (item: Pick<LineItem, 'sku' | 'description'>): boolean => {
-  const test = (v?: string) => /^US[\s-]?\d|^US-/i.test((v || '').trim());
-  return test(item.sku) || test(item.description);
+const US_STEPS: Record<string, StepSet> = {
+  B: { s10: 0.28, s25: 0.23, s50: 0.10, s100: 0.06 },
+  C: { s10: 0.27, s25: 0.22, s50: 0.09, s100: 0.05 },
+  D: { s10: 0.29, s25: 0.24, s50: 0.11, s100: 0.06 },
+  E: { s10: 0.27, s25: 0.22, s50: 0.09, s100: 0.05 },
+  F: { s10: 0.26, s25: 0.21, s50: 0.09, s100: 0.05 },
+  G: { s10: 0.23, s25: 0.18, s50: 0.07, s100: 0.04 },
 };
+
+const UC_STEPS: Record<string, StepSet> = {
+  B: { s10: 0.31, s25: 0.26, s50: 0.12, s100: 0.07 },
+  C: { s10: 0.29, s25: 0.24, s50: 0.11, s100: 0.06 },
+  D: { s10: 0.30, s25: 0.30, s50: 0.13, s100: 0.07 },
+  E: { s10: 0.30, s25: 0.25, s50: 0.11, s100: 0.06 },
+  F: { s10: 0.29, s25: 0.24, s50: 0.11, s100: 0.06 },
+  G: { s10: 0.28, s25: 0.23, s50: 0.10, s100: 0.06 },
+};
+
+const DEFAULT_STEPS: StepSet = { s10: 0.28, s25: 0.23, s50: 0.10, s100: 0.06 };
+
+const buildMultipliers = (steps: StepSet): Record<number, number> => {
+  const m5 = 1;
+  const m10 = m5 * (1 - steps.s10);
+  const m25 = m10 * (1 - steps.s25);
+  const m50 = m25 * (1 - steps.s50);
+  const m100 = m50 * (1 - steps.s100);
+  return { 2: m5 * 1.3, 5: m5, 10: m10, 25: m25, 50: m50, 100: m100 };
+};
+
+const TIER_MULTIPLIERS: Record<number, number> = buildMultipliers(DEFAULT_STEPS);
+
+// Insert group letter (B-G) from a description like "US-d140-D300-D-R04-PL-NCT".
+export const getInsertGroupLetter = (description?: string): string | null => {
+  const upper = (description || '').toUpperCase();
+  if (!upper) return null;
+  const letters = ['B', 'C', 'D', 'E', 'F', 'G'];
+  const parts = upper.split('-');
+  if (parts.length >= 4 && parts[3].length === 1 && letters.includes(parts[3])) return parts[3];
+  for (const l of letters) {
+    if (upper.includes(`-${l}-`)) return l;
+  }
+  return null;
+};
+
+const getItemFamily = (item: Pick<LineItem, 'sku' | 'description'>): 'US' | 'UC' | null => {
+  const src = `${item.sku || ''} ${item.description || ''}`.trim().toUpperCase();
+  if (/(^|\s)US[\s-]?\d|(^|\s)US-/.test(src)) return 'US';
+  if (/(^|\s)UC[\s-]?\d|(^|\s)UC-/.test(src)) return 'UC';
+  return null;
+};
+
+const getItemMultipliers = (item: Pick<LineItem, 'sku' | 'description'>): Record<number, number> => {
+  const family = getItemFamily(item);
+  const letter = getInsertGroupLetter(item.description) || getInsertGroupLetter(item.sku);
+  const table = family === 'UC' ? UC_STEPS : family === 'US' ? US_STEPS : null;
+  const steps = (table && letter && table[letter]) || DEFAULT_STEPS;
+  return buildMultipliers(steps);
+};
+
+export const isUsPriceBreakItem = (item: Pick<LineItem, 'sku' | 'description'>): boolean =>
+  getItemFamily(item) !== null;
 
 // Unit price for a given tier quantity, before line discount.
 export const getTierUnitPrice = (basePrice: number, qty: number): number => {
@@ -73,12 +124,16 @@ export const getTierUnitPrice = (basePrice: number, qty: number): number => {
   return mult != null ? basePrice * mult : basePrice;
 };
 
-// Unit price for a tier after the line discount.
-export const getTierNetUnitPrice = (item: LineItem, qty: number): number =>
-  getTierUnitPrice(item.unitPrice, qty) * (1 - (item.discountPercent || 0) / 100);
+// Unit price for a tier after the line discount (group/family aware).
+export const getTierNetUnitPrice = (item: LineItem, qty: number): number => {
+  const mult = getItemMultipliers(item)[qty];
+  const base = mult != null ? item.unitPrice * mult : item.unitPrice;
+  return base * (1 - (item.discountPercent || 0) / 100);
+};
 
 export const getActivePriceBreaks = (item: LineItem): number[] =>
   (item.priceBreaks || []).filter((q) => TIER_MULTIPLIERS[q] != null).sort((a, b) => a - b);
+
 
 // For customer-facing output: skip the tier that duplicates the row's own quantity.
 export const getDisplayPriceBreaks = (item: LineItem): number[] =>
@@ -104,11 +159,11 @@ export const calculateLineTotal = (item: LineItem): number => {
     item.highlightQty != null && Number(item.highlightQty) > 0
       ? Number(item.highlightQty)
       : Number(item.moq);
-  const unit =
-    getActivePriceBreaks(item).length > 0 ? getTierUnitPrice(item.unitPrice, chosenQty) : item.unitPrice;
-  const gross = chosenQty * unit;
-  const lineDiscount = gross * ((item.discountPercent || 0) / 100);
-  return gross - lineDiscount;
+  if (getActivePriceBreaks(item).length > 0) {
+    return getTierNetUnitPrice(item, chosenQty) * chosenQty;
+  }
+  const gross = chosenQty * item.unitPrice;
+  return gross - gross * ((item.discountPercent || 0) / 100);
 };
 
 // Total for the row's own quantity (MOQ row), regardless of the chosen tier.

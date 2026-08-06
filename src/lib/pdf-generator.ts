@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
@@ -389,7 +389,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
   for (let i = 0; i < quotation.items.length; i++) {
     const item = quotation.items[i];
-    const lineTotal = calculateLineTotal(item);
+    const lineTotal = calculateMoqLineTotal(item);
     const meta = metas[i];
     const descLines = meta.descLines;
     const noteLines = meta.noteLines;

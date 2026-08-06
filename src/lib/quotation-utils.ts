@@ -107,6 +107,12 @@ export const calculateLineTotal = (item: LineItem): number => {
   return gross - lineDiscount;
 };
 
+// Total for the row's own quantity (MOQ row), regardless of the chosen tier.
+export const calculateMoqLineTotal = (item: LineItem): number => {
+  const gross = Number(item.moq) * item.unitPrice;
+  return gross - gross * ((item.discountPercent || 0) / 100);
+};
+
 export const calculateSubtotal = (items: LineItem[]): number => {
   return items.reduce((sum, item) => sum + calculateLineTotal(item), 0);
 };

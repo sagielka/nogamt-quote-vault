@@ -183,12 +183,12 @@ const CustomerPortal = () => {
                     <tr key={`${idx}-b-${qty}`} className={bIdx === breaks.length - 1 ? 'border-b' : ''}>
                       <td />
                       <td />
-                      <td className="pb-1 pl-4 text-xs text-muted-foreground">{bIdx === 0 ? 'Price breaks' : ''}</td>
-                      <td className="pb-1 text-center text-xs text-muted-foreground">{qty}</td>
-                      <td className="pb-1 text-right text-xs text-muted-foreground">
+                      <td className="py-1.5 pl-4 text-muted-foreground">{bIdx === 0 ? 'Price breaks' : ''}</td>
+                      <td className="py-1.5 text-center text-muted-foreground">{qty}</td>
+                      <td className="py-1.5 text-right text-muted-foreground">
                         {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
                       </td>
-                      <td className="pb-1 text-right text-xs text-muted-foreground">
+                      <td className="py-1.5 text-right text-muted-foreground">
                         {formatCurrency(getTierNetUnitPrice(item, qty) * qty, quotation.currency)}
                       </td>
                     </tr>

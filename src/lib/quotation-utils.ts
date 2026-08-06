@@ -159,11 +159,11 @@ export const calculateLineTotal = (item: LineItem): number => {
     item.highlightQty != null && Number(item.highlightQty) > 0
       ? Number(item.highlightQty)
       : Number(item.moq);
-  const unit =
-    getActivePriceBreaks(item).length > 0 ? getTierUnitPrice(item.unitPrice, chosenQty) : item.unitPrice;
-  const gross = chosenQty * unit;
-  const lineDiscount = gross * ((item.discountPercent || 0) / 100);
-  return gross - lineDiscount;
+  if (getActivePriceBreaks(item).length > 0) {
+    return getTierNetUnitPrice(item, chosenQty) * chosenQty;
+  }
+  const gross = chosenQty * item.unitPrice;
+  return gross - gross * ((item.discountPercent || 0) / 100);
 };
 
 // Total for the row's own quantity (MOQ row), regardless of the chosen tier.

@@ -29,6 +29,7 @@ export interface LineItem {
   notes?: string;
   images?: string[]; // storage paths in line-item-images bucket
   priceBreaks?: number[]; // quantity tiers to quote (US... items)
+  highlightQty?: number | null; // quantity row to bold (customer requested qty)
 }
 
 export interface Quotation {

@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -842,6 +842,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   const upperBreaks = breaks.filter((qty) => qty > Number(item.moq));
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const tierNet = getTierNetUnitPrice(item, qty);
+                    const hl = isHighlightedQty(item, qty);
+                    const cell = `py-2 align-top ${hl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`;
                     return (
                       <tr
                         key={`${item.id}-break-${qty}`}
@@ -849,61 +851,63 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                       >
                         <td />
                         <td />
-                        <td className="py-1.5 pl-4 text-muted-foreground print:text-gray-600">
+                        <td className={`${cell} pl-4`}>
                           {showLabel ? 'Price breaks' : ''}
                         </td>
                         <td />
-                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">{qty}</td>
-                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">{qty}</td>
-                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
+                        <td className={`${cell} text-center`}>{qty}</td>
+                        <td className={`${cell} text-center`}>{qty}</td>
+                        <td className={`${cell} text-right`}>
                           {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
                         </td>
-                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">
+                        <td className={`${cell} text-center`}>
                           {item.discountPercent ? `${item.discountPercent}%` : '—'}
                         </td>
-                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
+                        <td className={`${cell} text-right`}>
                           {item.discountPercent > 0 ? formatCurrency(tierNet, quotation.currency) : '—'}
                         </td>
-                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
+                        <td className={`${cell} text-right`}>
                           {formatCurrency(tierNet * qty, quotation.currency)}
                         </td>
                       </tr>
                     );
                   };
+                  const mainHl = isHighlightedQty(item, Number(item.moq) || 1);
+                  const mainCell = `py-2 align-top ${mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`;
                   return (
                   <Fragment key={item.id}>
                   {lowerBreaks.map((qty, bIdx) => renderBreakRow(qty, bIdx === 0, false))}
                   <tr className={upperBreaks.length > 0 ? '' : 'border-b border-border print:border-gray-200'}>
-                    <td className="py-4 text-muted-foreground print:text-gray-600 align-top">
+                    <td className={mainCell}>
                       <div className="flex items-center gap-1.5">
                         {index + 1}
                         {isOrdered && <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
                       </div>
                     </td>
-                    <td className="py-4 text-foreground font-mono text-sm print:text-gray-900 align-top">{item.sku || '—'}</td>
-                    <td className="py-4 text-foreground font-normal print:text-gray-900 align-top">
+                    <td className={`py-2 align-top font-mono text-sm text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>{item.sku || '—'}</td>
+                    <td className={`py-2 align-top text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : 'font-normal'}`}>
                       <div>{item.description || '—'}</div>
                       {item.notes && (
-                        <div className="text-xs text-muted-foreground mt-1 italic print:text-gray-500">
+                        <div className="text-xs text-muted-foreground mt-1 italic font-normal print:text-gray-500">
                           Note: {item.notes}
                         </div>
                       )}
                     </td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.leadTime || '—'}</td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">{item.moq || 1}</td>
-                    <td className={`py-4 text-center align-top ${isOrdered ? 'text-green-600 font-medium' : 'text-muted-foreground print:text-gray-600'}`}>
+                    <td className={`${mainCell} text-center`}>{item.leadTime || '—'}</td>
+                    <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
+                    <td className={`py-2 align-top text-center ${isOrdered ? 'text-green-600 font-medium' : mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`}>
                       {isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)}
                     </td>
-                    <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">
+                    <td className={`${mainCell} text-right`}>
                       {formatCurrency(item.unitPrice, quotation.currency)}
                     </td>
-                    <td className="py-4 text-center text-muted-foreground print:text-gray-600 align-top">
+                    <td className={`${mainCell} text-center`}>
                       {item.discountPercent ? `${item.discountPercent}%` : '—'}
                     </td>
-                    <td className="py-4 text-right text-muted-foreground print:text-gray-600 align-top">
+                    <td className={`${mainCell} text-right`}>
                       {item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—'}
                     </td>
-                    <td className="py-4 text-right font-medium text-foreground print:text-gray-900 align-top">
+                    <td className={`py-2 align-top text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>

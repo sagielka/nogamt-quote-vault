@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
@@ -415,10 +415,12 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     // the complete quantity column always reads in ascending order.
     const rowY = y + lowerBreaks.length * lineH;
 
+    const mainHl = isHighlightedQty(item, Number(item.moq) || 1);
+
     pdf.setTextColor(...gray);
+    setFont(pdf, mainHl ? 'bold' : 'normal');
     pdf.text(String(i + 1), colX.num, rowY);
 
-    setFont(pdf, 'normal');
     pdf.setFontSize(fontSize);
     pdf.text(item.sku || '—', colX.sku, rowY);
 
@@ -427,10 +429,12 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
     if (noteLines.length > 0) {
       const noteY = rowY + descLines.length * lineH + lineH * 0.5;
+      setFont(pdf, 'normal');
       pdf.setFontSize(noteFontSize);
       pdf.setTextColor(...gray);
       noteLines.forEach((ln, idx) => pdf.text(ln, colX.desc, noteY + idx * lineH));
       pdf.setFontSize(fontSize);
+      setFont(pdf, mainHl ? 'bold' : 'normal');
     }
 
     pdf.setTextColor(...gray);
@@ -462,12 +466,17 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       const renderPdfBreak = (qty: number, by: number, showLabel: boolean) => {
         const tierGross = getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty);
         const tierNet = getTierNetUnitPrice(item, qty);
+        const hl = isHighlightedQty(item, qty);
+        setFont(pdf, hl ? 'bold' : 'normal');
+        if (hl) pdf.setTextColor(...black); else pdf.setTextColor(...gray);
         pdf.text(showLabel ? 'Price breaks:' : '', colX.desc, by);
         pdf.text(String(qty), colX.moq, by, { align: 'center' });
         pdf.text(formatCurrency(tierGross, quotation.currency), colX.price + 14, by, { align: 'right' });
         pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, by, { align: 'center' });
         pdf.text(item.discountPercent ? formatCurrency(tierNet, quotation.currency) : '—', colX.net + 14, by, { align: 'right' });
         pdf.text(formatCurrency(tierNet * qty, quotation.currency), colX.total, by, { align: 'right' });
+        setFont(pdf, 'normal');
+        pdf.setTextColor(...gray);
       };
       lowerBreaks.forEach((qty, bIdx) => renderPdfBreak(qty, lowerStartY + bIdx * lineH, bIdx === 0));
       upperBreaks.forEach((qty, bIdx) =>

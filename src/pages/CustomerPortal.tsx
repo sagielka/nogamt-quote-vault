@@ -169,21 +169,13 @@ const CustomerPortal = () => {
               <tbody>
                 {items.map((item: any, idx: number) => {
                   const breaks = getDisplayPriceBreaks(item);
-                  return (
-                  <Fragment key={idx}>
-                  <tr className={breaks.length > 0 ? '' : 'border-b'}>
-                    <td className="py-2 text-muted-foreground">{idx + 1}</td>
-                    <td className="py-2 font-mono text-sm">{item.sku || '—'}</td>
-                    <td className="py-2">{item.description || '—'}</td>
-                    <td className="py-2 text-center">{item.moq || 1}</td>
-                    <td className="py-2 text-right">{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
-                    <td className="py-2 text-right font-medium">{formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
-                  </tr>
-                  {breaks.map((qty: number, bIdx: number) => (
-                    <tr key={`${idx}-b-${qty}`} className={bIdx === breaks.length - 1 ? 'border-b' : ''}>
+                  const lowerBreaks = breaks.filter((qty: number) => qty < Number(item.moq));
+                  const upperBreaks = breaks.filter((qty: number) => qty > Number(item.moq));
+                  const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => (
+                    <tr key={`${idx}-b-${qty}`} className={isLast ? 'border-b' : ''}>
                       <td />
                       <td />
-                      <td className="py-1.5 pl-4 text-muted-foreground">{bIdx === 0 ? 'Price breaks' : ''}</td>
+                      <td className="py-1.5 pl-4 text-muted-foreground">{showLabel ? 'Price breaks' : ''}</td>
                       <td className="py-1.5 text-center text-muted-foreground">{qty}</td>
                       <td className="py-1.5 text-right text-muted-foreground">
                         {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
@@ -192,7 +184,21 @@ const CustomerPortal = () => {
                         {formatCurrency(getTierNetUnitPrice(item, qty) * qty, quotation.currency)}
                       </td>
                     </tr>
-                  ))}
+                  );
+                  return (
+                  <Fragment key={idx}>
+                  {lowerBreaks.map((qty: number, bIdx: number) => renderBreakRow(qty, bIdx === 0, false))}
+                  <tr className={upperBreaks.length > 0 ? '' : 'border-b'}>
+                    <td className="py-2 text-muted-foreground">{idx + 1}</td>
+                    <td className="py-2 font-mono text-sm">{item.sku || '—'}</td>
+                    <td className="py-2">{item.description || '—'}</td>
+                    <td className="py-2 text-center">{item.moq || 1}</td>
+                    <td className="py-2 text-right">{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
+                    <td className="py-2 text-right font-medium">{formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+                  </tr>
+                  {upperBreaks.map((qty: number, bIdx: number) =>
+                    renderBreakRow(qty, lowerBreaks.length === 0 && bIdx === 0, bIdx === upperBreaks.length - 1)
+                  )}
                   </Fragment>
                   );
                 })}

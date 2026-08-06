@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import { CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 

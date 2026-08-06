@@ -86,6 +86,12 @@ export const LineItemWithSku = ({
   const setHighlightQty = (qty: number) => {
     onUpdate(item.id, { highlightQty: Number(item.highlightQty) === qty ? null : qty });
   };
+  const setTierLeadTime = (qty: number, value: string) => {
+    onUpdate(item.id, {
+      tierLeadTimes: { ...(item.tierLeadTimes || {}), [String(qty)]: value },
+    });
+  };
+
 
   const { toast } = useToast();
   const { user } = useAuth();

@@ -394,6 +394,8 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     const descLines = meta.descLines;
     const noteLines = meta.noteLines;
     const rowHeight = meta.rowH;
+    const lowerBreaks = meta.breaks.filter((qty) => qty < Number(item.moq));
+    const upperBreaks = meta.breaks.filter((qty) => qty > Number(item.moq));
 
     const imgs = itemImages[i] || [];
     const thumbW = thumbHsel;
@@ -409,7 +411,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       y = margin;
     }
 
-    const rowY = y;
+    // Place the quoted MOQ row between smaller and larger quantity tiers so
+    // the complete quantity column always reads in ascending order.
+    const rowY = y + lowerBreaks.length * lineH;
 
     pdf.setTextColor(...gray);
     pdf.text(String(i + 1), colX.num, rowY);
@@ -444,24 +448,31 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
 
     // Quantity price breaks
     if (meta.breaks.length > 0) {
-      const breakStartY =
+      const lowerStartY = y;
+      const upperStartY =
         rowY +
-        descLines.length * lineH +
-        (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0) +
-        lineH * 0.6;
+        Math.max(
+          descLines.length * lineH +
+            (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0) +
+            lineH * 0.6,
+          lineH
+        );
       pdf.setFontSize(fontSize);
       pdf.setTextColor(...gray);
-      meta.breaks.forEach((qty, bIdx) => {
-        const by = breakStartY + bIdx * lineH;
+      const renderPdfBreak = (qty: number, by: number, showLabel: boolean) => {
         const tierGross = getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty);
         const tierNet = getTierNetUnitPrice(item, qty);
-        pdf.text(bIdx === 0 ? 'Price breaks:' : '', colX.desc, by);
+        pdf.text(showLabel ? 'Price breaks:' : '', colX.desc, by);
         pdf.text(String(qty), colX.moq, by, { align: 'center' });
         pdf.text(formatCurrency(tierGross, quotation.currency), colX.price + 14, by, { align: 'right' });
         pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, by, { align: 'center' });
         pdf.text(item.discountPercent ? formatCurrency(tierNet, quotation.currency) : '—', colX.net + 14, by, { align: 'right' });
         pdf.text(formatCurrency(tierNet * qty, quotation.currency), colX.total, by, { align: 'right' });
-      });
+      };
+      lowerBreaks.forEach((qty, bIdx) => renderPdfBreak(qty, lowerStartY + bIdx * lineH, bIdx === 0));
+      upperBreaks.forEach((qty, bIdx) =>
+        renderPdfBreak(qty, upperStartY + bIdx * lineH, lowerBreaks.length === 0 && bIdx === 0)
+      );
       pdf.setFontSize(fontSize);
       pdf.setTextColor(...black);
     }

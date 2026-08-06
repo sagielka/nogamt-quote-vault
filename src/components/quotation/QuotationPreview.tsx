@@ -838,9 +838,42 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
                   const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
                   const breaks = getDisplayPriceBreaks(item);
+                  const lowerBreaks = breaks.filter((qty) => qty < Number(item.moq));
+                  const upperBreaks = breaks.filter((qty) => qty > Number(item.moq));
+                  const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
+                    const tierNet = getTierNetUnitPrice(item, qty);
+                    return (
+                      <tr
+                        key={`${item.id}-break-${qty}`}
+                        className={isLast ? 'border-b border-border print:border-gray-200' : ''}
+                      >
+                        <td />
+                        <td />
+                        <td className="py-1.5 pl-4 text-muted-foreground print:text-gray-600">
+                          {showLabel ? 'Price breaks' : ''}
+                        </td>
+                        <td />
+                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">{qty}</td>
+                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">{qty}</td>
+                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
+                          {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
+                        </td>
+                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">
+                          {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                        </td>
+                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
+                          {item.discountPercent > 0 ? formatCurrency(tierNet, quotation.currency) : '—'}
+                        </td>
+                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
+                          {formatCurrency(tierNet * qty, quotation.currency)}
+                        </td>
+                      </tr>
+                    );
+                  };
                   return (
                   <Fragment key={item.id}>
-                  <tr className={breaks.length > 0 ? '' : 'border-b border-border print:border-gray-200'}>
+                  {lowerBreaks.map((qty, bIdx) => renderBreakRow(qty, bIdx === 0, false))}
+                  <tr className={upperBreaks.length > 0 ? '' : 'border-b border-border print:border-gray-200'}>
                     <td className="py-4 text-muted-foreground print:text-gray-600 align-top">
                       <div className="flex items-center gap-1.5">
                         {index + 1}
@@ -874,37 +907,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>
-                  {breaks.map((qty, bIdx) => {
-                    const tierNet = getTierNetUnitPrice(item, qty);
-                    const last = bIdx === breaks.length - 1;
-                    return (
-                      <tr
-                        key={`${item.id}-break-${qty}`}
-                        className={last ? 'border-b border-border print:border-gray-200' : ''}
-                      >
-                        <td />
-                        <td />
-                        <td className="py-1.5 pl-4 text-muted-foreground print:text-gray-600">
-                          {bIdx === 0 ? 'Price breaks' : ''}
-                        </td>
-                        <td />
-                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">{qty}</td>
-                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">{qty}</td>
-                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
-                          {formatCurrency(getTierNetUnitPrice({ ...item, discountPercent: 0 }, qty), quotation.currency)}
-                        </td>
-                        <td className="py-1.5 text-center text-muted-foreground print:text-gray-600">
-                          {item.discountPercent ? `${item.discountPercent}%` : '—'}
-                        </td>
-                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
-                          {item.discountPercent > 0 ? formatCurrency(tierNet, quotation.currency) : '—'}
-                        </td>
-                        <td className="py-1.5 text-right text-muted-foreground print:text-gray-600">
-                          {formatCurrency(tierNet * qty, quotation.currency)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {upperBreaks.map((qty, bIdx) =>
+                    renderBreakRow(qty, lowerBreaks.length === 0 && bIdx === 0, bIdx === upperBreaks.length - 1)
+                  )}
                   </Fragment>
                   );
                 })}

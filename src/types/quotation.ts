@@ -28,6 +28,7 @@ export interface LineItem {
   discountPercent: number;
   notes?: string;
   images?: string[]; // storage paths in line-item-images bucket
+  priceBreaks?: number[]; // quantity tiers to quote (US... items)
 }
 
 export interface Quotation {

@@ -93,8 +93,16 @@ export const isHighlightedQty = (
 ): boolean => item.highlightQty != null && Number(item.highlightQty) === Number(qty);
 
 export const calculateLineTotal = (item: LineItem): number => {
-
-  const gross = item.moq * item.unitPrice;
+  // When the customer picked a specific (bolded) quantity from the price
+  // breaks, the line total — and therefore subtotal/total — follows that
+  // chosen base quantity and its tier price.
+  const chosenQty =
+    item.highlightQty != null && Number(item.highlightQty) > 0
+      ? Number(item.highlightQty)
+      : Number(item.moq);
+  const unit =
+    getActivePriceBreaks(item).length > 0 ? getTierUnitPrice(item.unitPrice, chosenQty) : item.unitPrice;
+  const gross = chosenQty * unit;
   const lineDiscount = gross * ((item.discountPercent || 0) / 100);
   return gross - lineDiscount;
 };

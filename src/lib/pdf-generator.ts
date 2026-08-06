@@ -449,7 +449,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
         descLines.length * lineH +
         (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0) +
         lineH * 0.6;
-      pdf.setFontSize(noteFontSize);
+      pdf.setFontSize(fontSize);
       pdf.setTextColor(...gray);
       meta.breaks.forEach((qty, bIdx) => {
         const by = breakStartY + bIdx * lineH;

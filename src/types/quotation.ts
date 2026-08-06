@@ -30,6 +30,7 @@ export interface LineItem {
   images?: string[]; // storage paths in line-item-images bucket
   priceBreaks?: number[]; // quantity tiers to quote (US... items)
   highlightQty?: number | null; // quantity row to bold (customer requested qty)
+  tierLeadTimes?: Record<string, string>; // per-quantity lead time (weeks)
 }
 
 export interface Quotation {

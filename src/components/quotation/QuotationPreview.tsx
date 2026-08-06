@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getActivePriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -837,7 +837,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                 {quotation.items.map((item, index) => {
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
                   const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
-                  const breaks = getActivePriceBreaks(item);
+                  const breaks = getDisplayPriceBreaks(item);
                   return (
                   <Fragment key={item.id}>
                   <tr className={breaks.length > 0 ? '' : 'border-b border-border print:border-gray-200'}>

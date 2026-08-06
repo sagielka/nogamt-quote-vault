@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getActivePriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
@@ -354,7 +354,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       const item = quotation.items[i];
       const dL = wrapText(pdf, item.description || '—', descWidth);
       const nL = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
-      const brs = getActivePriceBreaks(item);
+      const brs = getDisplayPriceBreaks(item);
       const breaksH = brs.length > 0 ? brs.length * lineH + lineH * 0.6 : 0;
       const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0) + breaksH, 8);
       const imgs = itemImages[i] || [];

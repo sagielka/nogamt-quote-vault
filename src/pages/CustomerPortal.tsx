@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate, getActivePriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
 import { CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 
@@ -168,7 +168,7 @@ const CustomerPortal = () => {
               </thead>
               <tbody>
                 {items.map((item: any, idx: number) => {
-                  const breaks = getActivePriceBreaks(item);
+                  const breaks = getDisplayPriceBreaks(item);
                   return (
                   <Fragment key={idx}>
                   <tr className={breaks.length > 0 ? '' : 'border-b'}>

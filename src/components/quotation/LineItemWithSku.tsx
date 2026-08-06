@@ -68,6 +68,22 @@ export const LineItemWithSku = ({
   const [approveOpen, setApproveOpen] = useState(false);
   const [pendingCost, setPendingCost] = useState<number | null>(null);
   const [savingCost, setSavingCost] = useState(false);
+
+  // Quantity price breaks (US... items only)
+  const supportsPriceBreaks = isUsPriceBreakItem(item);
+  const activeBreaks = getActivePriceBreaks(item);
+  const togglePriceBreaks = () => {
+    onUpdate(item.id, {
+      priceBreaks: activeBreaks.length > 0 ? [] : [...US_PRICE_TIERS],
+    });
+  };
+  const toggleTier = (qty: number) => {
+    const next = activeBreaks.includes(qty)
+      ? activeBreaks.filter((q) => q !== qty)
+      : [...activeBreaks, qty].sort((a, b) => a - b);
+    onUpdate(item.id, { priceBreaks: next });
+  };
+
   const { toast } = useToast();
   const { user } = useAuth();
   useCostOverrides();

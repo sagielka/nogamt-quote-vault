@@ -843,7 +843,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const tierNet = getTierNetUnitPrice(item, qty);
                     const hl = isHighlightedQty(item, qty);
-                    const cell = `py-2 align-top ${hl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`;
+                    const cell = `py-1.5 align-middle text-sm leading-5 ${hl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`;
                     return (
                       <tr
                         key={`${item.id}-break-${qty}`}
@@ -873,7 +873,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     );
                   };
                   const mainHl = isHighlightedQty(item, Number(item.moq) || 1);
-                  const mainCell = `py-2 align-top ${mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`;
+                  const mainCell = `py-1.5 align-middle text-sm leading-5 ${mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`;
                   return (
                   <Fragment key={item.id}>
                   {lowerBreaks.map((qty, bIdx) => renderBreakRow(qty, bIdx === 0, false))}
@@ -884,8 +884,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         {isOrdered && <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
                       </div>
                     </td>
-                    <td className={`py-2 align-top font-mono text-sm text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>{item.sku || '—'}</td>
-                    <td className={`py-2 align-top text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : 'font-normal'}`}>
+                    <td className={`py-1.5 align-middle font-mono text-sm leading-5 text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>{item.sku || '—'}</td>
+                    <td className={`py-1.5 align-middle text-sm leading-5 text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : 'font-normal'}`}>
                       <div>{item.description || '—'}</div>
                       {item.notes && (
                         <div className="text-xs text-muted-foreground mt-1 italic font-normal print:text-gray-500">
@@ -895,7 +895,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     </td>
                     <td className={`${mainCell} text-center`}>{item.leadTime || '—'}</td>
                     <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
-                    <td className={`py-2 align-top text-center ${isOrdered ? 'text-green-600 font-medium' : mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`}>
+                    <td className={`py-1.5 align-middle text-sm leading-5 text-center ${isOrdered ? 'text-green-600 font-medium' : mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`}>
                       {isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)}
                     </td>
                     <td className={`${mainCell} text-right`}>
@@ -907,7 +907,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     <td className={`${mainCell} text-right`}>
                       {item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—'}
                     </td>
-                    <td className={`py-2 align-top text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
+                    <td className={`py-1.5 align-middle text-sm leading-5 text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
                       {formatCurrency(calculateLineTotal(item), quotation.currency)}
                     </td>
                   </tr>

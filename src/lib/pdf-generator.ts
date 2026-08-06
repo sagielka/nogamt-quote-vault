@@ -457,8 +457,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
         rowY +
         Math.max(
           descLines.length * lineH +
-            (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0) +
-            lineH * 0.6,
+            (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0),
           lineH
         );
       pdf.setFontSize(fontSize);

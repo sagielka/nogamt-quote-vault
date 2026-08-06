@@ -173,7 +173,7 @@ const CustomerPortal = () => {
                   const upperBreaks = breaks.filter((qty: number) => qty > Number(item.moq));
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const hl = isHighlightedQty(item, qty);
-                    const cell = `py-2 align-top ${hl ? 'font-bold text-foreground' : 'text-muted-foreground'}`;
+                    const cell = `py-1.5 align-middle text-sm leading-5 ${hl ? 'font-bold text-foreground' : 'text-muted-foreground'}`;
                     return (
                       <tr key={`${idx}-b-${qty}`} className={isLast ? 'border-b' : ''}>
                         <td />
@@ -190,7 +190,7 @@ const CustomerPortal = () => {
                     );
                   };
                   const mainHl = isHighlightedQty(item, Number(item.moq) || 1);
-                  const mainCell = `py-2 align-top ${mainHl ? 'font-bold' : ''}`;
+                  const mainCell = `py-1.5 align-middle text-sm leading-5 ${mainHl ? 'font-bold' : ''}`;
                   return (
                   <Fragment key={idx}>
                   {lowerBreaks.map((qty: number, bIdx: number) => renderBreakRow(qty, bIdx === 0, false))}

@@ -86,6 +86,12 @@ export const getDisplayPriceBreaks = (item: LineItem): number[] =>
     .filter((q) => Number(q) !== Number(item.moq))
     .sort((a, b) => a - b);
 
+// Whether a given quantity row should be emphasised (customer requested qty).
+export const isHighlightedQty = (
+  item: Pick<LineItem, 'highlightQty'>,
+  qty: number
+): boolean => item.highlightQty != null && Number(item.highlightQty) === Number(qty);
+
 export const calculateLineTotal = (item: LineItem): number => {
 
   const gross = item.moq * item.unitPrice;

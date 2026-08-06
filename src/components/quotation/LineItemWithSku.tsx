@@ -86,6 +86,12 @@ export const LineItemWithSku = ({
   const setHighlightQty = (qty: number) => {
     onUpdate(item.id, { highlightQty: Number(item.highlightQty) === qty ? null : qty });
   };
+  const setTierLeadTime = (qty: number, value: string) => {
+    onUpdate(item.id, {
+      tierLeadTimes: { ...(item.tierLeadTimes || {}), [String(qty)]: value },
+    });
+  };
+
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -813,6 +819,31 @@ export const LineItemWithSku = ({
                 })}
               </div>
 
+              {/* Per-quantity lead time */}
+              <div className="mt-2 pt-2 border-t border-primary/10">
+                <div className="text-xs text-muted-foreground mb-1.5">
+                  Lead time per quantity (weeks)
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(new Set([Number(item.moq) || 1, ...activeBreaks]))
+                    .sort((a, b) => a - b)
+                    .map((qty) => (
+                      <div key={`lt-${qty}`} className="flex items-center gap-1">
+                        <span className="text-xs font-mono text-muted-foreground w-12 text-right">
+                          {qty} pcs
+                        </span>
+                        <input
+                          type="text"
+                          value={item.tierLeadTimes?.[String(qty)] ?? ''}
+                          onChange={(e) => setTierLeadTime(qty, e.target.value)}
+                          placeholder={item.leadTime || 'LT'}
+                          className="h-7 w-14 rounded border border-border bg-background/50 px-1.5 text-xs font-mono text-center focus:border-primary/60 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                </div>
+              </div>
+
               {/* Bold / highlight the quantity the customer asked for */}
               <div className="mt-2 pt-2 border-t border-primary/10">
                 <div className="text-xs text-muted-foreground mb-1.5">
@@ -845,6 +876,7 @@ export const LineItemWithSku = ({
           </div>
         </div>
       )}
+
 
       {/* Notes & Images Section */}
 

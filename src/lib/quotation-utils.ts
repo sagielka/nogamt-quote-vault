@@ -92,6 +92,10 @@ export const isHighlightedQty = (
   qty: number
 ): boolean => item.highlightQty != null && Number(item.highlightQty) === Number(qty);
 
+// Lead time to show for a given quantity row (falls back to the line lead time).
+export const getTierLeadTime = (item: LineItem, qty: number): string =>
+  (item.tierLeadTimes?.[String(qty)] || '').trim() || (item.leadTime || '').trim() || '—';
+
 export const calculateLineTotal = (item: LineItem): number => {
   // When the customer picked a specific (bolded) quantity from the price
   // breaks, the line total — and therefore subtotal/total — follows that

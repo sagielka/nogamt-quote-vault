@@ -80,6 +80,10 @@ export const getTierNetUnitPrice = (item: LineItem, qty: number): number =>
 export const getActivePriceBreaks = (item: LineItem): number[] =>
   (item.priceBreaks || []).filter((q) => TIER_MULTIPLIERS[q] != null).sort((a, b) => a - b);
 
+// For customer-facing output: skip the tier that duplicates the row's own quantity.
+export const getDisplayPriceBreaks = (item: LineItem): number[] =>
+  getActivePriceBreaks(item).filter((q) => q !== Number(item.moq));
+
 export const calculateLineTotal = (item: LineItem): number => {
 
   const gross = item.moq * item.unitPrice;

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles, Layers } from 'lucide-react';
-import { formatCurrency, calculateLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, getActivePriceBreaks } from '@/lib/quotation-utils';
+import { formatCurrency, calculateLineTotal, calculateMoqLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, getActivePriceBreaks } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, convertPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
 import { useCostOverrides, saveCostOverride } from '@/data/cost-overrides';
@@ -722,7 +722,7 @@ export const LineItemWithSku = ({
 
         {/* Total */}
         <div className="text-right font-mono font-medium text-primary glow-text whitespace-nowrap text-sm">
-          {formatCurrency(calculateLineTotal(item), currency)}
+          {formatCurrency(calculateMoqLineTotal(item), currency)}
         </div>
         
         {/* Actions - moved to separate column with no overlap */}

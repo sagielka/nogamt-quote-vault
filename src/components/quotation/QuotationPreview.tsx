@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -908,7 +908,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                       {item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—'}
                     </td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
-                      {formatCurrency(calculateLineTotal(item), quotation.currency)}
+                      {formatCurrency(calculateMoqLineTotal(item), quotation.currency)}
                     </td>
                   </tr>
                   {upperBreaks.map((qty, bIdx) =>

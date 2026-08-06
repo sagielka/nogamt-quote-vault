@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, calculateMoqLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import { CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 
@@ -200,7 +200,7 @@ const CustomerPortal = () => {
                     <td className={mainCell}>{item.description || '—'}</td>
                     <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
                     <td className={`${mainCell} text-right`}>{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
-                    <td className={`${mainCell} text-right font-medium`}>{formatCurrency(calculateLineTotal(item), quotation.currency)}</td>
+                    <td className={`${mainCell} text-right font-medium`}>{formatCurrency(calculateMoqLineTotal(item), quotation.currency)}</td>
                   </tr>
                   {upperBreaks.map((qty: number, bIdx: number) =>
                     renderBreakRow(qty, lowerBreaks.length === 0 && bIdx === 0, bIdx === upperBreaks.length - 1)

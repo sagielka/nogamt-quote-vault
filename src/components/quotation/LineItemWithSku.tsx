@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
-import { formatCurrency, calculateLineTotal } from '@/lib/quotation-utils';
+import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles, Layers } from 'lucide-react';
+import { formatCurrency, calculateLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierUnitPrice, getTierNetUnitPrice, getActivePriceBreaks } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, convertPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
 import { useCostOverrides, saveCostOverride } from '@/data/cost-overrides';

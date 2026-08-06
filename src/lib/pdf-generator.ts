@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';

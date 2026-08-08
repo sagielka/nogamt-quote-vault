@@ -1049,6 +1049,11 @@ const Index = () => {
           <UserManagement />
         )}
 
+        {currentView === 'portal-accounts' && isAdmin && (
+          <CustomerAccountsAdmin />
+        )}
+
+
         {currentView === 'customers' && (
           <CustomerList
             onSelectCustomer={(email) => {

@@ -50,7 +50,7 @@ import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeTog
 import { QuotationViews } from '@/components/quotation/QuotationViews';
 
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports' | 'portal-accounts';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();

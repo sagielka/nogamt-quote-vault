@@ -664,6 +664,17 @@ const Index = () => {
                   Users
                 </Button>
               )}
+              {currentView === 'list' && isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateToView('portal-accounts')}
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Price Portal
+                </Button>
+              )}
+
               {currentView === 'list' && (
                 <Button 
                   variant="outline" 

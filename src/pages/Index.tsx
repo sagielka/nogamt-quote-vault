@@ -19,6 +19,7 @@ import { BulkActionsBar } from '@/components/BulkActionsBar';
 
 
 import { UserManagement } from '@/components/UserManagement';
+import { CustomerAccountsAdmin } from '@/components/CustomerAccountsAdmin';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';

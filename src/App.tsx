@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import CustomerPortal from "./pages/CustomerPortal";
+import CustomerPrices from "./pages/CustomerPrices";
 import NotFound from "./pages/NotFound";
 import DesktopUpdater from "./components/DesktopUpdater";
 
@@ -26,6 +27,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/portal" element={<CustomerPortal />} />
+            <Route path="/prices" element={<CustomerPrices />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -19,11 +19,12 @@ import { BulkActionsBar } from '@/components/BulkActionsBar';
 
 
 import { UserManagement } from '@/components/UserManagement';
+import { CustomerAccountsAdmin } from '@/components/CustomerAccountsAdmin';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck } from 'lucide-react';
 import { AIQuoteAssistant } from '@/components/AIQuoteAssistant';
 import {
   AlertDialog,
@@ -50,7 +51,7 @@ import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeTog
 import { QuotationViews } from '@/components/quotation/QuotationViews';
 
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports' | 'portal-accounts';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -663,6 +664,17 @@ const Index = () => {
                   Users
                 </Button>
               )}
+              {currentView === 'list' && isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigateToView('portal-accounts')}
+                >
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Price Portal
+                </Button>
+              )}
+
               {currentView === 'list' && (
                 <Button 
                   variant="outline" 
@@ -685,7 +697,7 @@ const Index = () => {
                   Reports
                 </Button>
               )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports') && (
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -1048,6 +1060,11 @@ const Index = () => {
         {currentView === 'users' && isAdmin && (
           <UserManagement />
         )}
+
+        {currentView === 'portal-accounts' && isAdmin && (
+          <CustomerAccountsAdmin />
+        )}
+
 
         {currentView === 'customers' && (
           <CustomerList

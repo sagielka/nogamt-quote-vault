@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_accounts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          email: string
+          id: string
+          notes: string | null
+          price_list: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          price_list?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          price_list?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_portal_tokens: {
         Row: {
           client_comment: string | null
@@ -694,12 +739,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_customer_price_list: { Args: { _user_id: string }; Returns: string }
       get_portal_data: { Args: { _token: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_approved_customer_for_email: {
+        Args: { _email: string; _user_id: string }
         Returns: boolean
       }
       submit_portal_response: {

@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import CustomerPortal from "./pages/CustomerPortal";
+import CustomerPrices from "./pages/CustomerPrices";
 import NotFound from "./pages/NotFound";
 import DesktopUpdater from "./components/DesktopUpdater";
 

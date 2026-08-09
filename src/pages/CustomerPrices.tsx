@@ -37,8 +37,10 @@ const CustomerPrices = () => {
   const [notice, setNotice] = useState('');
 
   const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<any[]>([]);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(() => getProductCatalog(), []);
   const rawList = account?.price_list || null;

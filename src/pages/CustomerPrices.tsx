@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, LogOut, Clock, ShieldCheck, FileText, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Search, LogOut, Clock, ShieldCheck, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };

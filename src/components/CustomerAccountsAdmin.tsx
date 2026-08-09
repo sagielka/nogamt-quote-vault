@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PRICE_LISTS } from '@/data/product-catalog';
+import { useCustomPriceLists, CUSTOM_PREFIX } from '@/hooks/useCustomPriceLists';
+import PriceListUploader from '@/components/PriceListUploader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +36,11 @@ interface CustomerOption {
 export const CustomerAccountsAdmin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { lists: customLists } = useCustomPriceLists();
+  const priceListOptions = [
+    ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),
+    ...customLists.map((l) => ({ value: `${CUSTOM_PREFIX}${l.id}`, label: `${l.name} (custom · ${l.currency})` })),
+  ];
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);
@@ -234,6 +241,8 @@ export const CustomerAccountsAdmin = () => {
         </Button>
       </div>
 
+      <PriceListUploader />
+
 
       {rows.length === 0 && (
         <Card>
@@ -266,7 +275,7 @@ export const CustomerAccountsAdmin = () => {
                   <SelectValue placeholder="Assign price list" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_LISTS.map((p) => (
+                  {priceListOptions.map((p) => (
                     <SelectItem key={p.value} value={p.value}>
                       {p.label}
                     </SelectItem>
@@ -324,7 +333,7 @@ export const CustomerAccountsAdmin = () => {
                   <SelectValue placeholder="Assign price list" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_LISTS.map((p) => (
+                  {priceListOptions.map((p) => (
                     <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -429,7 +438,7 @@ export const CustomerAccountsAdmin = () => {
                   <SelectValue placeholder="Assign price list" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_LISTS.map((p) => (
+                  {priceListOptions.map((p) => (
                     <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>

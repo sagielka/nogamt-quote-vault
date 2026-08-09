@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
 import { getProductCatalog, PRICE_LISTS, type PriceList } from '@/data/product-catalog';
+import {
+  CUSTOM_PREFIX,
+  fetchCustomPriceList,
+  fetchCustomPriceListItems,
+  type CustomPriceList,
+  type CustomPriceRow,
+} from '@/hooks/useCustomPriceLists';
 import { US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, formatDate, calculateTotal } from '@/lib/quotation-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,10 +41,34 @@ const CustomerPrices = () => {
   const [quotes, setQuotes] = useState<any[]>([]);
 
   const catalog = useMemo(() => getProductCatalog(), []);
-  const priceList = (account?.price_list || null) as PriceList | null;
-  const baseCurrency = priceList ? PRICE_LISTS.find((p) => p.value === priceList)?.baseCurrency || 'USD' : 'USD';
+  const rawList = account?.price_list || null;
+  const customListId = rawList?.startsWith(CUSTOM_PREFIX) ? rawList.slice(CUSTOM_PREFIX.length) : null;
+  const priceList = (customListId ? null : rawList) as PriceList | null;
+  const [customList, setCustomList] = useState<CustomPriceList | null>(null);
+  const [customRows, setCustomRows] = useState<CustomPriceRow[]>([]);
+
+  const baseCurrency = customListId
+    ? customList?.currency || 'USD'
+    : priceList
+      ? PRICE_LISTS.find((p) => p.value === priceList)?.baseCurrency || 'USD'
+      : 'USD';
   const symbol = SYMBOLS[baseCurrency] || '$';
-  const approved = account?.status === 'approved' && !!priceList;
+  const approved = account?.status === 'approved' && !!rawList;
+  const listLabel = customListId
+    ? customList?.name || 'Custom price list'
+    : PRICE_LISTS.find((p) => p.value === priceList)?.label;
+
+  useEffect(() => {
+    if (!customListId) return;
+    (async () => {
+      const [list, items] = await Promise.all([
+        fetchCustomPriceList(customListId),
+        fetchCustomPriceListItems(customListId),
+      ]);
+      setCustomList(list);
+      setCustomRows(items);
+    })();
+  }, [customListId]);
 
   useEffect(() => {
     if (!approved || !user?.email) return;
@@ -53,12 +84,19 @@ const CustomerPrices = () => {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const rows = catalog.filter((p) => (priceList ? p.prices[priceList] != null : false));
-    if (!q) return rows.slice(0, 200);
-    return rows
-      .filter((p) => p.sku.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
+    const rows = customListId
+      ? customRows.map((r) => ({
+          sku: r.sku,
+          description: r.description || '',
+          prices: {} as any,
+          customPrice: r.price,
+        }))
+      : catalog.filter((p) => (priceList ? p.prices[priceList] != null : false));
+    if (!q) return rows.slice(0, 200) as any[];
+    return (rows as any[])
+      .filter((p) => p.sku.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
       .slice(0, 200);
-  }, [catalog, query, priceList]);
+  }, [catalog, query, priceList, customListId, customRows]);
 
   const fmt = (v: number) =>
     `${symbol}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -236,7 +274,7 @@ const CustomerPrices = () => {
           {account.company_name || 'Your'} prices
         </h1>
         <Badge variant="secondary" className="ml-2">
-          {PRICE_LISTS.find((p) => p.value === priceList)?.label}
+          {listLabel}
         </Badge>
       </div>
 
@@ -268,7 +306,7 @@ const CustomerPrices = () => {
               </thead>
               <tbody>
                 {filtered.map((p) => {
-                  const unit = p.prices[priceList as PriceList] as number;
+                  const unit = (customListId ? p.customPrice : p.prices[priceList as PriceList]) as number;
                   const item: any = { sku: p.sku, description: p.description, unitPrice: unit, discountPercent: 0 };
                   const hasBreaks = isUsPriceBreakItem(item);
                   const open = expanded === p.sku;

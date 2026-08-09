@@ -5,17 +5,23 @@ import { PRICE_LISTS } from '@/data/product-catalog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail } from 'lucide-react';
 
 interface Row {
   id: string;
+  user_id: string;
   email: string;
   company_name: string | null;
   contact_name: string | null;
   status: string;
   price_list: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -24,6 +30,10 @@ export const CustomerAccountsAdmin = () => {
   const { toast } = useToast();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<Row | null>(null);
+  const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '' });
+  const [newPassword, setNewPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,9 +56,10 @@ export const CustomerAccountsAdmin = () => {
       .eq('id', id) as any);
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      return;
+      return false;
     }
     await load();
+    return true;
   };
 
   const approve = (row: Row) => {
@@ -58,6 +69,74 @@ export const CustomerAccountsAdmin = () => {
     }
     patch(row.id, { status: 'approved', approved_by: user?.id, approved_at: new Date().toISOString() });
     toast({ title: 'Customer approved', description: `${row.email} can now see their prices.` });
+  };
+
+  const openEdit = (row: Row) => {
+    setEditing(row);
+    setNewPassword('');
+    setForm({
+      company_name: row.company_name || '',
+      contact_name: row.contact_name || '',
+      notes: row.notes || '',
+      price_list: row.price_list || '',
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setBusy(true);
+    const ok = await patch(editing.id, {
+      company_name: form.company_name || null,
+      contact_name: form.contact_name || null,
+      notes: form.notes || null,
+      price_list: form.price_list || null,
+    });
+    setBusy(false);
+    if (ok) {
+      toast({ title: 'Saved', description: 'Customer details updated.' });
+      setEditing(null);
+    }
+  };
+
+  const callAdmin = async (action: string, body: Record<string, any>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await supabase.functions.invoke(`admin-users?action=${action}`, {
+      body,
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+    });
+    if (res.error) throw new Error(res.error.message);
+    if ((res.data as any)?.error) throw new Error((res.data as any).error);
+    return res.data as any;
+  };
+
+  const sendReset = async (row: Row) => {
+    setBusy(true);
+    try {
+      await callAdmin('reset-password', { email: row.email });
+      toast({ title: 'Reset email sent', description: `Password reset sent to ${row.email}.` });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const setPassword = async () => {
+    if (!editing) return;
+    if (newPassword.length < 6) {
+      toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    setBusy(true);
+    try {
+      await callAdmin('set-password', { userId: editing.user_id, password: newPassword });
+      setNewPassword('');
+      toast({ title: 'Password updated', description: `New password set for ${editing.email}.` });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const statusBadge = (status: string) => {
@@ -121,7 +200,15 @@ export const CustomerAccountsAdmin = () => {
                 </SelectContent>
               </Select>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="secondary" onClick={() => openEdit(row)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => sendReset(row)}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Reset link
+                </Button>
                 {row.status !== 'approved' && (
                   <Button size="sm" onClick={() => approve(row)}>
                     <UserCheck className="w-4 h-4 mr-2" />
@@ -139,6 +226,71 @@ export const CustomerAccountsAdmin = () => {
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit customer</DialogTitle>
+            <DialogDescription>{editing?.email}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Company name</Label>
+              <Input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Contact name</Label>
+              <Input value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Price list</Label>
+              <Select value={form.price_list || undefined} onValueChange={(v) => setForm({ ...form, price_list: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Assign price list" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRICE_LISTS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Internal notes</Label>
+              <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </div>
+
+            <div className="space-y-1.5 border-t border-border pt-3">
+              <Label className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4" /> Set a new password
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Min. 6 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <Button variant="secondary" disabled={busy || !newPassword} onClick={setPassword}>
+                  Apply
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Or use “Reset link” to email the customer a self-service reset.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={saveEdit} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

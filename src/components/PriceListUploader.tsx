@@ -40,7 +40,12 @@ const parseFile = async (file: File): Promise<CustomPriceRow[]> => {
   return rows;
 };
 
-export const PriceListUploader = () => {
+interface PriceListUploaderProps {
+  compact?: boolean;
+  onCreated?: (listId: string) => void;
+}
+
+export const PriceListUploader = ({ compact = false, onCreated }: PriceListUploaderProps = {}) => {
   const { toast } = useToast();
   const { lists, loading, createList, deleteList } = useCustomPriceLists();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +55,7 @@ export const PriceListUploader = () => {
   const [fileName, setFileName] = useState('');
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('USD');
+
 
   const handleFile = async (file: File) => {
     setBusy(true);

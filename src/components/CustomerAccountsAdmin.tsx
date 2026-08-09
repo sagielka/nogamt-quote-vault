@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2 } from 'lucide-react';
 
-const PORTAL_URL = `${window.location.origin}/#/prices`;
+const PORTAL_URL = 'https://quote.noga-mt.com/#/prices';
 
 interface Row {
   id: string;

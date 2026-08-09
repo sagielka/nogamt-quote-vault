@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus } from 'lucide-react';
 
 interface Row {
   id: string;
@@ -25,6 +25,12 @@ interface Row {
   created_at: string;
 }
 
+interface CustomerOption {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export const CustomerAccountsAdmin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -34,6 +40,18 @@ export const CustomerAccountsAdmin = () => {
   const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '' });
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    customerId: '',
+    email: '',
+    company_name: '',
+    contact_name: '',
+    price_list: '',
+    password: '',
+    notes: '',
+  });
+
 
   const load = useCallback(async () => {
     setLoading(true);

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus } from 'lucide-react';
 
 interface Row {
   id: string;
@@ -25,6 +25,12 @@ interface Row {
   created_at: string;
 }
 
+interface CustomerOption {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export const CustomerAccountsAdmin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -34,6 +40,18 @@ export const CustomerAccountsAdmin = () => {
   const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '' });
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    customerId: '',
+    email: '',
+    company_name: '',
+    contact_name: '',
+    price_list: '',
+    password: '',
+    notes: '',
+  });
+
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,9 +63,19 @@ export const CustomerAccountsAdmin = () => {
     setLoading(false);
   }, []);
 
+  const loadCustomers = useCallback(async () => {
+    const { data } = await supabase
+      .from('customers')
+      .select('id, name, email')
+      .order('name', { ascending: true });
+    setCustomers((data || []) as CustomerOption[]);
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadCustomers();
+  }, [load, loadCustomers]);
+
 
   const patch = async (id: string, values: Record<string, any>) => {
     const { error } = await (supabase
@@ -139,6 +167,47 @@ export const CustomerAccountsAdmin = () => {
     }
   };
 
+  const pickCustomer = (id: string) => {
+    const c = customers.find((x) => x.id === id);
+    const firstEmail = (c?.email || '').split(/[,;]/)[0].trim();
+    setCreateForm((f) => ({
+      ...f,
+      customerId: id,
+      email: firstEmail,
+      company_name: c?.name || '',
+    }));
+  };
+
+  const createPortalUser = async () => {
+    if (!createForm.email || !createForm.price_list) {
+      toast({ title: 'Missing details', description: 'Email and price list are required.', variant: 'destructive' });
+      return;
+    }
+    if (createForm.password && createForm.password.length < 6) {
+      toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    setBusy(true);
+    try {
+      await callAdmin('create-portal-user', {
+        email: createForm.email.trim(),
+        password: createForm.password || undefined,
+        companyName: createForm.company_name || null,
+        contactName: createForm.contact_name || null,
+        priceList: createForm.price_list,
+        notes: createForm.notes || null,
+      });
+      toast({ title: 'Portal user created', description: `${createForm.email} is approved with the ${createForm.price_list} price list.` });
+      setCreateOpen(false);
+      setCreateForm({ customerId: '', email: '', company_name: '', contact_name: '', price_list: '', password: '', notes: '' });
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
@@ -159,7 +228,12 @@ export const CustomerAccountsAdmin = () => {
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h2 className="heading-display text-xl">Customer Portal Accounts</h2>
         <span className="text-xs text-muted-foreground ml-auto">{rows.length} accounts</span>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          New portal user
+        </Button>
       </div>
+
 
       {rows.length === 0 && (
         <Card>
@@ -291,7 +365,106 @@ export const CustomerAccountsAdmin = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New portal user</DialogTitle>
+            <DialogDescription>
+              Pick an existing customer or type a new email, then assign a price list.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Choose from customers</Label>
+              <Select value={createForm.customerId || undefined} onValueChange={pickCustomer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an existing customer (optional)" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} — {(c.email || '').split(/[,;]/)[0].trim()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Login email *</Label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                placeholder="customer@company.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Company name</Label>
+                <Input
+                  value={createForm.company_name}
+                  onChange={(e) => setCreateForm({ ...createForm, company_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Contact name</Label>
+                <Input
+                  value={createForm.contact_name}
+                  onChange={(e) => setCreateForm({ ...createForm, contact_name: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Price list *</Label>
+              <Select
+                value={createForm.price_list || undefined}
+                onValueChange={(v) => setCreateForm({ ...createForm, price_list: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Assign price list" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRICE_LISTS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4" /> Initial password (optional)
+              </Label>
+              <Input
+                type="text"
+                placeholder="Leave empty to send a reset link later"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Internal notes</Label>
+              <Textarea rows={2} value={createForm.notes} onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createPortalUser} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Create &amp; approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 

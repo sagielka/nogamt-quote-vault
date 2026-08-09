@@ -259,11 +259,24 @@ export const CustomerAccountsAdmin = () => {
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h2 className="heading-display text-xl">Customer Portal Accounts</h2>
         <span className="text-xs text-muted-foreground ml-auto">{rows.length} accounts</span>
+        <Button size="sm" variant="outline" onClick={() => copyPortalLink()}>
+          <Link2 className="w-4 h-4 mr-2" />
+          Copy portal link
+        </Button>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <UserPlus className="w-4 h-4 mr-2" />
           New portal user
         </Button>
       </div>
+
+      <Card>
+        <CardContent className="p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+          <Label className="text-xs text-muted-foreground shrink-0">Shareable portal link</Label>
+          <Input readOnly value={PORTAL_URL} onFocus={(e) => e.currentTarget.select()} className="font-mono text-xs" />
+          <Button size="sm" variant="secondary" onClick={() => copyPortalLink()}>Copy</Button>
+        </CardContent>
+      </Card>
+
 
 
 

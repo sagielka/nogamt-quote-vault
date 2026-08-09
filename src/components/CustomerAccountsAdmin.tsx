@@ -241,7 +241,8 @@ export const CustomerAccountsAdmin = () => {
         </Button>
       </div>
 
-      <PriceListUploader />
+
+
 
 
       {rows.length === 0 && (

@@ -215,7 +215,7 @@ export const PriceListUploader = ({ compact = false, onCreated }: PriceListUploa
           </div>
         )}
 
-        {!loading && lists.length > 0 && (
+        {!compact && !loading && lists.length > 0 && (
           <div className="space-y-2 border-t border-border pt-3">
             {lists.map((l) => (
               <div key={l.id} className="flex items-center gap-3 text-sm">
@@ -230,9 +230,17 @@ export const PriceListUploader = ({ compact = false, onCreated }: PriceListUploa
             ))}
           </div>
         )}
-      </CardContent>
+    </>
+  );
+
+  if (compact) return <div className="space-y-4">{body}</div>;
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-4">{body}</CardContent>
     </Card>
   );
 };
 
 export default PriceListUploader;
+

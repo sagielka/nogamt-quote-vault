@@ -381,6 +381,27 @@ export const CustomerAccountsAdmin = () => {
         ))}
       </div>
 
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Customer portal preview</DialogTitle>
+            <DialogDescription>
+              Exactly what {preview?.company_name || preview?.email} sees when signed in to the portal.
+            </DialogDescription>
+          </DialogHeader>
+          {preview && (
+            preview.price_list ? (
+              <PortalContent rawList={preview.price_list} email={preview.email} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-6">
+                No price list assigned yet — the customer sees an "awaiting approval" screen.
+              </p>
+            )
+          )}
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>

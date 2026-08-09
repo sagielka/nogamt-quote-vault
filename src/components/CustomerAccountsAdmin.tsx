@@ -322,6 +322,14 @@ export const CustomerAccountsAdmin = () => {
               </Select>
 
               <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
+                  <Link2 className="w-4 h-4 mr-2" />
+                  Copy link
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => emailPortalLink(row)}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email link
+                </Button>
                 <Button size="sm" variant="secondary" onClick={() => openEdit(row)}>
                   <Pencil className="w-4 h-4 mr-2" />
                   Edit

@@ -306,7 +306,7 @@ const CustomerPrices = () => {
               </thead>
               <tbody>
                 {filtered.map((p) => {
-                  const unit = p.prices[priceList as PriceList] as number;
+                  const unit = (customListId ? p.customPrice : p.prices[priceList as PriceList]) as number;
                   const item: any = { sku: p.sku, description: p.description, unitPrice: unit, discountPercent: 0 };
                   const hasBreaks = isUsPriceBreakItem(item);
                   const open = expanded === p.sku;

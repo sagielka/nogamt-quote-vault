@@ -167,6 +167,47 @@ export const CustomerAccountsAdmin = () => {
     }
   };
 
+  const pickCustomer = (id: string) => {
+    const c = customers.find((x) => x.id === id);
+    const firstEmail = (c?.email || '').split(/[,;]/)[0].trim();
+    setCreateForm((f) => ({
+      ...f,
+      customerId: id,
+      email: firstEmail,
+      company_name: c?.name || '',
+    }));
+  };
+
+  const createPortalUser = async () => {
+    if (!createForm.email || !createForm.price_list) {
+      toast({ title: 'Missing details', description: 'Email and price list are required.', variant: 'destructive' });
+      return;
+    }
+    if (createForm.password && createForm.password.length < 6) {
+      toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    setBusy(true);
+    try {
+      await callAdmin('create-portal-user', {
+        email: createForm.email.trim(),
+        password: createForm.password || undefined,
+        companyName: createForm.company_name || null,
+        contactName: createForm.contact_name || null,
+        priceList: createForm.price_list,
+        notes: createForm.notes || null,
+      });
+      toast({ title: 'Portal user created', description: `${createForm.email} is approved with the ${createForm.price_list} price list.` });
+      setCreateOpen(false);
+      setCreateForm({ customerId: '', email: '', company_name: '', contact_name: '', price_list: '', password: '', notes: '' });
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
@@ -187,7 +228,12 @@ export const CustomerAccountsAdmin = () => {
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h2 className="heading-display text-xl">Customer Portal Accounts</h2>
         <span className="text-xs text-muted-foreground ml-auto">{rows.length} accounts</span>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-2" />
+          New portal user
+        </Button>
       </div>
+
 
       {rows.length === 0 && (
         <Card>

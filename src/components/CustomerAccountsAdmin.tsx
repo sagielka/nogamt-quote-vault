@@ -13,7 +13,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2 } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye } from 'lucide-react';
+import { PortalContent } from '@/components/customer-portal/PortalContent';
+
 
 const PORTAL_URL = 'https://quote.noga-mt.com/#/price-list';
 
@@ -46,6 +48,8 @@ export const CustomerAccountsAdmin = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [preview, setPreview] = useState<Row | null>(null);
+
   const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '' });
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -338,10 +342,15 @@ export const CustomerAccountsAdmin = () => {
               </Select>
 
               <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => setPreview(row)}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  View as customer
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
                   <Link2 className="w-4 h-4 mr-2" />
                   Copy link
                 </Button>
+
                 <Button size="sm" variant="outline" onClick={() => emailPortalLink(row)}>
                   <Mail className="w-4 h-4 mr-2" />
                   Email link
@@ -371,6 +380,27 @@ export const CustomerAccountsAdmin = () => {
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Customer portal preview</DialogTitle>
+            <DialogDescription>
+              Exactly what {preview?.company_name || preview?.email} sees when signed in to the portal.
+            </DialogDescription>
+          </DialogHeader>
+          {preview && (
+            preview.price_list ? (
+              <PortalContent rawList={preview.price_list} email={preview.email} />
+            ) : (
+              <p className="text-sm text-muted-foreground py-6">
+                No price list assigned yet — the customer sees an "awaiting approval" screen.
+              </p>
+            )
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg">

@@ -276,7 +276,11 @@ export const PortalContent = ({ rawList, email }: Props) => {
               </thead>
               <tbody>
                 {quotes.map((q) => (
-                  <tr key={q.id} className="border-t border-border hover:bg-muted/30">
+                  <tr
+                    key={q.id}
+                    className="border-t border-border hover:bg-muted/30 cursor-pointer"
+                    onClick={() => setSelectedQuote(q)}
+                  >
                     <td className="px-3 py-2 font-mono text-xs">{q.quote_number}</td>
                     <td className="px-3 py-2">{formatDate(new Date(q.created_at))}</td>
                     <td className="px-3 py-2">{formatDate(new Date(q.valid_until))}</td>
@@ -290,12 +294,18 @@ export const PortalContent = ({ rawList, email }: Props) => {
                       ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
                       {q.currency}
                     </td>
+                    <td className="px-3 py-2 text-right">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedQuote(q); }}>
+                        <Eye className="w-4 h-4 mr-1" /> View
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+        <PortalQuoteDialog quote={selectedQuote} onOpenChange={(o) => !o && setSelectedQuote(null)} />
       </TabsContent>
     </Tabs>
   );

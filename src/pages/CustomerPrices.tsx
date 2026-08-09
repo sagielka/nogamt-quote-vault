@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
 import { getProductCatalog, PRICE_LISTS, type PriceList } from '@/data/product-catalog';
+import {
+  CUSTOM_PREFIX,
+  fetchCustomPriceList,
+  fetchCustomPriceListItems,
+  type CustomPriceList,
+  type CustomPriceRow,
+} from '@/hooks/useCustomPriceLists';
 import { US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, formatDate, calculateTotal } from '@/lib/quotation-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

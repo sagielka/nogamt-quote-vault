@@ -19,11 +19,11 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return catalog.slice(0, compact ? 50 : 200);
-    return catalog
-      .filter(p => p.sku.toLowerCase().includes(q) || p.description.toLowerCase().includes(q))
-      .slice(0, compact ? 50 : 200);
-  }, [query, catalog, compact]);
+    if (!q) return catalog;
+    return catalog.filter(
+      p => p.sku.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+    );
+  }, [query, catalog]);
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">

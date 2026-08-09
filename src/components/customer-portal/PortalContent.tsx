@@ -13,8 +13,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid } from 'lucide-react';
+import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid, Eye } from 'lucide-react';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
+import { PortalQuoteDialog } from './PortalQuoteDialog';
 
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 
@@ -28,6 +29,7 @@ export const PortalContent = ({ rawList, email }: Props) => {
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<PortalQuoteRow[]>([]);
+  const [selectedQuote, setSelectedQuote] = useState<any | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(() => getProductCatalog(), []);

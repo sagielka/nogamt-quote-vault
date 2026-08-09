@@ -113,14 +113,16 @@ export const PriceListUploader = ({ compact = false, onCreated }: PriceListUploa
     }
   };
 
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <FileSpreadsheet className="w-5 h-5 text-primary" />
-          <h3 className="heading-display text-lg">Custom price lists</h3>
-          <span className="text-xs text-muted-foreground ml-auto">{lists.length} lists</span>
-        </div>
+  const body = (
+    <>
+        {!compact && (
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5 text-primary" />
+            <h3 className="heading-display text-lg">Custom price lists</h3>
+            <span className="text-xs text-muted-foreground ml-auto">{lists.length} lists</span>
+          </div>
+        )}
+
 
         <div
           onDragOver={(e) => {

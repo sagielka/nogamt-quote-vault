@@ -141,8 +141,24 @@ export const CustomerAccountsAdmin = () => {
       body,
       headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
     });
-    if (res.error) throw new Error(res.error.message);
+    if (res.error) {
+      // Surface the real message from the function's JSON body (e.g. invalid email)
+      let msg = res.error.message;
+      try {
+        const ctx: any = (res.error as any).context;
+        if (ctx?.json) {
+          const j = await ctx.json();
+          if (j?.error) msg = j.error;
+        } else if (typeof ctx?.text === 'function') {
+          const t = await ctx.text();
+          const j = JSON.parse(t);
+          if (j?.error) msg = j.error;
+        }
+      } catch { /* keep default message */ }
+      throw new Error(msg);
+    }
     if ((res.data as any)?.error) throw new Error((res.data as any).error);
+
     return res.data as any;
   };
 

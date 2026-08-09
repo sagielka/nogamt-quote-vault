@@ -63,9 +63,19 @@ export const CustomerAccountsAdmin = () => {
     setLoading(false);
   }, []);
 
+  const loadCustomers = useCallback(async () => {
+    const { data } = await supabase
+      .from('customers')
+      .select('id, name, email')
+      .order('name', { ascending: true });
+    setCustomers((data || []) as CustomerOption[]);
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadCustomers();
+  }, [load, loadCustomers]);
+
 
   const patch = async (id: string, values: Record<string, any>) => {
     const { error } = await (supabase

@@ -90,11 +90,13 @@ export const PriceListUploader = ({ compact = false, onCreated }: PriceListUploa
     if (!name.trim() || !rows.length) return;
     setBusy(true);
     try {
-      await createList(name.trim(), currency, fileName || null, rows);
+      const listId = await createList(name.trim(), currency, fileName || null, rows);
       toast({ title: 'Price list added', description: `${rows.length} prices imported.` });
       setRows([]);
       setFileName('');
       setName('');
+      if (listId) onCreated?.(listId);
+
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {

@@ -6,6 +6,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@,;]+\.[A-Za-z]{2,}$/;
+const cleanEmail = (v: unknown) => String(v ?? "").trim().toLowerCase();
+
 const jsonResponse = (data: object, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
@@ -114,10 +117,14 @@ Deno.serve(async (req) => {
 
     // ─── INVITE USER (create + send invite email) ───
     if (req.method === "POST" && action === "invite") {
-      const { email, role } = await req.json();
+      const { email: rawEmail, role } = await req.json();
+      const email = cleanEmail(rawEmail);
 
       if (!email) {
         return jsonResponse({ error: "Email is required" }, 400);
+      }
+      if (!EMAIL_RE.test(email)) {
+        return jsonResponse({ error: `"${email}" is not a valid email address` }, 400);
       }
 
       // Create user with invite (sends magic link email automatically)
@@ -174,10 +181,14 @@ Deno.serve(async (req) => {
 
     // ─── RESET PASSWORD (send reset email) ───
     if (req.method === "POST" && action === "reset-password") {
-      const { email } = await req.json();
+      const { email: rawEmail } = await req.json();
+      const email = cleanEmail(rawEmail);
 
       if (!email) {
         return jsonResponse({ error: "Email required" }, 400);
+      }
+      if (!EMAIL_RE.test(email)) {
+        return jsonResponse({ error: `"${email}" is not a valid email address` }, 400);
       }
 
       // Generate a password reset link and the API sends the email
@@ -286,7 +297,10 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Password must be at least 6 characters" }, 400);
       }
 
-      const normalizedEmail = String(email).trim().toLowerCase();
+      const normalizedEmail = cleanEmail(email);
+      if (!EMAIL_RE.test(normalizedEmail)) {
+        return jsonResponse({ error: `"${normalizedEmail}" is not a valid email address` }, 400);
+      }
       let targetUserId: string | null = null;
 
       const { data: created, error: createError } = await adminClient.auth.admin.createUser({

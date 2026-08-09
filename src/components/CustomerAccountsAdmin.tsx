@@ -446,6 +446,20 @@ export const CustomerAccountsAdmin = () => {
               </Select>
             </div>
 
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Or upload a new price list and assign it to this user
+              </p>
+              <PriceListUploader
+                compact
+                onCreated={async (id) => {
+                  await reloadCustomLists();
+                  setCreateForm((f) => ({ ...f, price_list: `${CUSTOM_PREFIX}${id}` }));
+                }}
+              />
+            </div>
+
+
             <div className="space-y-1.5">
               <Label className="flex items-center gap-2">
                 <KeyRound className="w-4 h-4" /> Initial password (optional)

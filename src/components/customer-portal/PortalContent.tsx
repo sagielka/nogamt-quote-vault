@@ -274,6 +274,7 @@ export const PortalContent = ({ rawList, email }: Props) => {
                   <th className="px-3 py-2 font-medium">Valid until</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium text-right">Total</th>
+                  <th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>

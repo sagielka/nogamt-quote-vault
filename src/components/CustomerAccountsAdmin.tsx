@@ -365,7 +365,106 @@ export const CustomerAccountsAdmin = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New portal user</DialogTitle>
+            <DialogDescription>
+              Pick an existing customer or type a new email, then assign a price list.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Choose from customers</Label>
+              <Select value={createForm.customerId || undefined} onValueChange={pickCustomer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an existing customer (optional)" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} — {(c.email || '').split(/[,;]/)[0].trim()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Login email *</Label>
+              <Input
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                placeholder="customer@company.com"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Company name</Label>
+                <Input
+                  value={createForm.company_name}
+                  onChange={(e) => setCreateForm({ ...createForm, company_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Contact name</Label>
+                <Input
+                  value={createForm.contact_name}
+                  onChange={(e) => setCreateForm({ ...createForm, contact_name: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Price list *</Label>
+              <Select
+                value={createForm.price_list || undefined}
+                onValueChange={(v) => setCreateForm({ ...createForm, price_list: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Assign price list" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRICE_LISTS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4" /> Initial password (optional)
+              </Label>
+              <Input
+                type="text"
+                placeholder="Leave empty to send a reset link later"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Internal notes</Label>
+              <Textarea rows={2} value={createForm.notes} onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button onClick={createPortalUser} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Create &amp; approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 

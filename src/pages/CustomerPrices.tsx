@@ -92,10 +92,9 @@ const CustomerPrices = () => {
           customPrice: r.price,
         }))
       : catalog.filter((p) => (priceList ? p.prices[priceList] != null : false));
-    if (!q) return rows.slice(0, 200) as any[];
+    if (!q) return rows as any[];
     return (rows as any[])
-      .filter((p) => p.sku.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q))
-      .slice(0, 200);
+      .filter((p) => p.sku.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
   }, [catalog, query, priceList, customListId, customRows]);
 
   const fmt = (v: number) =>

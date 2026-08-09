@@ -48,6 +48,8 @@ export const CustomerAccountsAdmin = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [preview, setPreview] = useState<Row | null>(null);
+
   const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '' });
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);

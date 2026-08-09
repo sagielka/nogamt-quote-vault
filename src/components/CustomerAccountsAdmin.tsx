@@ -36,7 +36,7 @@ interface CustomerOption {
 export const CustomerAccountsAdmin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { lists: customLists } = useCustomPriceLists();
+  const { lists: customLists, reload: reloadCustomLists } = useCustomPriceLists();
   const priceListOptions = [
     ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),
     ...customLists.map((l) => ({ value: `${CUSTOM_PREFIX}${l.id}`, label: `${l.name} (custom · ${l.currency})` })),

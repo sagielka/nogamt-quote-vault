@@ -273,7 +273,7 @@ export const CustomerAccountsAdmin = () => {
                   <SelectValue placeholder="Assign price list" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_LISTS.map((p) => (
+                  {priceListOptions.map((p) => (
                     <SelectItem key={p.value} value={p.value}>
                       {p.label}
                     </SelectItem>
@@ -331,7 +331,7 @@ export const CustomerAccountsAdmin = () => {
                   <SelectValue placeholder="Assign price list" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_LISTS.map((p) => (
+                  {priceListOptions.map((p) => (
                     <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -436,7 +436,7 @@ export const CustomerAccountsAdmin = () => {
                   <SelectValue placeholder="Assign price list" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRICE_LISTS.map((p) => (
+                  {priceListOptions.map((p) => (
                     <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>

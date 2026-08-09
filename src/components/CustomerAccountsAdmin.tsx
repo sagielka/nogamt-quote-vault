@@ -377,7 +377,8 @@ export const CustomerAccountsAdmin = () => {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+
           <DialogHeader>
             <DialogTitle>New portal user</DialogTitle>
             <DialogDescription>

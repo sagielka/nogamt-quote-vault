@@ -1,27 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
-import { getProductCatalog, PRICE_LISTS, type PriceList } from '@/data/product-catalog';
-import {
-  CUSTOM_PREFIX,
-  fetchCustomPriceList,
-  fetchCustomPriceListItems,
-  type CustomPriceList,
-  type CustomPriceRow,
-} from '@/hooks/useCustomPriceLists';
-import { US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, formatDate, calculateTotal } from '@/lib/quotation-utils';
+import { PRICE_LISTS, type PriceList } from '@/data/product-catalog';
+import { CUSTOM_PREFIX, fetchCustomPriceList, type CustomPriceList } from '@/hooks/useCustomPriceLists';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, LogOut, Clock, ShieldCheck, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid } from 'lucide-react';
+import { Loader2, LogOut, Clock, ShieldCheck } from 'lucide-react';
+import { PortalContent } from '@/components/customer-portal/PortalContent';
 import logo from '@/assets/logo.jpg';
-
-const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 
 const CustomerPrices = () => {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
@@ -36,25 +26,11 @@ const CustomerPrices = () => {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
 
-  const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const [quotes, setQuotes] = useState<any[]>([]);
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  const catalog = useMemo(() => getProductCatalog(), []);
   const rawList = account?.price_list || null;
   const customListId = rawList?.startsWith(CUSTOM_PREFIX) ? rawList.slice(CUSTOM_PREFIX.length) : null;
   const priceList = (customListId ? null : rawList) as PriceList | null;
   const [customList, setCustomList] = useState<CustomPriceList | null>(null);
-  const [customRows, setCustomRows] = useState<CustomPriceRow[]>([]);
 
-  const baseCurrency = customListId
-    ? customList?.currency || 'USD'
-    : priceList
-      ? PRICE_LISTS.find((p) => p.value === priceList)?.baseCurrency || 'USD'
-      : 'USD';
-  const symbol = SYMBOLS[baseCurrency] || '$';
   const approved = account?.status === 'approved' && !!rawList;
   const listLabel = customListId
     ? customList?.name || 'Custom price list'
@@ -62,45 +38,10 @@ const CustomerPrices = () => {
 
   useEffect(() => {
     if (!customListId) return;
-    (async () => {
-      const [list, items] = await Promise.all([
-        fetchCustomPriceList(customListId),
-        fetchCustomPriceListItems(customListId),
-      ]);
-      setCustomList(list);
-      setCustomRows(items);
-    })();
+    (async () => setCustomList(await fetchCustomPriceList(customListId)))();
   }, [customListId]);
 
-  useEffect(() => {
-    if (!approved || !user?.email) return;
-    (async () => {
-      const { data } = await supabase
-        .from('quotations')
-        .select('*')
-        .ilike('client_email', user.email as string)
-        .order('created_at', { ascending: false });
-      setQuotes(data || []);
-    })();
-  }, [approved, user?.email]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const rows = customListId
-      ? customRows.map((r) => ({
-          sku: r.sku,
-          description: r.description || '',
-          prices: {} as any,
-          customPrice: r.price,
-        }))
-      : catalog.filter((p) => (priceList ? p.prices[priceList] != null : false));
-    if (!q) return rows as any[];
-    return (rows as any[])
-      .filter((p) => p.sku.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
-  }, [catalog, query, priceList, customListId, customRows]);
-
-  const fmt = (v: number) =>
-    `${symbol}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

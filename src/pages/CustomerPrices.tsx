@@ -274,7 +274,7 @@ const CustomerPrices = () => {
           {account.company_name || 'Your'} prices
         </h1>
         <Badge variant="secondary" className="ml-2">
-          {PRICE_LISTS.find((p) => p.value === priceList)?.label}
+          {listLabel}
         </Badge>
       </div>
 

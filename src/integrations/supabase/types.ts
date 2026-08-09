@@ -119,6 +119,71 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_price_list_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          list_id: string
+          price: number
+          sku: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          list_id: string
+          price: number
+          sku: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          list_id?: string
+          price?: number
+          sku?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_price_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "custom_price_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_price_lists: {
+        Row: {
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          name: string
+          source_file: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          name: string
+          source_file?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          name?: string
+          source_file?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_accounts: {
         Row: {
           approved_at: string | null

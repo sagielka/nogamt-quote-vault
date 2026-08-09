@@ -36,6 +36,11 @@ interface CustomerOption {
 export const CustomerAccountsAdmin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { lists: customLists } = useCustomPriceLists();
+  const priceListOptions = [
+    ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),
+    ...customLists.map((l) => ({ value: `${CUSTOM_PREFIX}${l.id}`, label: `${l.name} (custom · ${l.currency})` })),
+  ];
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);

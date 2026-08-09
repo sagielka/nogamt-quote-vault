@@ -36,7 +36,7 @@ interface CustomerOption {
 export const CustomerAccountsAdmin = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { lists: customLists } = useCustomPriceLists();
+  const { lists: customLists, reload: reloadCustomLists } = useCustomPriceLists();
   const priceListOptions = [
     ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),
     ...customLists.map((l) => ({ value: `${CUSTOM_PREFIX}${l.id}`, label: `${l.name} (custom · ${l.currency})` })),
@@ -241,7 +241,8 @@ export const CustomerAccountsAdmin = () => {
         </Button>
       </div>
 
-      <PriceListUploader />
+
+
 
 
       {rows.length === 0 && (
@@ -376,7 +377,8 @@ export const CustomerAccountsAdmin = () => {
       </Dialog>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+
           <DialogHeader>
             <DialogTitle>New portal user</DialogTitle>
             <DialogDescription>
@@ -444,6 +446,20 @@ export const CustomerAccountsAdmin = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Or upload a new price list and assign it to this user
+              </p>
+              <PriceListUploader
+                compact
+                onCreated={async (id) => {
+                  await reloadCustomLists();
+                  setCreateForm((f) => ({ ...f, price_list: `${CUSTOM_PREFIX}${id}` }));
+                }}
+              />
+            </div>
+
 
             <div className="space-y-1.5">
               <Label className="flex items-center gap-2">

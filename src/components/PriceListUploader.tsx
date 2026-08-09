@@ -40,7 +40,12 @@ const parseFile = async (file: File): Promise<CustomPriceRow[]> => {
   return rows;
 };
 
-export const PriceListUploader = () => {
+interface PriceListUploaderProps {
+  compact?: boolean;
+  onCreated?: (listId: string) => void;
+}
+
+export const PriceListUploader = ({ compact = false, onCreated }: PriceListUploaderProps = {}) => {
   const { toast } = useToast();
   const { lists, loading, createList, deleteList } = useCustomPriceLists();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +55,7 @@ export const PriceListUploader = () => {
   const [fileName, setFileName] = useState('');
   const [name, setName] = useState('');
   const [currency, setCurrency] = useState('USD');
+
 
   const handleFile = async (file: File) => {
     setBusy(true);
@@ -84,11 +90,13 @@ export const PriceListUploader = () => {
     if (!name.trim() || !rows.length) return;
     setBusy(true);
     try {
-      await createList(name.trim(), currency, fileName || null, rows);
+      const listId = await createList(name.trim(), currency, fileName || null, rows);
       toast({ title: 'Price list added', description: `${rows.length} prices imported.` });
       setRows([]);
       setFileName('');
       setName('');
+      if (listId) onCreated?.(listId);
+
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {
@@ -105,14 +113,16 @@ export const PriceListUploader = () => {
     }
   };
 
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <FileSpreadsheet className="w-5 h-5 text-primary" />
-          <h3 className="heading-display text-lg">Custom price lists</h3>
-          <span className="text-xs text-muted-foreground ml-auto">{lists.length} lists</span>
-        </div>
+  const body = (
+    <>
+        {!compact && (
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5 text-primary" />
+            <h3 className="heading-display text-lg">Custom price lists</h3>
+            <span className="text-xs text-muted-foreground ml-auto">{lists.length} lists</span>
+          </div>
+        )}
+
 
         <div
           onDragOver={(e) => {
@@ -205,7 +215,7 @@ export const PriceListUploader = () => {
           </div>
         )}
 
-        {!loading && lists.length > 0 && (
+        {!compact && !loading && lists.length > 0 && (
           <div className="space-y-2 border-t border-border pt-3">
             {lists.map((l) => (
               <div key={l.id} className="flex items-center gap-3 text-sm">
@@ -220,9 +230,17 @@ export const PriceListUploader = () => {
             ))}
           </div>
         )}
-      </CardContent>
+    </>
+  );
+
+  if (compact) return <div className="space-y-4">{body}</div>;
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-4">{body}</CardContent>
     </Card>
   );
 };
 
 export default PriceListUploader;
+

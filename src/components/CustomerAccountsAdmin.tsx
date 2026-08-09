@@ -217,6 +217,28 @@ export const CustomerAccountsAdmin = () => {
     }
   };
 
+  const copyPortalLink = async (row?: Row) => {
+    try {
+      await navigator.clipboard.writeText(PORTAL_URL);
+      toast({
+        title: 'Link copied',
+        description: row ? `Share with ${row.email}: ${PORTAL_URL}` : PORTAL_URL,
+      });
+    } catch {
+      toast({ title: 'Portal link', description: PORTAL_URL });
+    }
+  };
+
+  const emailPortalLink = (row: Row) => {
+    const subject = encodeURIComponent('Your Noga price portal access');
+    const body = encodeURIComponent(
+      `Hello${row.contact_name ? ` ${row.contact_name}` : ''},\n\n` +
+        `You can view your personal price list here:\n${PORTAL_URL}\n\n` +
+        `Sign in with your email: ${row.email}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
+    );
+    window.location.href = `mailto:${row.email}?subject=${subject}&body=${body}`;
+  };
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;

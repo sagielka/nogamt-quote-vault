@@ -13,7 +13,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2 } from 'lucide-react';
+
+const PORTAL_URL = `${window.location.origin}/#/prices`;
 
 interface Row {
   id: string;
@@ -215,6 +217,28 @@ export const CustomerAccountsAdmin = () => {
     }
   };
 
+  const copyPortalLink = async (row?: Row) => {
+    try {
+      await navigator.clipboard.writeText(PORTAL_URL);
+      toast({
+        title: 'Link copied',
+        description: row ? `Share with ${row.email}: ${PORTAL_URL}` : PORTAL_URL,
+      });
+    } catch {
+      toast({ title: 'Portal link', description: PORTAL_URL });
+    }
+  };
+
+  const emailPortalLink = (row: Row) => {
+    const subject = encodeURIComponent('Your Noga price portal access');
+    const body = encodeURIComponent(
+      `Hello${row.contact_name ? ` ${row.contact_name}` : ''},\n\n` +
+        `You can view your personal price list here:\n${PORTAL_URL}\n\n` +
+        `Sign in with your email: ${row.email}\n\nBest regards,\nNoga Engineering & Technology Ltd.`
+    );
+    window.location.href = `mailto:${row.email}?subject=${subject}&body=${body}`;
+  };
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
@@ -235,11 +259,24 @@ export const CustomerAccountsAdmin = () => {
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h2 className="heading-display text-xl">Customer Portal Accounts</h2>
         <span className="text-xs text-muted-foreground ml-auto">{rows.length} accounts</span>
+        <Button size="sm" variant="outline" onClick={() => copyPortalLink()}>
+          <Link2 className="w-4 h-4 mr-2" />
+          Copy portal link
+        </Button>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <UserPlus className="w-4 h-4 mr-2" />
           New portal user
         </Button>
       </div>
+
+      <Card>
+        <CardContent className="p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+          <Label className="text-xs text-muted-foreground shrink-0">Shareable portal link</Label>
+          <Input readOnly value={PORTAL_URL} onFocus={(e) => e.currentTarget.select()} className="font-mono text-xs" />
+          <Button size="sm" variant="secondary" onClick={() => copyPortalLink()}>Copy</Button>
+        </CardContent>
+      </Card>
+
 
 
 
@@ -285,6 +322,14 @@ export const CustomerAccountsAdmin = () => {
               </Select>
 
               <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
+                  <Link2 className="w-4 h-4 mr-2" />
+                  Copy link
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => emailPortalLink(row)}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email link
+                </Button>
                 <Button size="sm" variant="secondary" onClick={() => openEdit(row)}>
                   <Pencil className="w-4 h-4 mr-2" />
                   Edit

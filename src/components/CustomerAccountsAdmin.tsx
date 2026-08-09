@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PRICE_LISTS } from '@/data/product-catalog';
+import { useCustomPriceLists, CUSTOM_PREFIX } from '@/hooks/useCustomPriceLists';
+import PriceListUploader from '@/components/PriceListUploader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

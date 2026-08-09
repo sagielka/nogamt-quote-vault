@@ -13,8 +13,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid } from 'lucide-react';
+import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid, Eye } from 'lucide-react';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
+import { PortalQuoteDialog } from './PortalQuoteDialog';
 
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 
@@ -28,6 +29,7 @@ export const PortalContent = ({ rawList, email }: Props) => {
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<PortalQuoteRow[]>([]);
+  const [selectedQuote, setSelectedQuote] = useState<any | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(() => getProductCatalog(), []);
@@ -272,11 +274,16 @@ export const PortalContent = ({ rawList, email }: Props) => {
                   <th className="px-3 py-2 font-medium">Valid until</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium text-right">Total</th>
+                  <th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>
                 {quotes.map((q) => (
-                  <tr key={q.id} className="border-t border-border hover:bg-muted/30">
+                  <tr
+                    key={q.id}
+                    className="border-t border-border hover:bg-muted/30 cursor-pointer"
+                    onClick={() => setSelectedQuote(q)}
+                  >
                     <td className="px-3 py-2 font-mono text-xs">{q.quote_number}</td>
                     <td className="px-3 py-2">{formatDate(new Date(q.created_at))}</td>
                     <td className="px-3 py-2">{formatDate(new Date(q.valid_until))}</td>
@@ -290,12 +297,18 @@ export const PortalContent = ({ rawList, email }: Props) => {
                       ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
                       {q.currency}
                     </td>
+                    <td className="px-3 py-2 text-right">
+                      <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedQuote(q); }}>
+                        <Eye className="w-4 h-4 mr-1" /> View
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
+        <PortalQuoteDialog quote={selectedQuote} onOpenChange={(o) => !o && setSelectedQuote(null)} />
       </TabsContent>
     </Tabs>
   );

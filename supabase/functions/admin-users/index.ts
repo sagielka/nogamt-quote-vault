@@ -275,7 +275,74 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── CREATE PORTAL (CUSTOMER) USER ───
+    if (req.method === "POST" && action === "create-portal-user") {
+      const { email, password, companyName, contactName, priceList, notes } = await req.json();
+
+      if (!email || !priceList) {
+        return jsonResponse({ error: "email and priceList are required" }, 400);
+      }
+      if (password && password.length < 6) {
+        return jsonResponse({ error: "Password must be at least 6 characters" }, 400);
+      }
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      let targetUserId: string | null = null;
+
+      const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+        email: normalizedEmail,
+        password: password || undefined,
+        email_confirm: true,
+      });
+
+      if (createError) {
+        if (!createError.message?.toLowerCase().includes("already")) throw createError;
+        // Find existing user by email
+        const { data: list } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+        const existing = list?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
+        if (!existing) return jsonResponse({ error: "User exists but could not be located" }, 409);
+        targetUserId = existing.id;
+        if (password) {
+          await adminClient.auth.admin.updateUserById(existing.id, { password, email_confirm: true });
+        }
+      } else {
+        targetUserId = created.user!.id;
+      }
+
+      const { data: existingAccount } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+
+      const payload = {
+        user_id: targetUserId,
+        email: normalizedEmail,
+        company_name: companyName || null,
+        contact_name: contactName || null,
+        notes: notes || null,
+        price_list: priceList,
+        status: "approved",
+        approved_by: user.id,
+        approved_at: new Date().toISOString(),
+      };
+
+      if (existingAccount) {
+        const { error: upErr } = await adminClient
+          .from("customer_accounts")
+          .update(payload)
+          .eq("id", existingAccount.id);
+        if (upErr) throw upErr;
+      } else {
+        const { error: insErr } = await adminClient.from("customer_accounts").insert(payload);
+        if (insErr) throw insErr;
+      }
+
+      return jsonResponse({ success: true, userId: targetUserId });
+    }
+
     return jsonResponse({ error: "Unknown action" }, 400);
+
   } catch (error) {
     return jsonResponse({ error: error.message }, 500);
   }

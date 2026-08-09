@@ -817,6 +817,7 @@ export type Database = {
         Args: { _email: string; _user_id: string }
         Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       submit_portal_response: {
         Args: { _comment: string; _response: string; _token: string }
         Returns: boolean

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import {
   ArrowLeft, FileText, DollarSign, TrendingUp, Package, Users, BarChart3,
-  Download, Search, X, PieChart as PieChartIcon, Calendar, Hash
+  Download, Search, X, PieChart as PieChartIcon, Calendar, Hash, FileSpreadsheet
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,

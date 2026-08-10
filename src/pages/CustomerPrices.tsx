@@ -141,6 +141,56 @@ const CustomerPrices = () => {
     </div>
   );
 
+  // Admin/staff with price_portal permission: browse customer portals directly
+  if (user && canManagePortal && !approved) {
+    const selectedRawList = selectedAccount?.price_list || null;
+    return (
+      <Shell>
+        <div className="flex items-center gap-2 mb-4">
+          <ShieldCheck className="w-5 h-5 text-primary" />
+          <h1 className="heading-display text-2xl">Customer Price Portal</h1>
+          <Badge variant="secondary" className="ml-2">Staff view</Badge>
+        </div>
+
+        <Card className="mb-4">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <Label className="text-xs text-muted-foreground shrink-0">Viewing as</Label>
+            {accountsLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            ) : portalAccounts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No approved customers with assigned price lists yet.</p>
+            ) : (
+              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                <SelectTrigger className="w-full sm:w-80">
+                  <SelectValue placeholder="Select a customer…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {portalAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.company_name || a.email} — {a.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </CardContent>
+        </Card>
+
+        {selectedAccount && selectedRawList ? (
+          <PortalContent rawList={selectedRawList} email={selectedAccount.email} />
+        ) : (
+          !accountsLoading && portalAccounts.length > 0 && (
+            <Card>
+              <CardContent className="p-10 text-center text-muted-foreground">
+                Select a customer above to view their price portal.
+              </CardContent>
+            </Card>
+          )
+        )}
+      </Shell>
+    );
+  }
+
   // Not signed in
   if (!user) {
     return (

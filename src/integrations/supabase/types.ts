@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      app_version_events: {
+        Row: {
+          created_at: string
+          id: string
+          previous_version: string | null
+          user_agent: string | null
+          user_id: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          previous_version?: string | null
+          user_agent?: string | null
+          user_id: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          previous_version?: string | null
+          user_agent?: string | null
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       archived_quotations: {
         Row: {
           archived_at: string

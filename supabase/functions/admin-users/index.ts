@@ -302,6 +302,21 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Cannot change your own role" }, 400);
       }
 
+      // A portal customer must never receive app-user privileges
+      const { data: custAcct } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (custAcct) {
+        return jsonResponse(
+          { error: "This account is a portal customer and cannot be given app-user roles." },
+          409,
+        );
+      }
+
+
+
       const { data: existing } = await adminClient
         .from("user_roles")
         .select("id")

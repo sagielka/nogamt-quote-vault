@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck, Building2 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchAllPermissions, setPermission } from '@/hooks/usePermissions';
 import {
   AlertDialog,
@@ -408,10 +409,24 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
                   <Circle className="w-2.5 h-2.5 fill-muted-foreground/30 text-muted-foreground/30 shrink-0" />
                 )}
                 <span className="font-medium text-foreground text-sm truncate">{u.email}</span>
-                <Badge variant={roleBadgeVariant(u.role)} className="flex items-center gap-1 text-xs">
-                  {roleIcon(u.role)}
-                  {u.role}
-                </Badge>
+                {isCustomerOnly(u) ? (
+                  <>
+                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                      <Building2 className="w-3 h-3" />
+                      Customer
+                    </Badge>
+                    {u.customer_status && (
+                      <Badge variant={u.customer_status === 'approved' ? 'default' : 'outline'} className="text-xs">
+                        {u.customer_status}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <Badge variant={roleBadgeVariant(u.role)} className="flex items-center gap-1 text-xs">
+                    {roleIcon(u.role)}
+                    {u.role}
+                  </Badge>
+                )}
                 {u.banned && (
                   <Badge variant="destructive" className="text-xs">
                     <Ban className="w-3 h-3 mr-1" />
@@ -423,13 +438,23 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
                 <span>Joined: {formatDate(u.created_at)}</span>
                 <span>Last login: {formatDate(u.last_sign_in_at)}</span>
                 {u.last_seen_at && <span>Last seen: {formatDate(u.last_seen_at)}</span>}
-                <span className="text-primary font-medium">{u.quotation_count} quotation{u.quotation_count !== 1 ? 's' : ''}</span>
+                {isCustomerOnly(u) ? (
+                  <>
+                    {u.customer_company && <span>Company: {u.customer_company}</span>}
+                    <span className="text-primary font-medium">
+                      Price list: {u.customer_price_list || 'not assigned'}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-primary font-medium">{u.quotation_count} quotation{u.quotation_count !== 1 ? 's' : ''}</span>
+                )}
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
               {/* Role */}
+              {!isCustomerOnly(u) && (
               <Select
                 value={u.role}
                 onValueChange={(role) => handleRoleChange(u.id, role)}
@@ -444,9 +469,10 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
+              )}
 
               {/* Price Portal permission */}
-              {u.role !== 'admin' && (
+              {!isCustomerOnly(u) && u.role !== 'admin' && (
                 <Button
                   variant={perms[u.id]?.includes('price_portal') ? 'default' : 'outline'}
                   size="sm"

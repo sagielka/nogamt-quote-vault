@@ -58,8 +58,11 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteKind, setInviteKind] = useState<'staff' | 'customer'>('staff');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('user');
+  const [invitePriceList, setInvitePriceList] = useState('');
+  const [inviteCompany, setInviteCompany] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [setPasswordOpen, setSetPasswordOpen] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');

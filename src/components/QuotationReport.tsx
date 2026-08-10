@@ -451,6 +451,9 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
           <Button variant="outline" size="sm" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
+          </Button>
           <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={exporting}>
             <Download className="w-4 h-4 mr-2" /> {exporting ? 'Exporting...' : 'Export PDF'}
           </Button>

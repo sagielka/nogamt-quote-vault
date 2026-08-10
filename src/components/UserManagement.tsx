@@ -159,13 +159,25 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
 
   const handleInviteUser = async () => {
     if (!inviteEmail.trim()) return;
+    if (inviteKind === 'customer' && !invitePriceList) {
+      toast({ title: 'Price list required', description: 'Choose which price list this customer may see.', variant: 'destructive' });
+      return;
+    }
     setInviteLoading(true);
     try {
-      const result = await invokeAdminAction('invite', { email: inviteEmail.trim(), role: inviteRole });
-      toast({ title: 'Invite Sent', description: result.message });
+      const result = await invokeAdminAction('invite', {
+        email: inviteEmail.trim(),
+        kind: inviteKind,
+        role: inviteKind === 'staff' ? inviteRole : undefined,
+        priceList: inviteKind === 'customer' ? invitePriceList : undefined,
+        companyName: inviteKind === 'customer' ? inviteCompany.trim() || undefined : undefined,
+      });
+      toast({ title: inviteKind === 'customer' ? 'Customer Invited' : 'Invite Sent', description: result.message });
       setInviteOpen(false);
       setInviteEmail('');
       setInviteRole('user');
+      setInvitePriceList('');
+      setInviteCompany('');
       await fetchUsers();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to invite user', variant: 'destructive' });

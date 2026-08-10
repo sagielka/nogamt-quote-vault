@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  History,
   Tag,
   Search,
   Plus,
@@ -72,6 +73,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
 import { Badge } from '@/components/ui/badge';
+import { PriceListHistoryDialog } from '@/components/PriceListHistoryDialog';
 
 
 const EMAIL_TEMPLATES = [
@@ -163,6 +165,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -1458,6 +1462,14 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PriceListHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        customerId={historyCustomer?.id ?? null}
+        customerName={historyCustomer?.name}
+        priceListOptions={priceListOptions}
+      />
     </div>
   );
 };

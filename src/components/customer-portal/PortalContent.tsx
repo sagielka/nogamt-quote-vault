@@ -38,6 +38,9 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<PortalQuoteRow[]>([]);
   const [selectedQuote, setSelectedQuote] = useState<any | null>(null);
+  const [quoteScope, setQuoteScope] = useState<'mine' | 'company'>('mine');
+  const [busyQuote, setBusyQuote] = useState<string | null>(null);
+  const { toast } = useToast();
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(() => getProductCatalog(), []);

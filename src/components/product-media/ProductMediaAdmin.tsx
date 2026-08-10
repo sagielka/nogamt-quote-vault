@@ -146,7 +146,7 @@ export const ProductMediaAdmin = () => {
         >
           {busy ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> Uploading…
+              <Loader2 className="w-4 h-4 animate-spin" /> {status ?? 'Uploading…'}
             </span>
           ) : (
             <>

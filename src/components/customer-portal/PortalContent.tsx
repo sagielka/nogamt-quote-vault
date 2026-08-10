@@ -13,9 +13,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid, Eye } from 'lucide-react';
+import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid, Eye, Download } from 'lucide-react';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
 import { PortalQuoteDialog } from './PortalQuoteDialog';
+import { PortalTeam } from './PortalTeam';
+import * as XLSX from 'xlsx';
 
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 

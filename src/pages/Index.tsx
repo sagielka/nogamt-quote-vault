@@ -50,9 +50,11 @@ import { ItemPricesView } from '@/components/ItemPricesView';
 import { usePermissions } from '@/hooks/usePermissions';
 import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
 import { QuotationViews } from '@/components/quotation/QuotationViews';
+import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
+import { History } from 'lucide-react';
 
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports' | 'portal-accounts';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports' | 'portal-accounts' | 'recurring';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -725,7 +727,19 @@ const Index = () => {
                   Reports
                 </Button>
               )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts') && (
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
+                  <RepeatIcon className="w-4 h-4 mr-2" />
+                  Recurring
+                </Button>
+              )}
+              {currentView === 'list' && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
+                  <History className="w-4 h-4 mr-2" />
+                  Versions
+                </Button>
+              )}
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts' || currentView === 'recurring') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -1105,6 +1119,10 @@ const Index = () => {
               navigateToView('report');
             }}
           />
+        )}
+
+        {currentView === 'recurring' && (
+          <RecurringQuotationsView onBack={() => navigateToView('list')} />
         )}
 
         {currentView === 'activity' && (

@@ -1086,7 +1086,7 @@ const Index = () => {
         )}
 
         {currentView === 'users' && isAdmin && (
-          <UserManagement />
+          <UserManagement onOpenPricePortal={() => navigateToView('portal-accounts')} />
         )}
 
         {currentView === 'portal-accounts' && canPricePortal && (

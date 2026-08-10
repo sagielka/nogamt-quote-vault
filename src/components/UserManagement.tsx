@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck, Building2 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchAllPermissions, setPermission } from '@/hooks/usePermissions';
 import {
   AlertDialog,
@@ -39,10 +40,21 @@ interface ManagedUser {
   last_seen_at: string | null;
   banned: boolean;
   quotation_count: number;
+  has_staff_role?: boolean;
+  is_customer?: boolean;
+  customer_company?: string | null;
+  customer_status?: string | null;
+  customer_price_list?: string | null;
 }
 
-export const UserManagement = () => {
+interface UserManagementProps {
+  /** Opens the Price Portal screen where customer accounts are managed. */
+  onOpenPricePortal?: () => void;
+}
+
+export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) => {
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [tab, setTab] = useState<'staff' | 'customers'>('staff');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -264,6 +276,11 @@ export const UserManagement = () => {
     }
   };
 
+  const isCustomerOnly = (u: ManagedUser) => !!u.is_customer && !u.has_staff_role;
+  const staffUsers = users.filter((u) => !isCustomerOnly(u));
+  const customerUsers = users.filter(isCustomerOnly);
+  const visibleUsers = tab === 'staff' ? staffUsers : customerUsers;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -280,7 +297,9 @@ export const UserManagement = () => {
           <h2 className="heading-display text-2xl text-foreground">User Management</h2>
         </div>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground">{users.length} user{users.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-muted-foreground">
+            {staffUsers.length} app user{staffUsers.length !== 1 ? 's' : ''} · {customerUsers.length} customer{customerUsers.length !== 1 ? 's' : ''}
+          </p>
           
           {/* Invite User Dialog */}
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -340,8 +359,41 @@ export const UserManagement = () => {
         </div>
       </div>
 
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'staff' | 'customers')}>
+        <TabsList>
+          <TabsTrigger value="staff">
+            <UserCog className="w-3.5 h-3.5 mr-1.5" />
+            App users ({staffUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="customers">
+            <Building2 className="w-3.5 h-3.5 mr-1.5" />
+            Customers ({customerUsers.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {tab === 'customers' && (
+        <div className="card-elevated p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Customer accounts only sign in to the customer portal to see their price list,
+            quotations and statistics. Approvals and price lists are managed in the Price Portal.
+          </p>
+          {onOpenPricePortal && (
+            <Button size="sm" variant="outline" onClick={onOpenPricePortal}>
+              Open Price Portal
+            </Button>
+          )}
+        </div>
+      )}
+
+      {visibleUsers.length === 0 && (
+        <p className="text-sm text-muted-foreground py-8 text-center">
+          {tab === 'staff' ? 'No app users.' : 'No customer accounts yet.'}
+        </p>
+      )}
+
       <div className="space-y-2">
-        {users.map((u) => (
+        {visibleUsers.map((u) => (
           <div
             key={u.id}
             className={`card-elevated p-4 flex flex-col md:flex-row md:items-center gap-4 ${
@@ -357,10 +409,24 @@ export const UserManagement = () => {
                   <Circle className="w-2.5 h-2.5 fill-muted-foreground/30 text-muted-foreground/30 shrink-0" />
                 )}
                 <span className="font-medium text-foreground text-sm truncate">{u.email}</span>
-                <Badge variant={roleBadgeVariant(u.role)} className="flex items-center gap-1 text-xs">
-                  {roleIcon(u.role)}
-                  {u.role}
-                </Badge>
+                {isCustomerOnly(u) ? (
+                  <>
+                    <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                      <Building2 className="w-3 h-3" />
+                      Customer
+                    </Badge>
+                    {u.customer_status && (
+                      <Badge variant={u.customer_status === 'approved' ? 'default' : 'outline'} className="text-xs">
+                        {u.customer_status}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <Badge variant={roleBadgeVariant(u.role)} className="flex items-center gap-1 text-xs">
+                    {roleIcon(u.role)}
+                    {u.role}
+                  </Badge>
+                )}
                 {u.banned && (
                   <Badge variant="destructive" className="text-xs">
                     <Ban className="w-3 h-3 mr-1" />
@@ -372,13 +438,23 @@ export const UserManagement = () => {
                 <span>Joined: {formatDate(u.created_at)}</span>
                 <span>Last login: {formatDate(u.last_sign_in_at)}</span>
                 {u.last_seen_at && <span>Last seen: {formatDate(u.last_seen_at)}</span>}
-                <span className="text-primary font-medium">{u.quotation_count} quotation{u.quotation_count !== 1 ? 's' : ''}</span>
+                {isCustomerOnly(u) ? (
+                  <>
+                    {u.customer_company && <span>Company: {u.customer_company}</span>}
+                    <span className="text-primary font-medium">
+                      Price list: {u.customer_price_list || 'not assigned'}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-primary font-medium">{u.quotation_count} quotation{u.quotation_count !== 1 ? 's' : ''}</span>
+                )}
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0 flex-wrap">
               {/* Role */}
+              {!isCustomerOnly(u) && (
               <Select
                 value={u.role}
                 onValueChange={(role) => handleRoleChange(u.id, role)}
@@ -393,9 +469,10 @@ export const UserManagement = () => {
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
+              )}
 
               {/* Price Portal permission */}
-              {u.role !== 'admin' && (
+              {!isCustomerOnly(u) && u.role !== 'admin' && (
                 <Button
                   variant={perms[u.id]?.includes('price_portal') ? 'default' : 'outline'}
                   size="sm"

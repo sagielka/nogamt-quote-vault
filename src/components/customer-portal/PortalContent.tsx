@@ -164,7 +164,12 @@ export const PortalContent = ({ rawList, email }: Props) => {
               Slide
             </button>
           </div>
+          <Button variant="outline" size="sm" className="self-start" onClick={exportExcel} disabled={filtered.length === 0}>
+            <Download className="w-3.5 h-3.5 mr-1" />
+            Download Excel
+          </Button>
         </div>
+
 
         {viewMode === 'cards' ? (
           <div className="relative">

@@ -69,12 +69,14 @@ export function initAutoUpdate() {
       const check = () => {
         if (navigator.onLine) registration.update().catch(() => {});
       };
+      swCheck = check;
       setInterval(check, 15 * 60 * 1000);
       window.addEventListener("focus", check);
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") check();
       });
     },
+
     onNeedRefresh() {
       applyUpdate = () => updateSW(true);
       window.dispatchEvent(new CustomEvent(UPDATE_AVAILABLE_EVENT));

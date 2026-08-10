@@ -20,6 +20,7 @@ import { BulkActionsBar } from '@/components/BulkActionsBar';
 
 import { UserManagement } from '@/components/UserManagement';
 import { CustomerAccountsAdmin } from '@/components/CustomerAccountsAdmin';
+import { CatalogSyncPanel } from '@/components/CatalogSyncPanel';
 import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -1114,7 +1115,10 @@ const Index = () => {
         )}
 
         {currentView === 'portal-accounts' && canPricePortal && (
-          <CustomerAccountsAdmin />
+          <div className="space-y-6">
+            {isAdmin && <CatalogSyncPanel />}
+            <CustomerAccountsAdmin />
+          </div>
         )}
 
 

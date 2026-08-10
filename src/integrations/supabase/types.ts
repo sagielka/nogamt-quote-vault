@@ -170,6 +170,87 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_prices: {
+        Row: {
+          china_dollar: number | null
+          created_at: string
+          description: string | null
+          dollar: number | null
+          euro: number | null
+          noga_bv_euro: number | null
+          shekel: number | null
+          sku: string
+          source_file: string | null
+          updated_at: string
+        }
+        Insert: {
+          china_dollar?: number | null
+          created_at?: string
+          description?: string | null
+          dollar?: number | null
+          euro?: number | null
+          noga_bv_euro?: number | null
+          shekel?: number | null
+          sku: string
+          source_file?: string | null
+          updated_at?: string
+        }
+        Update: {
+          china_dollar?: number | null
+          created_at?: string
+          description?: string | null
+          dollar?: number | null
+          euro?: number | null
+          noga_bv_euro?: number | null
+          shekel?: number | null
+          sku?: string
+          source_file?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      catalog_sync_state: {
+        Row: {
+          auto_sync_enabled: boolean
+          drive_file_id: string | null
+          drive_file_name: string | null
+          drive_modified_time: string | null
+          id: string
+          items_added: number
+          items_updated: number
+          last_error: string | null
+          last_status: string | null
+          last_sync_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_sync_enabled?: boolean
+          drive_file_id?: string | null
+          drive_file_name?: string | null
+          drive_modified_time?: string | null
+          id?: string
+          items_added?: number
+          items_updated?: number
+          last_error?: string | null
+          last_status?: string | null
+          last_sync_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_sync_enabled?: boolean
+          drive_file_id?: string | null
+          drive_file_name?: string | null
+          drive_modified_time?: string | null
+          id?: string
+          items_added?: number
+          items_updated?: number
+          last_error?: string | null
+          last_status?: string | null
+          last_sync_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_price_list_items: {
         Row: {
           created_at: string

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { GitHubCatalogProvider } from "@/components/GitHubCatalogProvider";
+import { SyncedCatalogProvider } from "@/components/SyncedCatalogProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
@@ -35,6 +36,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <GitHubCatalogProvider>
+        <SyncedCatalogProvider>
         <Toaster />
         <Sonner />
         <DesktopUpdater />
@@ -57,6 +59,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </HashRouter>
+        </SyncedCatalogProvider>
       </GitHubCatalogProvider>
     </TooltipProvider>
   </QueryClientProvider>

@@ -18,6 +18,31 @@ const SIGN_TTL = 60 * 60; // 1 hour
 
 const normalize = (sku: string) => sku.trim().toUpperCase();
 
+/**
+ * Catalog SKUs (e.g. UF1825) carry their family in the description
+ * (e.g. UF-FB-M-D025-L75). Media is stored per family + diameter (UF-FB-D025),
+ * so build candidate keys from the description.
+ */
+function familyCandidates(description?: string | null): string[] {
+  if (!description) return [];
+  const tokens = normalize(description).split('-').filter(Boolean);
+  if (tokens.length < 2) return [];
+  const prefix = `${tokens[0]}-${tokens[1]}`;
+  const dToken = tokens.find((t) => /^D[\d.]+$/.test(t));
+  const out = new Set<string>();
+  if (dToken) {
+    out.add(`${prefix}-${dToken}`);
+    const num = dToken.slice(1);
+    const asNum = Number(num);
+    if (!Number.isNaN(asNum)) {
+      out.add(`${prefix}-D${String(asNum)}`);
+      if (Number.isInteger(asNum)) out.add(`${prefix}-D${String(asNum).padStart(3, '0')}`);
+    }
+  }
+  out.add(prefix);
+  return [...out];
+}
+
 async function fetchMedia(): Promise<MediaMap> {
   const { data, error } = await supabase
     .from('product_media' as any)
@@ -76,7 +101,16 @@ export const useProductMedia = () => {
 
   return {
     media,
-    get: (sku?: string | null) => (sku ? media[normalize(sku)] : undefined),
+    get: (sku?: string | null, description?: string | null) => {
+      if (sku) {
+        const direct = media[normalize(sku)];
+        if (direct) return direct;
+      }
+      for (const key of familyCandidates(description)) {
+        if (media[key]) return media[key];
+      }
+      return undefined;
+    },
     reload: () => loadProductMedia(true),
   };
 };

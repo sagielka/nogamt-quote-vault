@@ -10,15 +10,16 @@ const Product3DViewer = lazy(() =>
 
 interface Props {
   sku?: string | null;
+  description?: string | null;
   size?: number;
   className?: string;
 }
 
 /** Small product thumbnail; click to open the picture and the rotatable 3D model. */
-export const ProductMediaThumb = ({ sku, size = 40, className = '' }: Props) => {
+export const ProductMediaThumb = ({ sku, description, size = 40, className = '' }: Props) => {
   const { get } = useProductMedia();
   const [open, setOpen] = useState(false);
-  const media = get(sku);
+  const media = get(sku, description);
 
   if (!media || (!media.imageUrl && !media.modelUrl)) return null;
 

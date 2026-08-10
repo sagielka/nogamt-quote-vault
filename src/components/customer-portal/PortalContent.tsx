@@ -114,6 +114,64 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
     })();
   }, [email]);
 
+  const myQuotes = useMemo(
+    () =>
+      quotes.filter((q: any) =>
+        String(q.client_email || '')
+          .split(',')
+          .some((a) => a.trim().toLowerCase() === email.toLowerCase())
+      ),
+    [quotes, email]
+  );
+  const visibleQuotes = quoteScope === 'mine' ? myQuotes : quotes;
+
+  const downloadQuote = async (row: any) => {
+    setBusyQuote(row.id);
+    try {
+      const res = await downloadQuotationPdf(dbRowToQuotation(row));
+      if (!res.success) throw new Error(res.error || 'Failed to generate PDF');
+      toast({ title: 'Downloaded', description: res.fileName });
+    } catch (e: any) {
+      toast({ title: 'Download failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusyQuote(null);
+    }
+  };
+
+  const emailQuote = async (row: any) => {
+    setBusyQuote(row.id);
+    try {
+      const quotation = dbRowToQuotation(row);
+      const { base64 } = await getQuotationPdfBase64(quotation);
+      const total = calculateTotal(
+        quotation.items as any,
+        quotation.taxRate,
+        quotation.discountType as any,
+        quotation.discountValue
+      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const { data, error } = await supabase.functions.invoke('send-quotation-email', {
+        body: {
+          to: email,
+          recipients: [email],
+          clientName: quotation.clientName,
+          quoteNumber: quotation.quoteNumber,
+          total: `${total} ${quotation.currency}`,
+          validUntil: formatDate(quotation.validUntil),
+          pdfBase64: base64,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Email sent', description: `${quotation.quoteNumber} was sent to ${email}.` });
+    } catch (e: any) {
+      toast({ title: 'Sending failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusyQuote(null);
+    }
+  };
+
+
+
 
 
   const filtered = useMemo(() => {

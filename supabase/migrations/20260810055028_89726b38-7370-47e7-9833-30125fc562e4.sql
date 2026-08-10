@@ -1,0 +1,1 @@
+DELETE FROM public.user_roles WHERE user_id = (SELECT id FROM auth.users WHERE email = 'john@nogatools.nl');

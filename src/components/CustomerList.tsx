@@ -902,7 +902,15 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                         </span>
                       </div>
                     )}
+                    <button
+                      type="button"
+                      className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+                      onClick={() => { setHistoryCustomer(customer); setHistoryOpen(true); }}
+                    >
+                      <History className="w-3 h-3" /> Price list history
+                    </button>
                   </div>
+
                   {(() => {
                     const stats = getCustomerTrackingStats(customer.email);
                     if (stats.sent === 0) return null;

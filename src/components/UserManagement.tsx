@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck, Building2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchAllPermissions, setPermission } from '@/hooks/usePermissions';
+import { PRICE_LISTS } from '@/data/product-catalog';
 import {
   AlertDialog,
   AlertDialogAction,

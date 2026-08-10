@@ -65,14 +65,32 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
   useEffect(() => {
     if (!email) return;
     (async () => {
+      // Include colleagues on the same portal account (shared company account)
+      let emails = [email.toLowerCase()];
+      const { data: me } = await supabase
+        .from('customer_accounts')
+        .select('id, parent_account_id')
+        .ilike('email', email)
+        .maybeSingle();
+      if (me) {
+        const rootId = (me as any).parent_account_id || (me as any).id;
+        const { data: fam } = await supabase
+          .from('customer_accounts')
+          .select('email')
+          .or(`id.eq.${rootId},parent_account_id.eq.${rootId}`);
+        if (fam?.length) {
+          emails = Array.from(new Set(fam.map((f: any) => String(f.email).toLowerCase()).concat(emails)));
+        }
+      }
       const { data } = await supabase
         .from('quotations')
         .select('*')
-        .ilike('client_email', `%${email}%`)
+        .or(emails.map((e) => `client_email.ilike.%${e}%`).join(','))
         .order('created_at', { ascending: false });
       setQuotes((data as any) || []);
     })();
   }, [email]);
+
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

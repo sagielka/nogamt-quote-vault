@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck, Building2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchAllPermissions, setPermission } from '@/hooks/usePermissions';
+import { PRICE_LISTS } from '@/data/product-catalog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,8 +59,11 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteKind, setInviteKind] = useState<'staff' | 'customer'>('staff');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('user');
+  const [invitePriceList, setInvitePriceList] = useState('');
+  const [inviteCompany, setInviteCompany] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [setPasswordOpen, setSetPasswordOpen] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -156,13 +160,25 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
 
   const handleInviteUser = async () => {
     if (!inviteEmail.trim()) return;
+    if (inviteKind === 'customer' && !invitePriceList) {
+      toast({ title: 'Price list required', description: 'Choose which price list this customer may see.', variant: 'destructive' });
+      return;
+    }
     setInviteLoading(true);
     try {
-      const result = await invokeAdminAction('invite', { email: inviteEmail.trim(), role: inviteRole });
-      toast({ title: 'Invite Sent', description: result.message });
+      const result = await invokeAdminAction('invite', {
+        email: inviteEmail.trim(),
+        kind: inviteKind,
+        role: inviteKind === 'staff' ? inviteRole : undefined,
+        priceList: inviteKind === 'customer' ? invitePriceList : undefined,
+        companyName: inviteKind === 'customer' ? inviteCompany.trim() || undefined : undefined,
+      });
+      toast({ title: inviteKind === 'customer' ? 'Customer Invited' : 'Invite Sent', description: result.message });
       setInviteOpen(false);
       setInviteEmail('');
       setInviteRole('user');
+      setInvitePriceList('');
+      setInviteCompany('');
       await fetchUsers();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Failed to invite user', variant: 'destructive' });
@@ -301,42 +317,92 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
             {staffUsers.length} app user{staffUsers.length !== 1 ? 's' : ''} · {customerUsers.length} customer{customerUsers.length !== 1 ? 's' : ''}
           </p>
           
-          {/* Invite User Dialog */}
+          {/* Invite Dialog */}
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <UserPlus className="w-4 h-4 mr-1" />
-                Invite User
+                Invite
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invite New User</DialogTitle>
+                <DialogTitle>{inviteKind === 'customer' ? 'Invite Customer' : 'Invite App User'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Account type</Label>
+                  <Tabs value={inviteKind} onValueChange={(v) => setInviteKind(v as 'staff' | 'customer')}>
+                    <TabsList className="w-full">
+                      <TabsTrigger value="staff" className="flex-1">
+                        <UserCog className="w-3.5 h-3.5 mr-1.5" />
+                        App user
+                      </TabsTrigger>
+                      <TabsTrigger value="customer" className="flex-1">
+                        <Building2 className="w-3.5 h-3.5 mr-1.5" />
+                        Customer
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <p className="text-xs text-muted-foreground">
+                    {inviteKind === 'customer'
+                      ? 'Price portal only — no access to quotations, users or app data.'
+                      : 'Internal staff account with the role you choose below.'}
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Email Address</Label>
                   <Input
                     type="email"
-                    placeholder="user@example.com"
+                    placeholder={inviteKind === 'customer' ? 'buyer@company.com' : 'user@example.com'}
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     className="input-focus"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger className="bg-background/50 border-primary/20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin — Full access</SelectItem>
-                      <SelectItem value="user">User — Create & edit quotations</SelectItem>
-                      <SelectItem value="viewer">Viewer — Read-only access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
+                {inviteKind === 'staff' ? (
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                      <SelectTrigger className="bg-background/50 border-primary/20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin — Full access</SelectItem>
+                        <SelectItem value="user">User — Create & edit quotations</SelectItem>
+                        <SelectItem value="viewer">Viewer — Read-only access</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Company (optional)</Label>
+                      <Input
+                        placeholder="Company name"
+                        value={inviteCompany}
+                        onChange={(e) => setInviteCompany(e.target.value)}
+                        className="input-focus"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Price list</Label>
+                      <Select value={invitePriceList || undefined} onValueChange={setInvitePriceList}>
+                        <SelectTrigger className="bg-background/50 border-primary/20">
+                          <SelectValue placeholder="Select price list" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRICE_LISTS.map((p) => (
+                            <SelectItem key={p.value} value={p.value as string}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+
                 <p className="text-xs text-muted-foreground">
                   <Mail className="w-3 h-3 inline mr-1" />
                   An invite email will be sent with a link to set up their password.
@@ -346,11 +412,12 @@ export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) 
                 <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
                 <Button onClick={handleInviteUser} disabled={inviteLoading || !inviteEmail.trim()}>
                   {inviteLoading ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <UserPlus className="w-4 h-4 mr-1" />}
-                  Send Invite
+                  {inviteKind === 'customer' ? 'Send Customer Invite' : 'Send Invite'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
 
           <Button variant="outline" size="sm" onClick={fetchUsers}>
             <RefreshCw className="w-4 h-4 mr-1" />

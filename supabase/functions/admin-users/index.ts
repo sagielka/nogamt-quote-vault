@@ -157,10 +157,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ users: enrichedUsers });
     }
 
-    // ─── INVITE USER (create + send invite email) ───
+    // ─── INVITE USER (app user) or INVITE CUSTOMER (portal only) ───
     if (req.method === "POST" && action === "invite") {
-      const { email: rawEmail, role } = await req.json();
+      const { email: rawEmail, role, kind, priceList, companyName, contactName } = await req.json();
       const email = cleanEmail(rawEmail);
+      const inviteKind = kind === "customer" ? "customer" : "staff";
 
       if (!email) {
         return jsonResponse({ error: "Email is required" }, 400);
@@ -168,11 +169,28 @@ Deno.serve(async (req) => {
       if (!EMAIL_RE.test(email)) {
         return jsonResponse({ error: `"${email}" is not a valid email address` }, 400);
       }
+      if (inviteKind === "customer" && !priceList) {
+        return jsonResponse({ error: "A price list is required for customer invites" }, 400);
+      }
+
+      // Cross-contamination guards: a customer must never get app privileges
+      const { data: existingCustomer } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .ilike("email", email)
+        .maybeSingle();
+
+      if (inviteKind === "staff" && existingCustomer) {
+        return jsonResponse(
+          { error: `${email} is already a portal customer. Customers cannot be invited as app users.` },
+          409,
+        );
+      }
 
       // Create user with invite (sends magic link email automatically)
       const { data: newUser, error: createError } =
         await adminClient.auth.admin.inviteUserByEmail(email, {
-          data: { invited_by: user.email },
+          data: { invited_by: user.email, account_type: inviteKind },
         });
 
       if (createError) {
@@ -183,11 +201,35 @@ Deno.serve(async (req) => {
         throw createError;
       }
 
+      const newUserId = newUser?.user?.id;
+
+      if (inviteKind === "customer") {
+        if (newUserId) {
+          // Never grant staff roles to a customer
+          await adminClient.from("user_roles").delete().eq("user_id", newUserId);
+          const { error: insErr } = await adminClient.from("customer_accounts").insert({
+            user_id: newUserId,
+            email,
+            company_name: companyName || null,
+            contact_name: contactName || null,
+            price_list: priceList,
+            status: "approved",
+            approved_by: user.id,
+            approved_at: new Date().toISOString(),
+          });
+          if (insErr) throw insErr;
+        }
+        return jsonResponse({
+          success: true,
+          message: `Customer invite sent to ${email}. They can set a password and view the ${priceList} price list.`,
+        });
+      }
+
       // Assign role if specified
-      if (role && role !== "user" && newUser?.user) {
+      if (role && role !== "user" && newUserId) {
         await adminClient
           .from("user_roles")
-          .insert({ user_id: newUser.user.id, role });
+          .insert({ user_id: newUserId, role });
       }
 
       return jsonResponse({
@@ -259,6 +301,21 @@ Deno.serve(async (req) => {
       if (userId === user.id) {
         return jsonResponse({ error: "Cannot change your own role" }, 400);
       }
+
+      // A portal customer must never receive app-user privileges
+      const { data: custAcct } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (custAcct) {
+        return jsonResponse(
+          { error: "This account is a portal customer and cannot be given app-user roles." },
+          409,
+        );
+      }
+
+
 
       const { data: existing } = await adminClient
         .from("user_roles")

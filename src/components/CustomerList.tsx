@@ -135,6 +135,8 @@ Thank you for your cooperation.`,
   },
 ];
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
+import { PRICE_LISTS } from '@/data/product-catalog';
+import { useCustomPriceLists, CUSTOM_PREFIX } from '@/hooks/useCustomPriceLists';
 
 interface Customer {
   id: string;

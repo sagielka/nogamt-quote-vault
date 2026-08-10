@@ -133,17 +133,24 @@ Deno.serve(async (req) => {
       })
       .filter(Boolean) as Array<Record<string, unknown>>;
 
-    if (!records.length) throw new Error('No valid product rows found in the spreadsheet');
+    // The sheet can list the same SKU twice - keep the first occurrence
+    const bySku = new Map<string, Record<string, unknown>>();
+    for (const r of records) {
+      if (!bySku.has(r.sku as string)) bySku.set(r.sku as string, r);
+    }
+    const uniqueRecords = [...bySku.values()];
+
+    if (!uniqueRecords.length) throw new Error('No valid product rows found in the spreadsheet');
 
     const { data: existing } = await admin.from('catalog_prices').select('sku');
     const existingSkus = new Set((existing ?? []).map((e: { sku: string }) => e.sku));
-    const added = records.filter((r) => !existingSkus.has(r.sku as string)).length;
-    const updated = records.length - added;
+    const added = uniqueRecords.filter((r) => !existingSkus.has(r.sku as string)).length;
+    const updated = uniqueRecords.length - added;
 
-    for (let i = 0; i < records.length; i += 500) {
+    for (let i = 0; i < uniqueRecords.length; i += 500) {
       const { error } = await admin
         .from('catalog_prices')
-        .upsert(records.slice(i, i + 500), { onConflict: 'sku' });
+        .upsert(uniqueRecords.slice(i, i + 500), { onConflict: 'sku' });
       if (error) throw new Error(`Upsert failed: ${JSON.stringify(error)}`);
     }
 
@@ -158,7 +165,7 @@ Deno.serve(async (req) => {
       items_updated: updated,
     }).eq('id', 'default');
 
-    return json({ status: 'success', fileName: meta.name, total: records.length, added, updated });
+    return json({ status: 'success', fileName: meta.name, total: uniqueRecords.length, added, updated });
   } catch (e) {
     const message = e instanceof Error ? e.message : JSON.stringify(e);
     console.error('sync-catalog-drive failed:', message);

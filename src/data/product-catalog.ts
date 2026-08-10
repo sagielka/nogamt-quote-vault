@@ -664,9 +664,19 @@ const dedupeBySku = (products: ProductItem[]): ProductItem[] => {
   return result;
 };
 
+// Products synced from the Google Drive master price list (override built-ins)
+let syncedCatalogProducts: ProductItem[] = [];
+
+export const setSyncedCatalogPrices = (items: ProductItem[]) => {
+  syncedCatalogProducts = items;
+};
+
+export const getSyncedCatalogPrices = (): ProductItem[] => syncedCatalogProducts;
+
 // Dynamic product catalog getter - combines static products with dynamic US/UC inserts
 export const getProductCatalog = (): ProductItem[] => {
   return dedupeBySku([
+    ...syncedCatalogProducts,
     ...staticCatalogProducts,
     ...getUspotProducts(),
     ...getUchamfProducts(),

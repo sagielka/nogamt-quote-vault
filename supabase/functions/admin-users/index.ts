@@ -97,6 +97,10 @@ Deno.serve(async (req) => {
         .from("quotations")
         .select("user_id");
 
+      const { data: customerAccounts } = await adminClient
+        .from("customer_accounts")
+        .select("user_id, company_name, status, price_list");
+
       const quotationCounts: Record<string, number> = {};
       quotations?.forEach((q: { user_id: string }) => {
         quotationCounts[q.user_id] = (quotationCounts[q.user_id] || 0) + 1;
@@ -106,6 +110,25 @@ Deno.serve(async (req) => {
       roles?.forEach((r: { user_id: string; role: string }) => {
         rolesMap[r.user_id] = r.role;
       });
+
+      const customerMap: Record<
+        string,
+        { company_name: string | null; status: string; price_list: string | null }
+      > = {};
+      customerAccounts?.forEach(
+        (c: {
+          user_id: string;
+          company_name: string | null;
+          status: string;
+          price_list: string | null;
+        }) => {
+          customerMap[c.user_id] = {
+            company_name: c.company_name,
+            status: c.status,
+            price_list: c.price_list,
+          };
+        },
+      );
 
       const profilesMap: Record<string, { display_name: string | null; is_active: boolean; last_seen_at: string | null }> = {};
       profiles?.forEach((p: { user_id: string; display_name: string | null; is_active: boolean; last_seen_at: string | null }) => {
@@ -118,12 +141,18 @@ Deno.serve(async (req) => {
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at,
         role: rolesMap[u.id] || "user",
+        has_staff_role: !!rolesMap[u.id],
+        is_customer: !!customerMap[u.id],
+        customer_company: customerMap[u.id]?.company_name ?? null,
+        customer_status: customerMap[u.id]?.status ?? null,
+        customer_price_list: customerMap[u.id]?.price_list ?? null,
         display_name: profilesMap[u.id]?.display_name || null,
         is_active: profilesMap[u.id]?.is_active ?? true,
         last_seen_at: profilesMap[u.id]?.last_seen_at || null,
         banned: u.banned_until ? new Date(u.banned_until) > new Date() : false,
         quotation_count: quotationCounts[u.id] || 0,
       }));
+
 
       return jsonResponse({ users: enrichedUsers });
     }

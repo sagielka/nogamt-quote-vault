@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 
 
@@ -28,6 +28,7 @@ interface Row {
   status: string;
   price_list: string | null;
   notes: string | null;
+  parent_account_id: string | null;
   created_at: string;
 }
 
@@ -55,6 +56,8 @@ export const CustomerAccountsAdmin = () => {
   const [busy, setBusy] = useState(false);
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
+  const [linkFor, setLinkFor] = useState<Row | null>(null);
+  const [linkForm, setLinkForm] = useState({ email: '', contact_name: '', password: '' });
   const [createForm, setCreateForm] = useState({
     customerId: '',
     email: '',
@@ -259,6 +262,58 @@ export const CustomerAccountsAdmin = () => {
     window.location.href = `mailto:${row.email}?subject=${subject}&body=${body}`;
   };
 
+  const rootRows = rows.filter((r) => !r.parent_account_id);
+  const membersOf = (id: string) => rows.filter((r) => r.parent_account_id === id);
+
+  const knownEmails = Array.from(
+    new Set(
+      customers
+        .flatMap((c) => (c.email || '').split(/[,;]/))
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  ).filter((e) => !rows.some((r) => r.email.toLowerCase() === e));
+
+  const addLinkedEmail = async () => {
+    if (!linkFor) return;
+    const email = linkForm.email.trim().toLowerCase();
+    if (!email) {
+      toast({ title: 'Email required', description: 'Choose an existing email or type a new one.', variant: 'destructive' });
+      return;
+    }
+    if (linkForm.password && linkForm.password.length < 6) {
+      toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    setBusy(true);
+    try {
+      await callAdmin('create-portal-user', {
+        email,
+        password: linkForm.password || undefined,
+        contactName: linkForm.contact_name || null,
+        companyName: linkFor.company_name,
+        priceList: linkFor.price_list,
+        parentAccountId: linkFor.id,
+      });
+      toast({
+        title: 'Email linked',
+        description: `${email} now shares the ${linkFor.company_name || linkFor.email} portal account.`,
+      });
+      setLinkFor(null);
+      setLinkForm({ email: '', contact_name: '', password: '' });
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unlinkEmail = async (member: Row) => {
+    const ok = await patch(member.id, { parent_account_id: null, status: 'rejected' });
+    if (ok) toast({ title: 'Access removed', description: `${member.email} no longer shares this account.` });
+  };
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
@@ -311,7 +366,7 @@ export const CustomerAccountsAdmin = () => {
       )}
 
       <div className="space-y-3">
-        {rows.map((row) => (
+        {rootRows.map((row) => (
           <Card key={row.id}>
             <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3">
               <div className="flex-1 min-w-0">
@@ -323,6 +378,27 @@ export const CustomerAccountsAdmin = () => {
                   {row.email}
                   {row.contact_name ? ` · ${row.contact_name}` : ''}
                 </p>
+                {membersOf(row.id).length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {membersOf(row.id).length} additional email{membersOf(row.id).length !== 1 ? 's' : ''}
+                    </p>
+                    {membersOf(row.id).map((m) => (
+                      <div key={m.id} className="flex items-center gap-2 text-xs">
+                        <span className="truncate">{m.email}{m.contact_name ? ` · ${m.contact_name}` : ''}</span>
+                        {statusBadge(m.status)}
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                          onClick={() => unlinkEmail(m)}
+                        >
+                          <Unlink className="w-3 h-3" /> Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Select
@@ -345,6 +421,14 @@ export const CustomerAccountsAdmin = () => {
                 <Button size="sm" variant="outline" onClick={() => setPreview(row)}>
                   <Eye className="w-4 h-4 mr-2" />
                   View as customer
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setLinkFor(row); setLinkForm({ email: '', contact_name: '', password: '' }); }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add email
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
                   <Link2 className="w-4 h-4 mr-2" />
@@ -462,6 +546,71 @@ export const CustomerAccountsAdmin = () => {
             <Button onClick={saveEdit} disabled={busy}>
               {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!linkFor} onOpenChange={(o) => !o && setLinkFor(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add email to this portal account</DialogTitle>
+            <DialogDescription>
+              The new email signs in separately but shares {linkFor?.company_name || linkFor?.email}'s price list and quotations.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Choose an existing customer email</Label>
+              <Select value={linkForm.email || undefined} onValueChange={(v) => setLinkForm({ ...linkForm, email: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a known email (optional)" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {knownEmails.map((e) => (
+                    <SelectItem key={e} value={e}>{e}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Or type an email *</Label>
+              <Input
+                type="email"
+                placeholder="colleague@company.com"
+                value={linkForm.email}
+                onChange={(e) => setLinkForm({ ...linkForm, email: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Contact name</Label>
+              <Input
+                value={linkForm.contact_name}
+                onChange={(e) => setLinkForm({ ...linkForm, contact_name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4" /> Initial password (optional)
+              </Label>
+              <Input
+                type="text"
+                placeholder="Leave empty to send a reset link later"
+                value={linkForm.password}
+                onChange={(e) => setLinkForm({ ...linkForm, password: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkFor(null)}>Cancel</Button>
+            <Button onClick={addLinkedEmail} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Link email
             </Button>
           </DialogFooter>
         </DialogContent>

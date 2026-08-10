@@ -387,9 +387,34 @@ Deno.serve(async (req) => {
 
     // ─── CREATE PORTAL (CUSTOMER) USER ───
     if (req.method === "POST" && action === "create-portal-user") {
-      const { email, password, companyName, contactName, priceList, notes } = await req.json();
+      const { email, password, companyName, contactName, priceList, notes, parentAccountId } =
+        await req.json();
 
-      if (!email || !priceList) {
+      // When linking to an existing portal account, details are inherited from it
+      let parentAccount: any = null;
+      if (parentAccountId) {
+        const { data: parent } = await adminClient
+          .from("customer_accounts")
+          .select("*")
+          .eq("id", parentAccountId)
+          .maybeSingle();
+        if (!parent) return jsonResponse({ error: "Parent portal account not found" }, 404);
+        // Always link to the root of the chain
+        if (parent.parent_account_id) {
+          const { data: root } = await adminClient
+            .from("customer_accounts")
+            .select("*")
+            .eq("id", parent.parent_account_id)
+            .maybeSingle();
+          parentAccount = root || parent;
+        } else {
+          parentAccount = parent;
+        }
+      }
+
+      const effectivePriceList = priceList || parentAccount?.price_list || null;
+
+      if (!email || !effectivePriceList) {
         return jsonResponse({ error: "email and priceList are required" }, 400);
       }
       if (password && password.length < 6) {
@@ -428,16 +453,20 @@ Deno.serve(async (req) => {
         .eq("user_id", targetUserId)
         .maybeSingle();
 
-      const payload = {
+      // A portal user must never hold app-user roles
+      await adminClient.from("user_roles").delete().eq("user_id", targetUserId);
+
+      const payload: Record<string, unknown> = {
         user_id: targetUserId,
         email: normalizedEmail,
-        company_name: companyName || null,
+        company_name: companyName || parentAccount?.company_name || null,
         contact_name: contactName || null,
         notes: notes || null,
-        price_list: priceList,
+        price_list: effectivePriceList,
         status: "approved",
         approved_by: user.id,
         approved_at: new Date().toISOString(),
+        parent_account_id: parentAccount?.id || null,
       };
 
       if (existingAccount) {

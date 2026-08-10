@@ -18,6 +18,7 @@ import { PortalStats, type PortalQuoteRow } from './PortalStats';
 import { PortalQuoteDialog } from './PortalQuoteDialog';
 import { PortalTeam } from './PortalTeam';
 import * as XLSX from 'xlsx';
+import { ProductMediaThumb } from '@/components/product-media/ProductMediaThumb';
 
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 
@@ -207,7 +208,10 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                 const hasBreaks = isUsPriceBreakItem(item);
                 return (
                   <div key={p.sku} className="snap-start shrink-0 w-[260px] rounded-lg border border-border bg-card p-4 flex flex-col">
-                    <div className="font-mono text-xs text-muted-foreground mb-1">{p.sku}</div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <ProductMediaThumb sku={p.sku} size={44} />
+                      <div className="font-mono text-xs text-muted-foreground">{p.sku}</div>
+                    </div>
                     <div className="text-sm font-medium leading-tight mb-3">{p.description}</div>
                     <div className="mt-auto">
                       <div className="text-2xl font-semibold text-right text-foreground">{fmt(unit)}</div>
@@ -260,7 +264,10 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                           <div className="px-3 py-1.5 text-muted-foreground">
                             {hasBreaks ? (open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
                           </div>
-                          <div className="px-3 py-1.5 font-mono text-xs">{p.sku}</div>
+                          <div className="px-3 py-1.5 font-mono text-xs flex items-center gap-2">
+                            <ProductMediaThumb sku={p.sku} size={28} />
+                            {p.sku}
+                          </div>
                           <div className="px-3 py-1.5">{p.description}</div>
                           <div className="px-3 py-1.5 text-right font-medium">{fmt(unit)}</div>
                         </div>

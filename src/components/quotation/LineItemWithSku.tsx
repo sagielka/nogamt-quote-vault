@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { ProductMediaThumb } from '@/components/product-media/ProductMediaThumb';
 import { LineItem } from '@/types/quotation';
 import { Input } from '@/components/ui/input';
 
@@ -521,7 +522,8 @@ export const LineItemWithSku = ({
         </div>
         
         {/* SKU with autocomplete */}
-        <div className="relative">
+        <div className="relative flex items-center gap-1.5">
+          <ProductMediaThumb sku={item.sku} size={30} />
           <Input
             ref={skuInputRef}
             placeholder="Type SKU..."

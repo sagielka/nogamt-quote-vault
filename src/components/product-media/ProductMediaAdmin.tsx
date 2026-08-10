@@ -160,7 +160,7 @@ export const ProductMediaAdmin = () => {
             ref={inputRef}
             type="file"
             multiple
-            accept=".png,.jpg,.jpeg,.webp,.glb,.gltf"
+            accept=".png,.jpg,.jpeg,.webp,.glb,.gltf,.stp,.step"
             className="hidden"
             onChange={(e) => handleFiles(e.target.files)}
           />

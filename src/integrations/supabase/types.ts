@@ -326,6 +326,7 @@ export type Database = {
           email: string
           id: string
           notes: string | null
+          parent_account_id: string | null
           price_list: string | null
           status: string
           updated_at: string
@@ -340,6 +341,7 @@ export type Database = {
           email: string
           id?: string
           notes?: string | null
+          parent_account_id?: string | null
           price_list?: string | null
           status?: string
           updated_at?: string
@@ -354,12 +356,21 @@ export type Database = {
           email?: string
           id?: string
           notes?: string | null
+          parent_account_id?: string | null
           price_list?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "customer_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_portal_tokens: {
         Row: {

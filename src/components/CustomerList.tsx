@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  History,
   Tag,
   Search,
   Plus,
@@ -72,6 +73,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
 import { Badge } from '@/components/ui/badge';
+import { PriceListHistoryDialog } from '@/components/PriceListHistoryDialog';
 
 
 const EMAIL_TEMPLATES = [
@@ -163,6 +165,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -902,7 +906,15 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                         </span>
                       </div>
                     )}
+                    <button
+                      type="button"
+                      className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+                      onClick={() => { setHistoryCustomer(customer); setHistoryOpen(true); }}
+                    >
+                      <History className="w-3 h-3" /> Price list history
+                    </button>
                   </div>
+
                   {(() => {
                     const stats = getCustomerTrackingStats(customer.email);
                     if (stats.sent === 0) return null;
@@ -1450,6 +1462,14 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PriceListHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        customerId={historyCustomer?.id ?? null}
+        customerName={historyCustomer?.name}
+        priceListOptions={priceListOptions}
+      />
     </div>
   );
 };

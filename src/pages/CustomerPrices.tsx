@@ -19,6 +19,8 @@ import logo from '@/assets/logo.jpg';
 const CustomerPrices = () => {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const { account, loading: accountLoading, createAccount } = useCustomerAccount();
+  const { can, isAdmin } = usePermissions();
+  const canManagePortal = can('price_portal');
   const { toast } = useToast();
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -28,6 +30,11 @@ const CustomerPrices = () => {
   const [contact, setContact] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+
+  // Admin/staff portal browsing state
+  const [portalAccounts, setPortalAccounts] = useState<Array<{ id: string; email: string; company_name: string | null; price_list: string | null; status: string }>>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [accountsLoading, setAccountsLoading] = useState(false);
 
   const rawList = account?.price_list || null;
   const customListId = rawList?.startsWith(CUSTOM_PREFIX) ? rawList.slice(CUSTOM_PREFIX.length) : null;
@@ -43,6 +50,26 @@ const CustomerPrices = () => {
     if (!customListId) return;
     (async () => setCustomList(await fetchCustomPriceList(customListId)))();
   }, [customListId]);
+
+  // Admin/staff: load approved customer accounts so they can browse the portal directly
+  useEffect(() => {
+    if (!user || !canManagePortal) return;
+    setAccountsLoading(true);
+    (async () => {
+      const { data } = await (supabase
+        .from('customer_accounts' as any)
+        .select('id, email, company_name, price_list, status')
+        .eq('status', 'approved')
+        .not('price_list', 'is', null)
+        .order('company_name', { ascending: true }) as any);
+      const rows = (data as any[]) || [];
+      setPortalAccounts(rows);
+      if (rows.length > 0 && !selectedAccountId) setSelectedAccountId(rows[0].id);
+      setAccountsLoading(false);
+    })();
+  }, [user, canManagePortal]);
+
+  const selectedAccount = portalAccounts.find((a) => a.id === selectedAccountId) || null;
 
 
 

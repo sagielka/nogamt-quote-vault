@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useEmailTracking } from '@/hooks/useEmailTracking';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Tag,
   Search,
   Plus,
   Pencil,

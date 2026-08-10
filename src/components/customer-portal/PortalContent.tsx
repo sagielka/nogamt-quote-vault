@@ -13,7 +13,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid, Eye, Download } from 'lucide-react';
+import { Search, FileText, ChevronDown, ChevronRight, ChevronLeft, List, LayoutGrid, Eye, Download, Mail } from 'lucide-react';
+import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
+import { dbRowToQuotation } from '@/hooks/useQuotations';
+import { useToast } from '@/hooks/use-toast';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
 import { PortalQuoteDialog } from './PortalQuoteDialog';
 import { PortalTeam } from './PortalTeam';
@@ -35,6 +38,9 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [quotes, setQuotes] = useState<PortalQuoteRow[]>([]);
   const [selectedQuote, setSelectedQuote] = useState<any | null>(null);
+  const [quoteScope, setQuoteScope] = useState<'mine' | 'company'>('mine');
+  const [busyQuote, setBusyQuote] = useState<string | null>(null);
+  const { toast } = useToast();
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const catalog = useMemo(() => getProductCatalog(), []);
@@ -107,6 +113,64 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       setQuotes((data as any) || []);
     })();
   }, [email]);
+
+  const myQuotes = useMemo(
+    () =>
+      quotes.filter((q: any) =>
+        String(q.client_email || '')
+          .split(',')
+          .some((a) => a.trim().toLowerCase() === email.toLowerCase())
+      ),
+    [quotes, email]
+  );
+  const visibleQuotes = quoteScope === 'mine' ? myQuotes : quotes;
+
+  const downloadQuote = async (row: any) => {
+    setBusyQuote(row.id);
+    try {
+      const res = await downloadQuotationPdf(dbRowToQuotation(row));
+      if (!res.success) throw new Error(res.error || 'Failed to generate PDF');
+      toast({ title: 'Downloaded', description: res.fileName });
+    } catch (e: any) {
+      toast({ title: 'Download failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusyQuote(null);
+    }
+  };
+
+  const emailQuote = async (row: any) => {
+    setBusyQuote(row.id);
+    try {
+      const quotation = dbRowToQuotation(row);
+      const { base64 } = await getQuotationPdfBase64(quotation);
+      const total = calculateTotal(
+        quotation.items as any,
+        quotation.taxRate,
+        quotation.discountType as any,
+        quotation.discountValue
+      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const { data, error } = await supabase.functions.invoke('send-quotation-email', {
+        body: {
+          to: email,
+          recipients: [email],
+          clientName: quotation.clientName,
+          quoteNumber: quotation.quoteNumber,
+          total: `${total} ${quotation.currency}`,
+          validUntil: formatDate(quotation.validUntil),
+          pdfBase64: base64,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Email sent', description: `${quotation.quoteNumber} was sent to ${email}.` });
+    } catch (e: any) {
+      toast({ title: 'Sending failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusyQuote(null);
+    }
+  };
+
+
 
 
 
@@ -338,7 +402,23 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       </TabsContent>
 
       <TabsContent value="quotes">
-        {quotes.length === 0 ? (
+        <div className="flex items-center gap-2 mb-3">
+          <Button
+            size="sm"
+            variant={quoteScope === 'mine' ? 'default' : 'outline'}
+            onClick={() => setQuoteScope('mine')}
+          >
+            Received by me ({myQuotes.length})
+          </Button>
+          <Button
+            size="sm"
+            variant={quoteScope === 'company' ? 'default' : 'outline'}
+            onClick={() => setQuoteScope('company')}
+          >
+            All company quotes ({quotes.length})
+          </Button>
+        </div>
+        {visibleQuotes.length === 0 ? (
           <Card>
             <CardContent className="p-10 text-center text-muted-foreground">
               <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
@@ -359,7 +439,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                 </tr>
               </thead>
               <tbody>
-                {quotes.map((q) => (
+                {visibleQuotes.map((q) => (
                   <tr
                     key={q.id}
                     className="border-t border-border hover:bg-muted/30 cursor-pointer"
@@ -378,9 +458,25 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                       ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
                       {q.currency}
                     </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedQuote(q); }}>
                         <Eye className="w-4 h-4 mr-1" /> View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyQuote === q.id}
+                        onClick={(e) => { e.stopPropagation(); downloadQuote(q); }}
+                      >
+                        <Download className="w-4 h-4 mr-1" /> PDF
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyQuote === q.id}
+                        onClick={(e) => { e.stopPropagation(); emailQuote(q); }}
+                      >
+                        <Mail className="w-4 h-4 mr-1" /> Email me
                       </Button>
                     </td>
                   </tr>
@@ -391,6 +487,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         )}
         <PortalQuoteDialog quote={selectedQuote} onOpenChange={(o) => !o && setSelectedQuote(null)} />
       </TabsContent>
+
 
       {showTeam && (
         <TabsContent value="team">

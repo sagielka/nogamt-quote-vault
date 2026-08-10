@@ -190,6 +190,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [importing, setImporting] = useState(false);
   const { user } = useAuth();
   const { tracking } = useEmailTracking();
+  const { isAdmin } = usePermissions();
   const { lists: customPriceLists } = useCustomPriceLists();
   const priceListOptions = useMemo(() => [
     ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),

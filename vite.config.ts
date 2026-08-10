@@ -29,7 +29,35 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Drop precaches from previous builds so old JS/CSS never resurfaces
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        runtimeCaching: [
+          {
+            // HTML shell always tries the network first, so a new build wins
+            urlPattern: ({ request, url }) =>
+              request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-shell",
+              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
+            },
+          },
+          {
+            // Content-hashed build assets are immutable — safe to serve from cache
+            urlPattern: ({ url, sameOrigin }) =>
+              sameOrigin && /\/assets\/.*-[A-Za-z0-9_-]{8,}\.(js|css|woff2)$/.test(url.pathname),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "hashed-assets",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+        ],
       },
+
       manifest: {
         name: "Quote Vault",
         short_name: "QuoteVault",

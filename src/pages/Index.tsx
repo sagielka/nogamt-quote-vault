@@ -613,11 +613,12 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b no-print">
-        <div className="container py-4">
+        <div className="container py-2.5">
+          {/* Brand row */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
-              <img src={logo} alt="NogaMT Logo" className="h-12 w-auto shrink-0" />
-              
+              <img src={logo} alt="NogaMT Logo" className="h-11 w-auto shrink-0" />
+
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 shrink-0">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
@@ -657,125 +658,113 @@ const Index = () => {
                 </TooltipProvider>
               )}
             </div>
-            <div className="flex items-center gap-2 shrink-0 flex-wrap">
-              {currentView === 'list' && quotations.length > 0 && (
-                <>
-                  <Button variant="outline" onClick={() => setAiAssistantOpen(true)} className="border-primary/40">
-                    <Sparkles className="w-4 h-4 mr-2 text-primary" />
-                    AI Quote
-                  </Button>
-                  <Button onClick={() => navigateToView('create')}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Quote
-                  </Button>
-                </>
-              )}
-              {currentView === 'list' && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateToView('archive')}
-                  className="relative"
-                >
-                  <Archive className="w-4 h-4 mr-2" />
-                  Archive
-                  {archivedQuotations.length > 0 && (
-                    <span className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full">
-                      {archivedQuotations.length}
-                    </span>
-                  )}
-                </Button>
-              )}
-              {currentView === 'list' && isAdmin && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateToView('users')}
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Users
-                </Button>
-              )}
-              {currentView === 'list' && canPricePortal && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigateToView('portal-accounts')}
-                >
-                  <ShieldCheck className="w-4 h-4 mr-2" />
-                  Price Portal
-                </Button>
-              )}
-              {currentView === 'list' && canPricePortal && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/price-list')}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Customer Portal
-                </Button>
-              )}
 
-              {currentView === 'list' && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateToView('customers')}
-                >
-                  <BookUser className="w-4 h-4 mr-2" />
-                  Customers
-                </Button>
-              )}
-              {currentView === 'list' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('activity')}>
-                  <Activity className="w-4 h-4 mr-2" />
-                  Activity
-                </Button>
-              )}
-              {currentView === 'list' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Reports
-                </Button>
-              )}
-              {currentView === 'list' && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
-                  <RepeatIcon className="w-4 h-4 mr-2" />
-                  Recurring
-                </Button>
-              )}
-              {currentView === 'list' && isAdmin && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('settings')}>
-                  <SettingsIcon className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              )}
-              {currentView === 'list' && (
-                <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
-                  <History className="w-4 h-4 mr-2" />
-                  Versions
-                </Button>
-              )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts' || currentView === 'recurring' || currentView === 'settings') && (
-                <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Quotations
-                </Button>
-              )}
-              {currentView === 'report' && (
-                <Button variant="outline" size="sm" onClick={() => { setReportCustomer(null); navigateToView('customers'); }}>
-                  <BookUser className="w-4 h-4 mr-2" />
-                  Customers
-                </Button>
-              )}
+            <div className="flex items-center gap-2 shrink-0">
               <HelpSection />
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
+              <img src={thinkingInside} alt="Thinking Inside" className="h-11 w-auto shrink-0" />
             </div>
-            <img src={thinkingInside} alt="Thinking Inside" className="h-12 w-auto shrink-0" />
+          </div>
+
+          {/* Nav tabs row */}
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+            {currentView === 'list' && quotations.length > 0 && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setAiAssistantOpen(true)} className="border-primary/40">
+                  <Sparkles className="w-4 h-4 mr-1.5 text-primary" />
+                  AI Quote
+                </Button>
+                <Button size="sm" onClick={() => navigateToView('create')}>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  New Quote
+                </Button>
+              </>
+            )}
+            {currentView === 'list' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigateToView('archive')}
+                className="relative"
+              >
+                <Archive className="w-4 h-4 mr-1.5" />
+                Archive
+                {archivedQuotations.length > 0 && (
+                  <span className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full">
+                    {archivedQuotations.length}
+                  </span>
+                )}
+              </Button>
+            )}
+            {currentView === 'list' && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('customers')}>
+                <BookUser className="w-4 h-4 mr-1.5" />
+                Customers
+              </Button>
+            )}
+            {currentView === 'list' && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('activity')}>
+                <Activity className="w-4 h-4 mr-1.5" />
+                Activity
+              </Button>
+            )}
+            {currentView === 'list' && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
+                <BarChart3 className="w-4 h-4 mr-1.5" />
+                Reports
+              </Button>
+            )}
+            {currentView === 'list' && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
+                <RepeatIcon className="w-4 h-4 mr-1.5" />
+                Recurring
+              </Button>
+            )}
+            {currentView === 'list' && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
+                <History className="w-4 h-4 mr-1.5" />
+                Versions
+              </Button>
+            )}
+            {currentView === 'list' && isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('users')}>
+                <Users className="w-4 h-4 mr-1.5" />
+                Users
+              </Button>
+            )}
+            {currentView === 'list' && canPricePortal && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('portal-accounts')}>
+                <ShieldCheck className="w-4 h-4 mr-1.5" />
+                Price Portal
+              </Button>
+            )}
+            {currentView === 'list' && canPricePortal && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/price-list')}>
+                <Eye className="w-4 h-4 mr-1.5" />
+                Customer Portal
+              </Button>
+            )}
+            {currentView === 'list' && isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('settings')}>
+                <SettingsIcon className="w-4 h-4 mr-1.5" />
+                Settings
+              </Button>
+            )}
+            {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts' || currentView === 'recurring' || currentView === 'settings') && (
+              <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
+                <FolderOpen className="w-4 h-4 mr-1.5" />
+                Quotations
+              </Button>
+            )}
+            {currentView === 'report' && (
+              <Button variant="outline" size="sm" onClick={() => { setReportCustomer(null); navigateToView('customers'); }}>
+                <BookUser className="w-4 h-4 mr-1.5" />
+                Customers
+              </Button>
+            )}
           </div>
         </div>
       </header>

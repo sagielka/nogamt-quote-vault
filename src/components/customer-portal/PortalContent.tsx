@@ -24,9 +24,11 @@ const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 interface Props {
   rawList: string | null;
   email: string;
+  /** Hide the team management tab (e.g. staff previewing a customer's portal). */
+  showTeam?: boolean;
 }
 
-export const PortalContent = ({ rawList, email }: Props) => {
+export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -123,7 +125,7 @@ export const PortalContent = ({ rawList, email }: Props) => {
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="prices">Price list</TabsTrigger>
         <TabsTrigger value="quotes">My quotations ({quotes.length})</TabsTrigger>
-        <TabsTrigger value="team">Team</TabsTrigger>
+        {showTeam && <TabsTrigger value="team">Team</TabsTrigger>}
       </TabsList>
 
       <TabsContent value="overview">
@@ -347,9 +349,11 @@ export const PortalContent = ({ rawList, email }: Props) => {
         <PortalQuoteDialog quote={selectedQuote} onOpenChange={(o) => !o && setSelectedQuote(null)} />
       </TabsContent>
 
-      <TabsContent value="team">
-        <PortalTeam />
-      </TabsContent>
+      {showTeam && (
+        <TabsContent value="team">
+          <PortalTeam />
+        </TabsContent>
+      )}
     </Tabs>
 
   );

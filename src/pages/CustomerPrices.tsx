@@ -181,7 +181,7 @@ const CustomerPrices = () => {
         </Card>
 
         {selectedAccount && selectedRawList ? (
-          <PortalContent rawList={selectedRawList} email={selectedAccount.email} />
+          <PortalContent rawList={selectedRawList} email={selectedAccount.email} showTeam={false} />
         ) : (
           !accountsLoading && portalAccounts.length > 0 && (
             <Card>

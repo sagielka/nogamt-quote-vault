@@ -21,7 +21,7 @@ const enrichItemsWithCost = (items: any[], currency: Currency): LineItem[] => {
 };
 
 // Helper to convert database row to Quotation type
-const dbRowToQuotation = (row: any): Quotation => {
+export const dbRowToQuotation = (row: any): Quotation => {
   const currency: Currency = row.currency || 'USD';
   return {
     id: row.id,

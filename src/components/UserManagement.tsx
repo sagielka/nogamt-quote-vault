@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail } from 'lucide-react';
+import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { fetchAllPermissions, setPermission } from '@/hooks/usePermissions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,7 +52,31 @@ export const UserManagement = () => {
   const [setPasswordOpen, setSetPasswordOpen] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [setPasswordLoading, setSetPasswordLoading] = useState(false);
+  const [perms, setPerms] = useState<Record<string, string[]>>({});
+  const [permLoading, setPermLoading] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchAllPermissions().then(setPerms);
+  }, []);
+
+  const togglePricePortal = async (userId: string) => {
+    const enabled = !(perms[userId] || []).includes('price_portal');
+    setPermLoading(userId);
+    const error = await setPermission(userId, 'price_portal', enabled);
+    setPermLoading(null);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setPerms(await fetchAllPermissions());
+    toast({
+      title: enabled ? 'Access granted' : 'Access removed',
+      description: `Price Portal access ${enabled ? 'granted to' : 'removed from'} this user.`,
+    });
+  };
+
+
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -368,6 +393,22 @@ export const UserManagement = () => {
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Price Portal permission */}
+              {u.role !== 'admin' && (
+                <Button
+                  variant={perms[u.id]?.includes('price_portal') ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs"
+                  disabled={permLoading === u.id}
+                  onClick={() => togglePricePortal(u.id)}
+                  title="Allow this user to open the Price Portal admin screen"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+                  Price Portal
+                </Button>
+              )}
+
 
               {/* Reset Password */}
               <AlertDialog>

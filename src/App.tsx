@@ -10,6 +10,8 @@ import Unsubscribe from "./pages/Unsubscribe";
 import CustomerPortal from "./pages/CustomerPortal";
 import CustomerPrices from "./pages/CustomerPrices";
 import NotFound from "./pages/NotFound";
+import Versions from "./pages/Versions";
+
 import DesktopUpdater from "./components/DesktopUpdater";
 import UpdateBanner from "./components/UpdateBanner";
 
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/portal" element={<CustomerPortal />} />
             <Route path="/price-list" element={<CustomerPrices />} />
+            <Route path="/versions" element={<Versions />} />
+
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

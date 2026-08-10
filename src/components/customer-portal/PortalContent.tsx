@@ -346,6 +346,11 @@ export const PortalContent = ({ rawList, email }: Props) => {
         )}
         <PortalQuoteDialog quote={selectedQuote} onOpenChange={(o) => !o && setSelectedQuote(null)} />
       </TabsContent>
+
+      <TabsContent value="team">
+        <PortalTeam />
+      </TabsContent>
     </Tabs>
+
   );
 };

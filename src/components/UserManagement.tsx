@@ -52,7 +52,31 @@ export const UserManagement = () => {
   const [setPasswordOpen, setSetPasswordOpen] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [setPasswordLoading, setSetPasswordLoading] = useState(false);
+  const [perms, setPerms] = useState<Record<string, string[]>>({});
+  const [permLoading, setPermLoading] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchAllPermissions().then(setPerms);
+  }, []);
+
+  const togglePricePortal = async (userId: string) => {
+    const enabled = !(perms[userId] || []).includes('price_portal');
+    setPermLoading(userId);
+    const error = await setPermission(userId, 'price_portal', enabled);
+    setPermLoading(null);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setPerms(await fetchAllPermissions());
+    toast({
+      title: enabled ? 'Access granted' : 'Access removed',
+      description: `Price Portal access ${enabled ? 'granted to' : 'removed from'} this user.`,
+    });
+  };
+
+
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);

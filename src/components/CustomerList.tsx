@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useEmailTracking } from '@/hooks/useEmailTracking';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Tag,
   Search,
   Plus,
   Pencil,
@@ -190,6 +192,7 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [importing, setImporting] = useState(false);
   const { user } = useAuth();
   const { tracking } = useEmailTracking();
+  const { isAdmin } = usePermissions();
   const { lists: customPriceLists } = useCustomPriceLists();
   const priceListOptions = useMemo(() => [
     ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),
@@ -874,20 +877,31 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                     </span>
                   </div>
                   <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                    <Select
-                      value={customer.price_list || '__none__'}
-                      onValueChange={(v) => assignPriceList(customer, v)}
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="Assign price list" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-72">
-                        <SelectItem value="__none__">No price list</SelectItem>
-                        {priceListOptions.map((p) => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isAdmin ? (
+                      <Select
+                        value={customer.price_list || '__none__'}
+                        onValueChange={(v) => assignPriceList(customer, v)}
+                      >
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue placeholder="Assign price list" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          <SelectItem value="__none__">No price list</SelectItem>
+                          {priceListOptions.map((p) => (
+                            <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-3 h-3 shrink-0" />
+                        <span className="truncate">
+                          {customer.price_list
+                            ? priceListOptions.find((p) => p.value === customer.price_list)?.label || customer.price_list
+                            : 'No price list'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   {(() => {
                     const stats = getCustomerTrackingStats(customer.email);

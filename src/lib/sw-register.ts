@@ -33,6 +33,21 @@ async function unregisterAppSW() {
  * checks for a new version on load, every 15 minutes, and whenever the tab
  * regains focus. When a new build is found it activates and reloads once.
  */
+export const UPDATE_AVAILABLE_EVENT = "app:update-available";
+export const PENDING_UPDATE_KEY = "app:pending-update-version";
+
+let applyUpdate: (() => Promise<void>) | null = null;
+
+/** Activates the waiting service worker; the page reloads once it takes over. */
+export function applyPendingUpdate() {
+  try {
+    sessionStorage.setItem(PENDING_UPDATE_KEY, String(import.meta.env.PACKAGE_VERSION ?? ""));
+  } catch {
+    /* storage unavailable — reload confirmation is best-effort */
+  }
+  void applyUpdate?.();
+}
+
 export function initAutoUpdate() {
   if (isBlockedContext()) {
     void unregisterAppSW();
@@ -61,8 +76,9 @@ export function initAutoUpdate() {
       });
     },
     onNeedRefresh() {
-      // autoUpdate: activate the new build straight away
-      updateSW(true).catch(() => {});
+      applyUpdate = () => updateSW(true);
+      window.dispatchEvent(new CustomEvent(UPDATE_AVAILABLE_EVENT));
     },
   });
 }
+

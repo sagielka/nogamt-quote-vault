@@ -37,6 +37,13 @@ export const UPDATE_AVAILABLE_EVENT = "app:update-available";
 export const PENDING_UPDATE_KEY = "app:pending-update-version";
 
 let applyUpdate: (() => Promise<void>) | null = null;
+let swCheck: (() => void) | null = null;
+
+/** Asks the service worker to check the server for a newer build right now. */
+export async function checkForUpdate() {
+  swCheck?.();
+}
+
 
 /** Activates the waiting service worker; the page reloads once it takes over. */
 export function applyPendingUpdate() {

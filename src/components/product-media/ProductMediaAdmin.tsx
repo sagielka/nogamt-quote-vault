@@ -131,8 +131,9 @@ export const ProductMediaAdmin = () => {
           Item pictures & 3D models
         </CardTitle>
         <CardDescription>
-          Drop pictures (PNG/JPG), 3D models (GLB) and original CAD files (STP/STEP) here. The file name must be the
-          item number — e.g. <span className="font-mono">UF2612.png</span> or <span className="font-mono">UF2612.glb</span>.
+          Drop pictures (PNG/JPG), 3D models (GLB) or original CAD files (STP/STEP) here. STEP files are converted
+          automatically into a 3D model and a preview picture. The file name must be the item number — e.g.{' '}
+          <span className="font-mono">UF2612.stp</span>.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

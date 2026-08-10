@@ -170,6 +170,31 @@ const Index = () => {
     }
   }, [user, loading, navigate]);
 
+  // Customer accounts (non-staff) belong in the customer portal, not the internal app
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      if (cancelled) return;
+      if (roles && roles.length > 0) return; // staff member
+      const { data: account } = await (supabase
+        .from('customer_accounts' as any)
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'approved')
+        .maybeSingle() as any);
+      if (!cancelled && account) navigate('/price-list', { replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, navigate]);
+
+
   // Track user activity (last_seen)
   useEffect(() => {
     if (!user) return;

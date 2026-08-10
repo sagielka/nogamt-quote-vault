@@ -704,6 +704,16 @@ const Index = () => {
                   Price Portal
                 </Button>
               )}
+              {currentView === 'list' && canPricePortal && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/price-list')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Customer Portal
+                </Button>
+              )}
 
               {currentView === 'list' && (
                 <Button 

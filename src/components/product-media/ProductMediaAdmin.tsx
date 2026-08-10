@@ -40,17 +40,15 @@ export const ProductMediaAdmin = () => {
         const ext = file.name.split('.').pop()?.toLowerCase() || '';
         const isModel = ext === 'glb' || ext === 'gltf';
         const isImage = ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+        const isStep = ext === 'stp' || ext === 'step';
 
-        if (ext === 'stp' || ext === 'step') {
-          errors.push(`${file.name}: STEP files must be converted to GLB/PNG first`);
-          continue;
-        }
-        if (!isModel && !isImage) {
+        if (!isModel && !isImage && !isStep) {
           errors.push(`${file.name}: unsupported file type`);
           continue;
         }
 
-        const path = `${sku}/${isModel ? 'model' : 'image'}.${ext}`;
+        const kind = isStep ? 'step' : isModel ? 'model' : 'image';
+        const path = `${sku}/${kind}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from(BUCKET)
           .upload(path, file, { upsert: true, contentType: file.type || undefined });
@@ -62,7 +60,7 @@ export const ProductMediaAdmin = () => {
         const patch: Record<string, unknown> = {
           sku,
           uploaded_by: userData.user?.id ?? null,
-          [isModel ? 'model_path' : 'image_path']: path,
+          [`${kind}_path`]: path,
         };
         const { error: dbErr } = await supabase
           .from('product_media' as any)
@@ -90,7 +88,7 @@ export const ProductMediaAdmin = () => {
       toast.error(error.message);
       return;
     }
-    await supabase.storage.from(BUCKET).remove([`${sku}/image.png`, `${sku}/image.jpg`, `${sku}/image.jpeg`, `${sku}/image.webp`, `${sku}/model.glb`, `${sku}/model.gltf`]);
+    await supabase.storage.from(BUCKET).remove([`${sku}/image.png`, `${sku}/image.jpg`, `${sku}/image.jpeg`, `${sku}/image.webp`, `${sku}/model.glb`, `${sku}/model.gltf`, `${sku}/step.stp`, `${sku}/step.step`]);
     await reload();
     toast.success(`Removed media for ${sku}`);
   };
@@ -103,7 +101,7 @@ export const ProductMediaAdmin = () => {
           Item pictures & 3D models
         </CardTitle>
         <CardDescription>
-          Drop pictures (PNG/JPG) and 3D models (GLB, converted from the .stp files) here. The file name must be the
+          Drop pictures (PNG/JPG), 3D models (GLB) and original CAD files (STP/STEP) here. The file name must be the
           item number — e.g. <span className="font-mono">UF2612.png</span> or <span className="font-mono">UF2612.glb</span>.
         </CardDescription>
       </CardHeader>

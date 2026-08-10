@@ -22,6 +22,8 @@ import { PortalQuoteDialog } from './PortalQuoteDialog';
 import { PortalTeam } from './PortalTeam';
 import * as XLSX from 'xlsx';
 import { ProductMediaThumb } from '@/components/product-media/ProductMediaThumb';
+import { ProductMediaDownload } from '@/components/product-media/ProductMediaDownload';
+import { GritColorBadge } from '@/components/product-media/GritColorBadge';
 
 const SYMBOLS: Record<string, string> = { EUR: '€', USD: '$', ILS: '₪' };
 
@@ -311,6 +313,10 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                     <div className="flex items-center gap-2 mb-1">
                       <ProductMediaThumb sku={p.sku} description={p.description} size={44} />
                       <div className="font-mono text-xs text-muted-foreground">{p.sku}</div>
+                      <GritColorBadge description={p.description} />
+                      <div className="ml-auto">
+                        <ProductMediaDownload sku={p.sku} description={p.description} />
+                      </div>
                     </div>
                     <div className="text-sm font-medium leading-tight mb-3">{p.description}</div>
                     <div className="mt-auto">
@@ -368,8 +374,14 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                             <ProductMediaThumb sku={p.sku} description={p.description} size={28} />
                             {p.sku}
                           </div>
-                          <div className="px-3 py-1.5">{p.description}</div>
-                          <div className="px-3 py-1.5 text-right font-medium">{fmt(unit)}</div>
+                          <div className="px-3 py-1.5 flex items-center gap-2">
+                            <GritColorBadge description={p.description} />
+                            {p.description}
+                          </div>
+                          <div className="px-3 py-1.5 flex items-center justify-end gap-1">
+                            <span className="font-medium">{fmt(unit)}</span>
+                            <ProductMediaDownload sku={p.sku} description={p.description} />
+                          </div>
                         </div>
                         {hasBreaks && open && (
                           <div className="bg-muted/20 border-t border-border px-3 py-2">

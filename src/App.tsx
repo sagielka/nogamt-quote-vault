@@ -14,10 +14,16 @@ import Versions from "./pages/Versions";
 
 import DesktopUpdater from "./components/DesktopUpdater";
 import UpdateBanner from "./components/UpdateBanner";
+import { initForceUpdateWatcher } from "./lib/force-update";
 import { useVersionReporter } from "./hooks/useVersionReporter";
 
 
 const queryClient = new QueryClient();
+
+const ForceUpdateWatcher = () => {
+  useEffect(() => initForceUpdateWatcher(), []);
+  return null;
+};
 
 const VersionReporter = () => {
   useVersionReporter();
@@ -33,6 +39,7 @@ const App = () => (
         <DesktopUpdater />
         <UpdateBanner />
         <VersionReporter />
+        <ForceUpdateWatcher />
 
 
         <HashRouter>

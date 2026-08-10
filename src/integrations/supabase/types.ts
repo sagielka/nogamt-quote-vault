@@ -419,6 +419,41 @@ export type Database = {
           },
         ]
       }
+      customer_price_list_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          customer_id: string
+          id: string
+          new_price_list: string | null
+          previous_price_list: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          customer_id: string
+          id?: string
+          new_price_list?: string | null
+          previous_price_list?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          customer_id?: string
+          id?: string
+          new_price_list?: string | null
+          previous_price_list?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_price_list_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null

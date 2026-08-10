@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       const { error } = await admin
         .from('catalog_prices')
         .upsert(records.slice(i, i + 500), { onConflict: 'sku' });
-      if (error) throw error;
+      if (error) throw new Error(`Upsert failed: ${JSON.stringify(error)}`);
     }
 
     await admin.from('catalog_sync_state').update({
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
 
     return json({ status: 'success', fileName: meta.name, total: records.length, added, updated });
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+    const message = e instanceof Error ? e.message : JSON.stringify(e);
     console.error('sync-catalog-drive failed:', message);
     await admin.from('catalog_sync_state').update({
       last_sync_at: new Date().toISOString(),

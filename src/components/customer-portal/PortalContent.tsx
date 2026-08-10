@@ -338,7 +338,23 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       </TabsContent>
 
       <TabsContent value="quotes">
-        {quotes.length === 0 ? (
+        <div className="flex items-center gap-2 mb-3">
+          <Button
+            size="sm"
+            variant={quoteScope === 'mine' ? 'default' : 'outline'}
+            onClick={() => setQuoteScope('mine')}
+          >
+            Received by me ({myQuotes.length})
+          </Button>
+          <Button
+            size="sm"
+            variant={quoteScope === 'company' ? 'default' : 'outline'}
+            onClick={() => setQuoteScope('company')}
+          >
+            All company quotes ({quotes.length})
+          </Button>
+        </div>
+        {visibleQuotes.length === 0 ? (
           <Card>
             <CardContent className="p-10 text-center text-muted-foreground">
               <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
@@ -359,7 +375,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                 </tr>
               </thead>
               <tbody>
-                {quotes.map((q) => (
+                {visibleQuotes.map((q) => (
                   <tr
                     key={q.id}
                     className="border-t border-border hover:bg-muted/30 cursor-pointer"
@@ -378,9 +394,25 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                       ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
                       {q.currency}
                     </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
                       <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedQuote(q); }}>
                         <Eye className="w-4 h-4 mr-1" /> View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyQuote === q.id}
+                        onClick={(e) => { e.stopPropagation(); downloadQuote(q); }}
+                      >
+                        <Download className="w-4 h-4 mr-1" /> PDF
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyQuote === q.id}
+                        onClick={(e) => { e.stopPropagation(); emailQuote(q); }}
+                      >
+                        <Mail className="w-4 h-4 mr-1" /> Email me
                       </Button>
                     </td>
                   </tr>
@@ -391,6 +423,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         )}
         <PortalQuoteDialog quote={selectedQuote} onOpenChange={(o) => !o && setSelectedQuote(null)} />
       </TabsContent>
+
 
       {showTeam && (
         <TabsContent value="team">

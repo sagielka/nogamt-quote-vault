@@ -11,6 +11,8 @@ import CustomerPortal from "./pages/CustomerPortal";
 import CustomerPrices from "./pages/CustomerPrices";
 import NotFound from "./pages/NotFound";
 import DesktopUpdater from "./components/DesktopUpdater";
+import UpdateBanner from "./components/UpdateBanner";
+
 
 const queryClient = new QueryClient();
 

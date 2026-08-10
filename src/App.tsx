@@ -23,6 +23,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <DesktopUpdater />
+        <UpdateBanner />
+
         <HashRouter>
           <Routes>
             <Route path="/" element={<Index />} />

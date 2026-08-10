@@ -39,10 +39,21 @@ interface ManagedUser {
   last_seen_at: string | null;
   banned: boolean;
   quotation_count: number;
+  has_staff_role?: boolean;
+  is_customer?: boolean;
+  customer_company?: string | null;
+  customer_status?: string | null;
+  customer_price_list?: string | null;
 }
 
-export const UserManagement = () => {
+interface UserManagementProps {
+  /** Opens the Price Portal screen where customer accounts are managed. */
+  onOpenPricePortal?: () => void;
+}
+
+export const UserManagement = ({ onOpenPricePortal }: UserManagementProps = {}) => {
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [tab, setTab] = useState<'staff' | 'customers'>('staff');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -264,6 +275,11 @@ export const UserManagement = () => {
     }
   };
 
+  const isCustomerOnly = (u: ManagedUser) => !!u.is_customer && !u.has_staff_role;
+  const staffUsers = users.filter((u) => !isCustomerOnly(u));
+  const customerUsers = users.filter(isCustomerOnly);
+  const visibleUsers = tab === 'staff' ? staffUsers : customerUsers;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -280,7 +296,9 @@ export const UserManagement = () => {
           <h2 className="heading-display text-2xl text-foreground">User Management</h2>
         </div>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-muted-foreground">{users.length} user{users.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-muted-foreground">
+            {staffUsers.length} app user{staffUsers.length !== 1 ? 's' : ''} · {customerUsers.length} customer{customerUsers.length !== 1 ? 's' : ''}
+          </p>
           
           {/* Invite User Dialog */}
           <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -340,8 +358,41 @@ export const UserManagement = () => {
         </div>
       </div>
 
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'staff' | 'customers')}>
+        <TabsList>
+          <TabsTrigger value="staff">
+            <UserCog className="w-3.5 h-3.5 mr-1.5" />
+            App users ({staffUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="customers">
+            <Building2 className="w-3.5 h-3.5 mr-1.5" />
+            Customers ({customerUsers.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {tab === 'customers' && (
+        <div className="card-elevated p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Customer accounts only sign in to the customer portal to see their price list,
+            quotations and statistics. Approvals and price lists are managed in the Price Portal.
+          </p>
+          {onOpenPricePortal && (
+            <Button size="sm" variant="outline" onClick={onOpenPricePortal}>
+              Open Price Portal
+            </Button>
+          )}
+        </div>
+      )}
+
+      {visibleUsers.length === 0 && (
+        <p className="text-sm text-muted-foreground py-8 text-center">
+          {tab === 'staff' ? 'No app users.' : 'No customer accounts yet.'}
+        </p>
+      )}
+
       <div className="space-y-2">
-        {users.map((u) => (
+        {visibleUsers.map((u) => (
           <div
             key={u.id}
             className={`card-elevated p-4 flex flex-col md:flex-row md:items-center gap-4 ${

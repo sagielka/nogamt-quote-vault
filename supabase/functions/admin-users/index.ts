@@ -55,9 +55,21 @@ Deno.serve(async (req) => {
       _role: "admin",
     });
 
-    if (!isAdmin) {
+    const portalAction =
+      new URL(req.url).searchParams.get("action") === "create-portal-user";
+    let allowed = !!isAdmin;
+    if (!allowed && portalAction) {
+      const { data: canPortal } = await anonClient.rpc("has_permission", {
+        _user_id: user.id,
+        _permission: "price_portal",
+      });
+      allowed = !!canPortal;
+    }
+
+    if (!allowed) {
       return jsonResponse({ error: "Admin access required" }, 403);
     }
+
 
     // adminClient already created above
     const url = new URL(req.url);

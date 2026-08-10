@@ -369,6 +369,22 @@ export const UserManagement = () => {
                 </SelectContent>
               </Select>
 
+              {/* Price Portal permission */}
+              {u.role !== 'admin' && (
+                <Button
+                  variant={perms[u.id]?.includes('price_portal') ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs"
+                  disabled={permLoading === u.id}
+                  onClick={() => togglePricePortal(u.id)}
+                  title="Allow this user to open the Price Portal admin screen"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+                  Price Portal
+                </Button>
+              )}
+
+
               {/* Reset Password */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>

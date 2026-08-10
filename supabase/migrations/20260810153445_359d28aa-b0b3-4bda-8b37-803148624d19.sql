@@ -1,0 +1,1 @@
+ALTER TABLE public.product_media ADD COLUMN IF NOT EXISTS step_path text;

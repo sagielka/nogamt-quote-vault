@@ -612,6 +612,7 @@ export type Database = {
           image_path: string | null
           model_path: string | null
           sku: string
+          step_path: string | null
           updated_at: string
           uploaded_by: string | null
         }
@@ -620,6 +621,7 @@ export type Database = {
           image_path?: string | null
           model_path?: string | null
           sku: string
+          step_path?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }
@@ -628,6 +630,7 @@ export type Database = {
           image_path?: string | null
           model_path?: string | null
           sku?: string
+          step_path?: string | null
           updated_at?: string
           uploaded_by?: string | null
         }

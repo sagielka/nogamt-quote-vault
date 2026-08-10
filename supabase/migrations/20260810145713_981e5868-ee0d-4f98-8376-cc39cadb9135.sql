@@ -1,0 +1,1 @@
+delete from auth.users where email = 'pilot.test.9182@nogatools.nl';

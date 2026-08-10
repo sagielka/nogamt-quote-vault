@@ -80,13 +80,22 @@ const CustomerPrices = () => {
     try {
       if (mode === 'signup') {
         const { error } = await signUp(email.trim(), password);
-        if (error) throw error;
-        setNotice('Account created. Please check your email to confirm, then sign in to complete your registration.');
-        setMode('signin');
+        if (error) {
+          if (/already registered/i.test(error.message)) {
+            setNotice('This email is already registered. Please sign in instead.');
+            setMode('signin');
+            return;
+          }
+          throw error;
+        }
+        // Auto-confirm is enabled: the user is signed in right away and
+        // continues to the registration details step.
+        setNotice('');
       } else {
         const { error } = await signIn(email.trim(), password);
         if (error) throw error;
       }
+
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {

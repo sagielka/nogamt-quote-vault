@@ -90,17 +90,46 @@ export const PortalContent = ({ rawList, email }: Props) => {
   const fmt = (v: number) =>
     `${symbol}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  const exportExcel = () => {
+    const rows = filtered.map((p: any) => {
+      const unit = (customListId ? p.customPrice : p.prices[priceList as PriceList]) as number;
+      const item: any = { sku: p.sku, description: p.description, unitPrice: unit, discountPercent: 0 };
+      const row: Record<string, any> = {
+        'Item number': p.sku,
+        Description: p.description || '',
+        Currency: baseCurrency,
+        'Unit price': Number(unit?.toFixed?.(2) ?? unit),
+      };
+      if (isUsPriceBreakItem(item)) {
+        US_PRICE_TIERS.forEach((qty) => {
+          row[`${qty} pcs`] = Number(getTierNetUnitPrice(item, qty).toFixed(2));
+        });
+      }
+      return row;
+    });
+
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    sheet['!cols'] = [{ wch: 18 }, { wch: 60 }, { wch: 10 }, { wch: 14 }];
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, 'Price list');
+    const listName = (customListId ? customList?.name : PRICE_LISTS.find((p) => p.value === priceList)?.label) || 'price-list';
+    const stamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(book, `NOGA-MT_${listName.replace(/[^\w-]+/g, '-')}_${stamp}.xlsx`);
+  };
+
   return (
     <Tabs defaultValue="overview">
       <TabsList className="mb-4">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="prices">Price list</TabsTrigger>
         <TabsTrigger value="quotes">My quotations ({quotes.length})</TabsTrigger>
+        <TabsTrigger value="team">Team</TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview">
         <PortalStats quotes={quotes} />
       </TabsContent>
+
 
       <TabsContent value="prices">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">

@@ -18,6 +18,7 @@ const skuFromFileName = (name: string) => name.replace(/\.[^.]+$/, '').trim().to
 export const ProductMediaAdmin = () => {
   const { media, reload } = useProductMedia();
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 

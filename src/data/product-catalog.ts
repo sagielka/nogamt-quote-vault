@@ -647,12 +647,6 @@ const staticCatalogProducts: ProductItem[] = [
   { sku: "UX9002", description: 'MT MICRO DEMO KIT', prices: { EURO: 215.0, DOLLAR: 252.0, NOGA_BV_EURO: 215.0, SHEKEL: 817.0, CHINA_DOLLAR: 252.0 } },
   { sku: "UF9999", description: 'E-PACK', prices: { EURO: 350.0, DOLLAR: 350.0, NOGA_BV_EURO: 262.5, SHEKEL: 1330.0, CHINA_DOLLAR: 350.0 } },
   { sku: "UF9420", description: 'UF-PS-O-D2-L20', prices: { EURO: 52.28, DOLLAR: 60.12, NOGA_BV_EURO: 31.37, SHEKEL: 198.66, CHINA_DOLLAR: 48.1 } },
-  { sku: "US2…", description: 'US-...-...-B-...-...-…', prices: { EURO: 48.5, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 } },
-  { sku: "US3…", description: 'US-...-...-C-...-...-…', prices: { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 } },
-  { sku: "US4…", description: 'US-...-...-D-...-...-…', prices: { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 } },
-  { sku: "US5…", description: 'US-...-...-E-...-...-…', prices: { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 } },
-  { sku: "US6…", description: 'US-...-...-F-...-...-…', prices: { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 } },
-  { sku: "US7…", description: 'US-...-...-G-...-...-…', prices: { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 } },
 ];
 
 // Deduplicate products by SKU (case-insensitive), keeping the first occurrence.

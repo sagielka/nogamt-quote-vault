@@ -14,9 +14,15 @@ import Versions from "./pages/Versions";
 
 import DesktopUpdater from "./components/DesktopUpdater";
 import UpdateBanner from "./components/UpdateBanner";
+import { useVersionReporter } from "./hooks/useVersionReporter";
 
 
 const queryClient = new QueryClient();
+
+const VersionReporter = () => {
+  useVersionReporter();
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,6 +32,8 @@ const App = () => (
         <Sonner />
         <DesktopUpdater />
         <UpdateBanner />
+        <VersionReporter />
+
 
         <HashRouter>
           <Routes>

@@ -309,7 +309,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                 return (
                   <div key={p.sku} className="snap-start shrink-0 w-[260px] rounded-lg border border-border bg-card p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
-                      <ProductMediaThumb sku={p.sku} size={44} />
+                      <ProductMediaThumb sku={p.sku} description={p.description} size={44} />
                       <div className="font-mono text-xs text-muted-foreground">{p.sku}</div>
                     </div>
                     <div className="text-sm font-medium leading-tight mb-3">{p.description}</div>
@@ -365,7 +365,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                             {hasBreaks ? (open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
                           </div>
                           <div className="px-3 py-1.5 font-mono text-xs flex items-center gap-2">
-                            <ProductMediaThumb sku={p.sku} size={28} />
+                            <ProductMediaThumb sku={p.sku} description={p.description} size={28} />
                             {p.sku}
                           </div>
                           <div className="px-3 py-1.5">{p.description}</div>

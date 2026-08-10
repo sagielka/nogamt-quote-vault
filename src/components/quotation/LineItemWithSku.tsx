@@ -523,7 +523,7 @@ export const LineItemWithSku = ({
         
         {/* SKU with autocomplete */}
         <div className="relative flex items-center gap-1.5">
-          <ProductMediaThumb sku={item.sku} size={30} />
+          <ProductMediaThumb sku={item.sku} description={item.description} size={30} />
           <Input
             ref={skuInputRef}
             placeholder="Type SKU..."

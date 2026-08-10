@@ -873,6 +873,22 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
                       {customer.quotation_count} quotation{customer.quotation_count !== 1 ? 's' : ''}
                     </span>
                   </div>
+                  <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={customer.price_list || '__none__'}
+                      onValueChange={(v) => assignPriceList(customer, v)}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Assign price list" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        <SelectItem value="__none__">No price list</SelectItem>
+                        {priceListOptions.map((p) => (
+                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   {(() => {
                     const stats = getCustomerTrackingStats(customer.email);
                     if (stats.sent === 0) return null;

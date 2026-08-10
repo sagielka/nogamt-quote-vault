@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import {
   ArrowLeft, FileText, DollarSign, TrendingUp, Package, Users, BarChart3,
-  Download, Search, X, PieChart as PieChartIcon, Calendar, Hash
+  Download, Search, X, PieChart as PieChartIcon, Calendar, Hash, FileSpreadsheet
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
@@ -390,6 +390,48 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     toast({ title: 'CSV Exported', description: 'Line items exported successfully.' });
   };
 
+  // === EXPORT EXCEL ===
+  const handleExportExcel = async () => {
+    const XLSX = await import('xlsx');
+
+    const itemRows = allLineItems.map(i => ({
+      'Quote #': i.quoteNumber,
+      Customer: i.clientName,
+      Status: i.status,
+      SKU: i.sku,
+      Description: i.description,
+      Qty: i.qty,
+      'Unit Price': Number(i.unitPrice.toFixed(2)),
+      'Line Total': Number(i.lineTotal.toFixed(2)),
+      Currency: i.currency,
+      Date: new Date(i.createdAt).toLocaleDateString(),
+    }));
+
+    const quoteRows = quotations.map(q => ({
+      'Quote #': q.quoteNumber,
+      Customer: q.clientName,
+      Email: q.clientEmail,
+      Status: q.status,
+      Items: q.items.length,
+      Subtotal: Number(calculateSubtotal(q.items).toFixed(2)),
+      Total: Number(calculateTotal(q.items, q.taxRate, q.discountType, q.discountValue).toFixed(2)),
+      Currency: q.currency,
+      Created: new Date(q.createdAt).toLocaleDateString(),
+      'Valid Until': new Date(q.validUntil).toLocaleDateString(),
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const wsQuotes = XLSX.utils.json_to_sheet(quoteRows);
+    const wsItems = XLSX.utils.json_to_sheet(itemRows);
+    wsQuotes['!cols'] = [{ wch: 22 }, { wch: 26 }, { wch: 28 }, { wch: 10 }, { wch: 7 }, { wch: 12 }, { wch: 12 }, { wch: 9 }, { wch: 12 }, { wch: 12 }];
+    wsItems['!cols'] = [{ wch: 22 }, { wch: 26 }, { wch: 10 }, { wch: 18 }, { wch: 40 }, { wch: 7 }, { wch: 12 }, { wch: 12 }, { wch: 9 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsQuotes, 'Quotations');
+    XLSX.utils.book_append_sheet(wb, wsItems, 'Line Items');
+    XLSX.writeFile(wb, `noga-quotations-${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+    toast({ title: 'Excel Exported', description: 'Quotations and line items exported.' });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -408,6 +450,9 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-2" /> Export CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={exporting}>
             <Download className="w-4 h-4 mr-2" /> {exporting ? 'Exporting...' : 'Export PDF'}

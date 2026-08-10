@@ -37,6 +37,13 @@ export const UPDATE_AVAILABLE_EVENT = "app:update-available";
 export const PENDING_UPDATE_KEY = "app:pending-update-version";
 
 let applyUpdate: (() => Promise<void>) | null = null;
+let swCheck: (() => void) | null = null;
+
+/** Asks the service worker to check the server for a newer build right now. */
+export async function checkForUpdate() {
+  swCheck?.();
+}
+
 
 /** Activates the waiting service worker; the page reloads once it takes over. */
 export function applyPendingUpdate() {
@@ -69,12 +76,14 @@ export function initAutoUpdate() {
       const check = () => {
         if (navigator.onLine) registration.update().catch(() => {});
       };
+      swCheck = check;
       setInterval(check, 15 * 60 * 1000);
       window.addEventListener("focus", check);
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") check();
       });
     },
+
     onNeedRefresh() {
       applyUpdate = () => updateSW(true);
       window.dispatchEvent(new CustomEvent(UPDATE_AVAILABLE_EVENT));

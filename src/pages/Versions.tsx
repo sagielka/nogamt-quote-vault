@@ -15,6 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useVersionReporter } from "@/hooks/useVersionReporter";
+import { usePermissions } from "@/hooks/usePermissions";
+import ForceUpdateSettings from "@/components/ForceUpdateSettings";
 
 interface VersionEvent {
   id: string;
@@ -42,6 +44,7 @@ const browserOf = (ua: string | null) => {
 
 export default function Versions() {
   useVersionReporter();
+  const { isAdmin } = usePermissions();
   const navigate = useNavigate();
   const [events, setEvents] = useState<VersionEvent[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -107,6 +110,8 @@ export default function Versions() {
             </Button>
           </div>
         </div>
+
+        {isAdmin && <ForceUpdateSettings />}
 
         <Card>
           <CardHeader>

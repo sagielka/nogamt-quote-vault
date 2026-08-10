@@ -26,7 +26,7 @@ import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck, Eye } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck, Eye, Settings as SettingsIcon } from 'lucide-react';
 import { AIQuoteAssistant } from '@/components/AIQuoteAssistant';
 import {
   AlertDialog,
@@ -56,7 +56,7 @@ import { RecurringQuotationsView } from '@/components/RecurringQuotationsView';
 import { History } from 'lucide-react';
 
 
-type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports' | 'portal-accounts' | 'recurring';
+type View = 'list' | 'create' | 'edit' | 'preview' | 'archive' | 'users' | 'customers' | 'report' | 'activity' | 'reports' | 'portal-accounts' | 'recurring' | 'settings';
 
 const Index = () => {
   const { quotations, addQuotation, updateQuotation, deleteQuotation, duplicateQuotation, getQuotation, refreshQuotations } = useQuotations();
@@ -745,13 +745,19 @@ const Index = () => {
                   Recurring
                 </Button>
               )}
+              {currentView === 'list' && isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => navigateToView('settings')}>
+                  <SettingsIcon className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
+              )}
               {currentView === 'list' && (
                 <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
                   <History className="w-4 h-4 mr-2" />
                   Versions
                 </Button>
               )}
-              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts' || currentView === 'recurring') && (
+              {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts' || currentView === 'recurring' || currentView === 'settings') && (
                 <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
                   <FolderOpen className="w-4 h-4 mr-2" />
                   Quotations
@@ -1116,13 +1122,17 @@ const Index = () => {
         )}
 
         {currentView === 'portal-accounts' && canPricePortal && (
-          <div className="space-y-6">
-            {isAdmin && <CatalogSyncPanel />}
-            {isAdmin && <ProductMediaAdmin />}
-            <CustomerAccountsAdmin />
-          </div>
+          <CustomerAccountsAdmin />
         )}
 
+
+        {currentView === 'settings' && isAdmin && (
+          <div className="space-y-6">
+            <h2 className="heading-display text-2xl">Settings</h2>
+            <CatalogSyncPanel />
+            <ProductMediaAdmin />
+          </div>
+        )}
 
         {currentView === 'customers' && (
           <CustomerList

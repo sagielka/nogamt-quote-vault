@@ -49,6 +49,12 @@ export const ProductMediaAdmin = () => {
 
         const kind = isStep ? 'step' : isModel ? 'model' : 'image';
         const path = `${sku}/${kind}.${ext}`;
+        const patch: Record<string, unknown> = {
+          sku,
+          uploaded_by: userData.user?.id ?? null,
+          [`${kind}_path`]: path,
+        };
+
         const { error: upErr } = await supabase.storage
           .from(BUCKET)
           .upload(path, file, { upsert: true, contentType: file.type || undefined });
@@ -57,11 +63,34 @@ export const ProductMediaAdmin = () => {
           continue;
         }
 
-        const patch: Record<string, unknown> = {
-          sku,
-          uploaded_by: userData.user?.id ?? null,
-          [`${kind}_path`]: path,
-        };
+        // A STEP file also produces the 3D model (GLB) and the preview picture (PNG)
+        if (isStep) {
+          setStatus(`Converting ${sku}…`);
+          try {
+            const { convertStepFile } = await import('@/lib/step-convert');
+            const { glb, png } = await convertStepFile(file);
+
+            const glbPath = `${sku}/model.glb`;
+            const { error: glbErr } = await supabase.storage
+              .from(BUCKET)
+              .upload(glbPath, glb, { upsert: true, contentType: 'model/gltf-binary' });
+            if (glbErr) throw glbErr;
+            patch.model_path = glbPath;
+
+            if (png) {
+              const pngPath = `${sku}/image.png`;
+              const { error: pngErr } = await supabase.storage
+                .from(BUCKET)
+                .upload(pngPath, png, { upsert: true, contentType: 'image/png' });
+              if (pngErr) throw pngErr;
+              patch.image_path = pngPath;
+            }
+          } catch (e) {
+            errors.push(`${file.name}: conversion failed (${(e as Error).message})`);
+          }
+          setStatus(null);
+        }
+
         const { error: dbErr } = await supabase
           .from('product_media' as any)
           .upsert(patch as any, { onConflict: 'sku' });

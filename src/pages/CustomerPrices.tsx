@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
+import { usePermissions } from '@/hooks/usePermissions';
 import { PRICE_LISTS, type PriceList } from '@/data/product-catalog';
 import { CUSTOM_PREFIX, fetchCustomPriceList, type CustomPriceList } from '@/hooks/useCustomPriceLists';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogOut, Clock, ShieldCheck } from 'lucide-react';
+import { Loader2, LogOut, Clock, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 import logo from '@/assets/logo.jpg';
 

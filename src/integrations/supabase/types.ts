@@ -1049,6 +1049,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_approved_customer_for_company: {
+        Args: { _client_name: string; _user_id: string }
+        Returns: boolean
+      }
       is_approved_customer_for_email: {
         Args: { _email: string; _user_id: string }
         Returns: boolean

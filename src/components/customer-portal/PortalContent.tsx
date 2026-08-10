@@ -67,6 +67,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
     (async () => {
       // Include colleagues on the same portal account (shared company account)
       let emails = [email.toLowerCase()];
+      const companies: string[] = [];
       const { data: me } = await supabase
         .from('customer_accounts')
         .select('id, parent_account_id')
@@ -76,20 +77,37 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         const rootId = (me as any).parent_account_id || (me as any).id;
         const { data: fam } = await supabase
           .from('customer_accounts')
-          .select('email')
+          .select('email, company_name')
           .or(`id.eq.${rootId},parent_account_id.eq.${rootId}`);
         if (fam?.length) {
           emails = Array.from(new Set(fam.map((f: any) => String(f.email).toLowerCase()).concat(emails)));
+          fam.forEach((f: any) => {
+            if (f.company_name && !companies.includes(f.company_name)) companies.push(f.company_name);
+          });
         }
       }
+      // Company names from the customers directory linked to any of these emails
+      const { data: custRows } = await supabase.from('customers').select('name, email');
+      (custRows || []).forEach((c: any) => {
+        const addrs = String(c.email || '').split(',').map((s) => s.trim().toLowerCase());
+        if (addrs.some((a) => emails.includes(a)) && c.name && !companies.includes(c.name)) {
+          companies.push(c.name);
+        }
+      });
+
+      const filters = [
+        ...emails.map((e) => `client_email.ilike.%${e}%`),
+        ...companies.map((c) => `client_name.ilike.${c}`),
+      ];
       const { data } = await supabase
         .from('quotations')
         .select('*')
-        .or(emails.map((e) => `client_email.ilike.%${e}%`).join(','))
+        .or(filters.join(','))
         .order('created_at', { ascending: false });
       setQuotes((data as any) || []);
     })();
   }, [email]);
+
 
 
   const filtered = useMemo(() => {

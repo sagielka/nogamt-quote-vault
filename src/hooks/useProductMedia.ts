@@ -5,6 +5,7 @@ export interface ProductMedia {
   sku: string;
   imageUrl: string | null;
   modelUrl: string | null;
+  stepUrl: string | null;
 }
 
 type MediaMap = Record<string, ProductMedia>;
@@ -46,12 +47,17 @@ function familyCandidates(description?: string | null): string[] {
 async function fetchMedia(): Promise<MediaMap> {
   const { data, error } = await supabase
     .from('product_media' as any)
-    .select('sku, image_path, model_path');
+    .select('sku, image_path, model_path, step_path');
 
   if (error || !data) return {};
 
-  const rows = data as unknown as { sku: string; image_path: string | null; model_path: string | null }[];
-  const paths = rows.flatMap((r) => [r.image_path, r.model_path].filter(Boolean) as string[]);
+  const rows = data as unknown as {
+    sku: string;
+    image_path: string | null;
+    model_path: string | null;
+    step_path: string | null;
+  }[];
+  const paths = rows.flatMap((r) => [r.image_path, r.model_path, r.step_path].filter(Boolean) as string[]);
   const signed: Record<string, string> = {};
 
   if (paths.length) {
@@ -67,6 +73,7 @@ async function fetchMedia(): Promise<MediaMap> {
       sku: r.sku,
       imageUrl: r.image_path ? signed[r.image_path] ?? null : null,
       modelUrl: r.model_path ? signed[r.model_path] ?? null : null,
+      stepUrl: r.step_path ? signed[r.step_path] ?? null : null,
     };
   });
   return map;

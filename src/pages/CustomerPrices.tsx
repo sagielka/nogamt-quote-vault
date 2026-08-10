@@ -147,7 +147,11 @@ const CustomerPrices = () => {
     return (
       <Shell>
         <div className="flex items-center gap-2 mb-4">
-          <ShieldCheck className="w-5 h-5 text-primary" />
+          <Button variant="ghost" size="sm" onClick={() => window.location.hash = '#/'}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Dashboard
+          </Button>
+          <ShieldCheck className="w-5 h-5 text-primary ml-auto" />
           <h1 className="heading-display text-2xl">Customer Price Portal</h1>
           <Badge variant="secondary" className="ml-2">Staff view</Badge>
         </div>

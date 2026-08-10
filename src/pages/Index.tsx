@@ -1114,7 +1114,10 @@ const Index = () => {
         )}
 
         {currentView === 'portal-accounts' && canPricePortal && (
-          <CustomerAccountsAdmin />
+          <div className="space-y-6">
+            {isAdmin && <CatalogSyncPanel />}
+            <CustomerAccountsAdmin />
+          </div>
         )}
 
 

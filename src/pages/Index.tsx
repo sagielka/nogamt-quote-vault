@@ -47,6 +47,7 @@ import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 import { ItemPricesView } from '@/components/ItemPricesView';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ViewModeToggle, ViewMode, loadViewMode } from '@/components/ViewModeToggle';
 import { QuotationViews } from '@/components/quotation/QuotationViews';
 
@@ -64,6 +65,8 @@ const Index = () => {
     restoreQuotation 
   } = useArchivedQuotations();
   const { user, loading, signOut } = useAuth();
+  const { can } = usePermissions();
+  const canPricePortal = can('price_portal');
   const [currentView, setCurrentView] = useState<View>('list');
   const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
   const scrollPositionRef = useRef(0);
@@ -689,7 +692,7 @@ const Index = () => {
                   Users
                 </Button>
               )}
-              {currentView === 'list' && isAdmin && (
+              {currentView === 'list' && canPricePortal && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1086,7 +1089,7 @@ const Index = () => {
           <UserManagement />
         )}
 
-        {currentView === 'portal-accounts' && isAdmin && (
+        {currentView === 'portal-accounts' && canPricePortal && (
           <CustomerAccountsAdmin />
         )}
 

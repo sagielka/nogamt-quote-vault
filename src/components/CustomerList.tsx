@@ -190,6 +190,36 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [importing, setImporting] = useState(false);
   const { user } = useAuth();
   const { tracking } = useEmailTracking();
+  const { lists: customPriceLists } = useCustomPriceLists();
+  const priceListOptions = useMemo(() => [
+    ...PRICE_LISTS.map((p) => ({ value: p.value as string, label: p.label })),
+    ...customPriceLists.map((l) => ({ value: `${CUSTOM_PREFIX}${l.id}`, label: `${l.name} (custom · ${l.currency})` })),
+  ], [customPriceLists]);
+
+  const assignPriceList = async (customer: Customer, value: string) => {
+    const next = value === '__none__' ? null : value;
+    const { error } = await supabase
+      .from('customers')
+      .update({ price_list: next } as any)
+      .eq('id', customer.id);
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to assign price list.', variant: 'destructive' });
+      return;
+    }
+    setCustomers((prev) => prev.map((c) => (c.id === customer.id ? { ...c, price_list: next } : c)));
+
+    // Keep any linked portal account in sync
+    const emails = (customer.email || '').split(/[,;]/).map((e) => e.trim().toLowerCase()).filter(Boolean);
+    if (next && emails.length) {
+      await (supabase.from('customer_accounts' as any).update({ price_list: next } as any).in('email', emails) as any);
+    }
+    toast({
+      title: 'Price list assigned',
+      description: next
+        ? `${customer.name} → ${priceListOptions.find((p) => p.value === next)?.label || next}`
+        : `Price list cleared for ${customer.name}`,
+    });
+  };
 
   const execFormat = useCallback((command: string, value?: string) => {
     document.execCommand(command, false, value);

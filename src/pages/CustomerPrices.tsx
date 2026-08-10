@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
+import { usePermissions } from '@/hooks/usePermissions';
 import { PRICE_LISTS, type PriceList } from '@/data/product-catalog';
 import { CUSTOM_PREFIX, fetchCustomPriceList, type CustomPriceList } from '@/hooks/useCustomPriceLists';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,14 +10,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, LogOut, Clock, ShieldCheck } from 'lucide-react';
+import { Loader2, LogOut, Clock, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 import logo from '@/assets/logo.jpg';
 
 const CustomerPrices = () => {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const { account, loading: accountLoading, createAccount } = useCustomerAccount();
+  const { can, isAdmin } = usePermissions();
+  const canManagePortal = can('price_portal');
   const { toast } = useToast();
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -25,6 +30,11 @@ const CustomerPrices = () => {
   const [contact, setContact] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+
+  // Admin/staff portal browsing state
+  const [portalAccounts, setPortalAccounts] = useState<Array<{ id: string; email: string; company_name: string | null; price_list: string | null; status: string }>>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [accountsLoading, setAccountsLoading] = useState(false);
 
   const rawList = account?.price_list || null;
   const customListId = rawList?.startsWith(CUSTOM_PREFIX) ? rawList.slice(CUSTOM_PREFIX.length) : null;
@@ -40,6 +50,26 @@ const CustomerPrices = () => {
     if (!customListId) return;
     (async () => setCustomList(await fetchCustomPriceList(customListId)))();
   }, [customListId]);
+
+  // Admin/staff: load approved customer accounts so they can browse the portal directly
+  useEffect(() => {
+    if (!user || !canManagePortal) return;
+    setAccountsLoading(true);
+    (async () => {
+      const { data } = await (supabase
+        .from('customer_accounts' as any)
+        .select('id, email, company_name, price_list, status')
+        .eq('status', 'approved')
+        .not('price_list', 'is', null)
+        .order('company_name', { ascending: true }) as any);
+      const rows = (data as any[]) || [];
+      setPortalAccounts(rows);
+      if (rows.length > 0 && !selectedAccountId) setSelectedAccountId(rows[0].id);
+      setAccountsLoading(false);
+    })();
+  }, [user, canManagePortal]);
+
+  const selectedAccount = portalAccounts.find((a) => a.id === selectedAccountId) || null;
 
 
 
@@ -110,6 +140,60 @@ const CustomerPrices = () => {
       </footer>
     </div>
   );
+
+  // Admin/staff with price_portal permission: browse customer portals directly
+  if (user && canManagePortal && !approved) {
+    const selectedRawList = selectedAccount?.price_list || null;
+    return (
+      <Shell>
+        <div className="flex items-center gap-2 mb-4">
+          <Button variant="ghost" size="sm" onClick={() => window.location.hash = '#/'}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Dashboard
+          </Button>
+          <ShieldCheck className="w-5 h-5 text-primary ml-auto" />
+          <h1 className="heading-display text-2xl">Customer Price Portal</h1>
+          <Badge variant="secondary" className="ml-2">Staff view</Badge>
+        </div>
+
+        <Card className="mb-4">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <Label className="text-xs text-muted-foreground shrink-0">Viewing as</Label>
+            {accountsLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            ) : portalAccounts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No approved customers with assigned price lists yet.</p>
+            ) : (
+              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                <SelectTrigger className="w-full sm:w-80">
+                  <SelectValue placeholder="Select a customer…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {portalAccounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.company_name || a.email} — {a.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </CardContent>
+        </Card>
+
+        {selectedAccount && selectedRawList ? (
+          <PortalContent rawList={selectedRawList} email={selectedAccount.email} />
+        ) : (
+          !accountsLoading && portalAccounts.length > 0 && (
+            <Card>
+              <CardContent className="p-10 text-center text-muted-foreground">
+                Select a customer above to view their price portal.
+              </CardContent>
+            </Card>
+          )
+        )}
+      </Shell>
+    );
+  }
 
   // Not signed in
   if (!user) {

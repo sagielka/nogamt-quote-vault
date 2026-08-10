@@ -24,7 +24,7 @@ import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck, Eye } from 'lucide-react';
 import { AIQuoteAssistant } from '@/components/AIQuoteAssistant';
 import {
   AlertDialog,
@@ -702,6 +702,16 @@ const Index = () => {
                 >
                   <ShieldCheck className="w-4 h-4 mr-2" />
                   Price Portal
+                </Button>
+              )}
+              {currentView === 'list' && canPricePortal && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/price-list')}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Customer Portal
                 </Button>
               )}
 

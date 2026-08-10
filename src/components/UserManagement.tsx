@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail } from 'lucide-react';
+import { Shield, ShieldOff, RefreshCw, Users, Eye, UserCog, Ban, CheckCircle, Circle, UserPlus, Trash2, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { fetchAllPermissions, setPermission } from '@/hooks/usePermissions';
 import {
   AlertDialog,
   AlertDialogAction,

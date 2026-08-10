@@ -7,6 +7,7 @@ import {
   PENDING_UPDATE_KEY,
   applyPendingUpdate,
 } from "@/lib/sw-register";
+import { isForceUpdateEnabled } from "@/lib/force-update";
 
 const AUTO_APPLY_SECONDS = 20;
 
@@ -45,7 +46,7 @@ export default function UpdateBanner() {
 
   useEffect(() => {
     if (!available || updating) return;
-    if (seconds <= 0) {
+    if (seconds <= 0 || isForceUpdateEnabled()) {
       setUpdating(true);
       applyPendingUpdate();
       return;

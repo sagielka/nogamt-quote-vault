@@ -142,6 +142,7 @@ interface Customer {
   email: string;
   address: string | null;
   created_at: string;
+  price_list?: string | null;
   quotation_count?: number;
 }
 

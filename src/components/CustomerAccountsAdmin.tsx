@@ -391,7 +391,7 @@ export const CustomerAccountsAdmin = () => {
           </DialogHeader>
           {preview && (
             preview.price_list ? (
-              <PortalContent rawList={preview.price_list} email={preview.email} />
+              <PortalContent rawList={preview.price_list} email={preview.email} showTeam={false} />
             ) : (
               <p className="text-sm text-muted-foreground py-6">
                 No price list assigned yet — the customer sees an "awaiting approval" screen.

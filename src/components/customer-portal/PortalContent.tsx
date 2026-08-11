@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
 import { PortalQuoteDialog } from './PortalQuoteDialog';
 import { PortalTeam } from './PortalTeam';
+import { PortalAccountSettings } from './PortalAccountSettings';
 import * as XLSX from 'xlsx';
 import { ProductMediaThumb } from '@/components/product-media/ProductMediaThumb';
 import { ProductMediaDownload } from '@/components/product-media/ProductMediaDownload';

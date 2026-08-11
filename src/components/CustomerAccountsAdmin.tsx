@@ -462,22 +462,91 @@ export const CustomerAccountsAdmin = () => {
             key={row.id}
             className={row.status === 'pending' ? 'border-amber-500/70 bg-amber-500/5 ring-1 ring-amber-500/30' : undefined}
           >
-            <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3">
+            <CardContent className="p-4 space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">{row.company_name || '—'}</span>
+                    {statusBadge(row.status)}
+                    {row.is_account_admin && (
+                      <Badge variant="outline" className="gap-1 border-primary/60 text-primary">
+                        <Shield className="w-3 h-3" /> Account admin
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {row.email}
+                    {row.contact_name ? ` · ${row.contact_name}` : ''}
+                  </p>
+                <Select
+                  value={row.price_list || undefined}
+                  onValueChange={(v) => patch(row.id, { price_list: v })}
+                >
+                  <SelectTrigger className="w-full md:w-56">
+                    <SelectValue placeholder="Assign price list" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {priceListOptions.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" variant="outline" onClick={() => setPreview(row)}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    View as customer
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setLinkFor(row); setLinkForm({ email: '', contact_name: '', password: '' }); }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add email
+                  </Button>
+                  {rootRows.length > 1 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setMergeFrom(row); setMergeTargetId(''); }}
+                    >
+                      <Merge className="w-4 h-4 mr-2" />
+                      Merge
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
+                    <Link2 className="w-4 h-4 mr-2" />
+                    Copy link
+                  </Button>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">{row.company_name || '—'}</span>
-                  {statusBadge(row.status)}
-                  {row.is_account_admin && (
-                    <Badge variant="outline" className="gap-1 border-primary/60 text-primary">
-                      <Shield className="w-3 h-3" /> Account admin
-                    </Badge>
+                  <Button size="sm" variant="outline" onClick={() => emailPortalLink(row)}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Email link
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => openEdit(row)}>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => sendReset(row)}>
+                    <Mail className="w-4 h-4 mr-2" />
+                    Reset link
+                  </Button>
+                  {row.status !== 'approved' && (
+                    <Button size="sm" onClick={() => openApprove(row)}>
+                      <UserCheck className="w-4 h-4 mr-2" />
+                      Approve
+                    </Button>
+                  )}
+                  {row.status !== 'rejected' && (
+                    <Button size="sm" variant="outline" onClick={() => patch(row.id, { status: 'rejected' })}>
+                      <UserX className="w-4 h-4 mr-2" />
+                      {row.status === 'approved' ? 'Revoke' : 'Reject'}
+                    </Button>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground truncate">
-                  {row.email}
-                  {row.contact_name ? ` · ${row.contact_name}` : ''}
-                </p>
+              </div>
                 {membersOf(row.id).length > 0 && (
                   <div className="mt-2 rounded-md border border-border/60 divide-y divide-border/60">
                     <div className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
@@ -529,78 +598,6 @@ export const CustomerAccountsAdmin = () => {
                     ))}
                   </div>
                 )}
-
-              </div>
-
-              <Select
-                value={row.price_list || undefined}
-                onValueChange={(v) => patch(row.id, { price_list: v })}
-              >
-                <SelectTrigger className="w-full md:w-56">
-                  <SelectValue placeholder="Assign price list" />
-                </SelectTrigger>
-                <SelectContent>
-                  {priceListOptions.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" variant="outline" onClick={() => setPreview(row)}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  View as customer
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setLinkFor(row); setLinkForm({ email: '', contact_name: '', password: '' }); }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add email
-                </Button>
-                {rootRows.length > 1 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => { setMergeFrom(row); setMergeTargetId(''); }}
-                  >
-                    <Merge className="w-4 h-4 mr-2" />
-                    Merge
-                  </Button>
-                )}
-                <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
-                  <Link2 className="w-4 h-4 mr-2" />
-                  Copy link
-                </Button>
-
-                <Button size="sm" variant="outline" onClick={() => emailPortalLink(row)}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email link
-                </Button>
-                <Button size="sm" variant="secondary" onClick={() => openEdit(row)}>
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => sendReset(row)}>
-                  <Mail className="w-4 h-4 mr-2" />
-                  Reset link
-                </Button>
-                {row.status !== 'approved' && (
-                  <Button size="sm" onClick={() => openApprove(row)}>
-                    <UserCheck className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-                )}
-                {row.status !== 'rejected' && (
-                  <Button size="sm" variant="outline" onClick={() => patch(row.id, { status: 'rejected' })}>
-                    <UserX className="w-4 h-4 mr-2" />
-                    {row.status === 'approved' ? 'Revoke' : 'Reject'}
-                  </Button>
-                )}
-              </div>
             </CardContent>
           </Card>
         ))}

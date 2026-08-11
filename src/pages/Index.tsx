@@ -671,7 +671,7 @@ const Index = () => {
 
           {/* Nav tabs row */}
           <nav aria-label="Main navigation" className="mt-2">
-            <div role="tablist" aria-label="Sections" className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
             {currentView === 'list' && quotations.length > 0 && (
               <>
                 <Button variant="outline" size="sm" onClick={() => setAiAssistantOpen(true)} className="border-primary/40">
@@ -687,8 +687,6 @@ const Index = () => {
             {/* Quotations tab — active for list/create/edit/preview */}
             {(() => { const active = ['list', 'create', 'edit', 'preview'].includes(currentView); return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -702,8 +700,6 @@ const Index = () => {
             {/* Archive tab */}
             {(() => { const active = currentView === 'archive'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -725,8 +721,6 @@ const Index = () => {
             {/* Customers tab — active for customers/report */}
             {(() => { const active = ['customers', 'report'].includes(currentView); return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -740,8 +734,6 @@ const Index = () => {
             {/* Activity tab */}
             {(() => { const active = currentView === 'activity'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -755,8 +747,6 @@ const Index = () => {
             {/* Reports tab */}
             {(() => { const active = currentView === 'reports'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -770,8 +760,6 @@ const Index = () => {
             {/* Recurring tab */}
             {(() => { const active = currentView === 'recurring'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -783,15 +771,13 @@ const Index = () => {
               </Button>
             ); })()}
             {/* Versions tab (separate route) */}
-            <Button role="tab" aria-selected={false} variant="outline" size="sm" onClick={() => navigate('/versions')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
               <History className="w-4 h-4 mr-1.5" />
               Versions
             </Button>
             {/* Users tab (admin only) */}
             {isAdmin && (() => { const active = currentView === 'users'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -805,8 +791,6 @@ const Index = () => {
             {/* Price Portal tab */}
             {canPricePortal && (() => { const active = currentView === 'portal-accounts'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"
@@ -819,7 +803,7 @@ const Index = () => {
             ); })()}
             {/* Customer Portal (separate route) */}
             {canPricePortal && (
-              <Button role="tab" aria-selected={false} variant="outline" size="sm" onClick={() => navigate('/price-list')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/price-list')}>
                 <Eye className="w-4 h-4 mr-1.5" />
                 Customer Portal
               </Button>
@@ -827,8 +811,6 @@ const Index = () => {
             {/* Settings tab (admin only) */}
             {isAdmin && (() => { const active = currentView === 'settings'; return (
               <Button
-                role="tab"
-                aria-selected={active}
                 aria-current={active ? 'page' : undefined}
                 variant={active ? 'default' : 'outline'}
                 size="sm"

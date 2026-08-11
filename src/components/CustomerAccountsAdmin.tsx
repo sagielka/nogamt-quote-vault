@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 
 
@@ -57,6 +57,8 @@ export const CustomerAccountsAdmin = () => {
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [linkFor, setLinkFor] = useState<Row | null>(null);
+  const [mergeFrom, setMergeFrom] = useState<Row | null>(null);
+  const [mergeTargetId, setMergeTargetId] = useState('');
   const [linkForm, setLinkForm] = useState({ email: '', contact_name: '', password: '' });
   const [createForm, setCreateForm] = useState({
     customerId: '',
@@ -314,6 +316,47 @@ export const CustomerAccountsAdmin = () => {
     if (ok) toast({ title: 'Access removed', description: `${member.email} no longer shares this account.` });
   };
 
+  // Detach a linked user so they become their own standalone portal account
+  const splitAccount = async (member: Row) => {
+    const ok = await patch(member.id, { parent_account_id: null });
+    if (ok) toast({ title: 'Account split', description: `${member.email} is now a separate portal account.` });
+  };
+
+  // Merge one root account (and everyone under it) into another company account
+  const mergeAccounts = async () => {
+    if (!mergeFrom || !mergeTargetId) return;
+    setBusy(true);
+    try {
+      const target = rows.find((r) => r.id === mergeTargetId);
+      const childIds = membersOf(mergeFrom.id).map((m) => m.id);
+      if (childIds.length) {
+        await (supabase.from('customer_accounts' as any).update({ parent_account_id: mergeTargetId } as any).in('id', childIds) as any);
+      }
+      const { error } = await (supabase
+        .from('customer_accounts' as any)
+        .update({
+          parent_account_id: mergeTargetId,
+          company_name: target?.company_name ?? mergeFrom.company_name,
+          price_list: target?.price_list ?? mergeFrom.price_list,
+        } as any)
+        .eq('id', mergeFrom.id) as any);
+      if (error) throw error;
+      toast({
+        title: 'Accounts merged',
+        description: `${mergeFrom.email} now shares the ${target?.company_name || target?.email} account.`,
+      });
+      setMergeFrom(null);
+      setMergeTargetId('');
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
@@ -336,7 +379,9 @@ export const CustomerAccountsAdmin = () => {
       <div className="flex items-center gap-2">
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h2 className="heading-display text-xl">Customer Portal Accounts</h2>
-        <span className="text-xs text-muted-foreground ml-auto">{rows.length} accounts</span>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {rootRows.length} compan{rootRows.length !== 1 ? 'ies' : 'y'} · {rows.length} user{rows.length !== 1 ? 's' : ''}
+        </span>
         <Button size="sm" variant="outline" onClick={() => copyPortalLink()}>
           <Link2 className="w-4 h-4 mr-2" />
           Copy portal link
@@ -393,26 +438,45 @@ export const CustomerAccountsAdmin = () => {
                   {row.contact_name ? ` · ${row.contact_name}` : ''}
                 </p>
                 {membersOf(row.id).length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <div className="mt-2 rounded-md border border-border/60 divide-y divide-border/60">
+                    <div className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      {membersOf(row.id).length} additional email{membersOf(row.id).length !== 1 ? 's' : ''}
-                    </p>
+                      {membersOf(row.id).length} additional user{membersOf(row.id).length !== 1 ? 's' : ''} on this account
+                    </div>
                     {membersOf(row.id).map((m) => (
-                      <div key={m.id} className="flex items-center gap-2 text-xs">
-                        <span className="truncate">{m.email}{m.contact_name ? ` · ${m.contact_name}` : ''}</span>
+                      <div key={m.id} className="px-2 py-1.5 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="truncate font-medium">{m.email}</span>
+                        <span className="text-muted-foreground">{m.contact_name || 'No name'}</span>
+                        <span className="text-muted-foreground">
+                          {priceListOptions.find((p) => p.value === m.price_list)?.label || 'No price list'}
+                        </span>
+                        <span className="text-muted-foreground">
+                          added {new Date(m.created_at).toLocaleDateString()}
+                        </span>
                         {statusBadge(m.status)}
-                        <button
-                          type="button"
-                          className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
-                          onClick={() => unlinkEmail(m)}
-                        >
-                          <Unlink className="w-3 h-3" /> Remove
-                        </button>
+                        <div className="ml-auto flex items-center gap-2">
+                          <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => openEdit(m)}>
+                            <Pencil className="w-3 h-3" /> Edit
+                          </button>
+                          <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => sendReset(m)}>
+                            <Mail className="w-3 h-3" /> Reset
+                          </button>
+                          <button type="button" className="text-muted-foreground hover:text-primary inline-flex items-center gap-1" onClick={() => splitAccount(m)}>
+                            <Split className="w-3 h-3" /> Split out
+                          </button>
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                            onClick={() => unlinkEmail(m)}
+                          >
+                            <Unlink className="w-3 h-3" /> Remove
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
+
               </div>
 
               <Select
@@ -444,6 +508,16 @@ export const CustomerAccountsAdmin = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   Add email
                 </Button>
+                {rootRows.length > 1 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setMergeFrom(row); setMergeTargetId(''); }}
+                  >
+                    <Merge className="w-4 h-4 mr-2" />
+                    Merge
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
                   <Link2 className="w-4 h-4 mr-2" />
                   Copy link
@@ -478,6 +552,43 @@ export const CustomerAccountsAdmin = () => {
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!mergeFrom} onOpenChange={(o) => !o && setMergeFrom(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Merge portal accounts</DialogTitle>
+            <DialogDescription>
+              {mergeFrom?.company_name || mergeFrom?.email} and everyone linked to it will move under the account you
+              choose, and share its company name and price list.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label>Merge into</Label>
+            <Select value={mergeTargetId || undefined} onValueChange={setMergeTargetId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose the main account to keep" />
+              </SelectTrigger>
+              <SelectContent>
+                {rootRows
+                  .filter((r) => r.id !== mergeFrom?.id)
+                  .map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {(r.company_name || '—') + ' · ' + r.email}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMergeFrom(null)}>Cancel</Button>
+            <Button onClick={mergeAccounts} disabled={busy || !mergeTargetId}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Merge
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">

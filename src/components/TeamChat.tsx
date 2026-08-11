@@ -350,25 +350,66 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
 
           {/* Input */}
           <div className="px-3 py-2 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="text-sm h-9"
-                autoFocus
-              />
-              <Button type="submit" size="sm" className="h-9 px-3" disabled={!newMessage.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+            {recording ? (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-2 flex-1 text-sm text-destructive">
+                  <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  Recording {Math.floor(recordSeconds / 60)}:{String(recordSeconds % 60).padStart(2, '0')}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-9 px-3"
+                  onClick={() => stopRecording(true)}
+                  aria-label="Cancel recording"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 px-3"
+                  onClick={() => stopRecording(false)}
+                  aria-label="Send voice message"
+                >
+                  <Square className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="flex gap-2"
+              >
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="text-sm h-9"
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 px-3"
+                  onClick={startRecording}
+                  disabled={uploading}
+                  aria-label="Record voice message"
+                  title="Record voice message"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
+                </Button>
+                <Button type="submit" size="sm" className="h-9 px-3" disabled={!newMessage.trim()}>
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            )}
           </div>
+
         </div>
       )}
     </>

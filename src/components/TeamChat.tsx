@@ -403,8 +403,25 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
                         msg.content
                       )}
                     </div>
-
+                    {isMe && (() => {
+                      const readers = (reads[msg.id] || []).filter((r) => r.user_id !== user.id);
+                      const names = readers.map((r) => getUserLabel(r.user_id));
+                      return (
+                        <p
+                          className={`mt-0.5 flex items-center gap-1 justify-end text-[10px] ${readers.length ? 'text-primary' : 'text-muted-foreground'}`}
+                          title={
+                            readers.length
+                              ? `Read by ${names.join(', ')}`
+                              : 'Sent — not read yet'
+                          }
+                        >
+                          {readers.length ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                          {readers.length ? `Read by ${names.join(', ')}` : 'Sent'}
+                        </p>
+                      );
+                    })()}
                   </div>
+
                 </div>
               );
             })}

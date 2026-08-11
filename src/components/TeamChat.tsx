@@ -66,38 +66,65 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     loadProfiles();
   }, []);
 
-  // Load messages
-  useEffect(() => {
-    const loadMessages = async () => {
-      const { data } = await (supabase
-        .from('messages' as any)
-        .select('*')
-        .order('created_at', { ascending: true })
-        .limit(100) as any);
-      if (data) {
-        setMessages(data);
-        if (data.length > 0) {
-          lastSeenRef.current = data[data.length - 1].id;
-        }
-      }
-    };
-    loadMessages();
+  const openRef = useRef(open);
+  useEffect(() => { openRef.current = open; }, [open]);
+  const soundRef = useRef(soundEnabled);
+  useEffect(() => { soundRef.current = soundEnabled; }, [soundEnabled]);
+
+  const mergeMessages = useCallback((incoming: ChatMessage[]) => {
+    setMessages((prev) => {
+      const map = new Map(prev.map((m) => [m.id, m]));
+      incoming.forEach((m) => map.set(m.id, m));
+      return Array.from(map.values()).sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
   }, []);
+
+  const fetchMessages = useCallback(async () => {
+    const { data } = await (supabase
+      .from('messages' as any)
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(200) as any);
+    if (!data) return;
+    mergeMessages(data as ChatMessage[]);
+  }, [mergeMessages]);
+
+  // Initial load + polling fallback (in case realtime is unavailable)
+  useEffect(() => {
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 8000);
+    const onFocus = () => fetchMessages();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [fetchMessages]);
+
+  // Notify on genuinely new messages from others
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (lastSeenRef.current === null) {
+      lastSeenRef.current = last.id;
+      return;
+    }
+    if (lastSeenRef.current === last.id) return;
+    lastSeenRef.current = last.id;
+    if (last.user_id !== user?.id) {
+      if (soundRef.current) playNotificationSound();
+      if (!openRef.current) setUnread((u) => u + 1);
+    }
+  }, [messages, user?.id, playNotificationSound]);
 
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel('team-chat')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        const msg = payload.new as ChatMessage;
-        setMessages((prev) => [...prev, msg]);
-        if (msg.user_id !== user?.id) {
-          if (soundEnabled) playNotificationSound();
-          if (!open) {
-            setOpen(true);
-            setUnread(0);
-          }
-        }
+        mergeMessages([payload.new as ChatMessage]);
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, (payload) => {
         setMessages((prev) => prev.filter((m) => m.id !== (payload.old as any).id));
@@ -107,7 +134,7 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [open, user?.id, soundEnabled]);
+  }, [mergeMessages]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -125,8 +152,19 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     if (!newMessage.trim() || !user) return;
     const content = newMessage.trim();
     setNewMessage('');
-    await (supabase.from('messages' as any).insert({ user_id: user.id, content } as any) as any);
+    const { data, error } = await (supabase
+      .from('messages' as any)
+      .insert({ user_id: user.id, content } as any)
+      .select()
+      .maybeSingle() as any);
+    if (error) {
+      setNewMessage(content);
+      toast({ title: 'Message not sent', description: error.message, variant: 'destructive' });
+      return;
+    }
+    if (data) mergeMessages([data as ChatMessage]);
   };
+
 
   const getUserLabel = (userId: string) => {
     if (userNameMap[userId]) return userNameMap[userId];

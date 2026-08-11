@@ -699,143 +699,70 @@ const Index = () => {
                 </Button>
               </>
             )}
-            {/* Quotations tab — active for list/create/edit/preview */}
-            {(() => { const active = ['list', 'create', 'edit', 'preview'].includes(currentView); return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('list')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <FolderOpen className="w-4 h-4 mr-1.5" />
-                Quotations
-              </Button>
-            ); })()}
-            {/* Archive tab */}
-            {(() => { const active = currentView === 'archive'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('archive')}
-                className={`relative ${active ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
-              >
-                <Archive className="w-4 h-4 mr-1.5" />
-                Archive
-                {archivedQuotations.length > 0 && (
-                  <span
-                    className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
-                    aria-label={`${archivedQuotations.length} archived quotations`}
-                  >
-                    {archivedQuotations.length}
-                  </span>
-                )}
-              </Button>
-            ); })()}
-            {/* Customers tab — active for customers/report */}
-            {(() => { const active = ['customers', 'report'].includes(currentView); return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => { setReportCustomer(null); navigateToView('customers'); }}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <BookUser className="w-4 h-4 mr-1.5" />
-                Customers
-              </Button>
-            ); })()}
-            {/* Activity tab */}
-            {(() => { const active = currentView === 'activity'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('activity')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <Activity className="w-4 h-4 mr-1.5" />
-                Activity
-              </Button>
-            ); })()}
-            {/* Reports tab */}
-            {(() => { const active = currentView === 'reports'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('reports')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <BarChart3 className="w-4 h-4 mr-1.5" />
-                Reports
-              </Button>
-            ); })()}
-            {/* Recurring tab */}
-            {(() => { const active = currentView === 'recurring'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('recurring')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <RepeatIcon className="w-4 h-4 mr-1.5" />
-                Recurring
-              </Button>
-            ); })()}
-            {/* Versions tab (separate route) */}
-            <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
-              <History className="w-4 h-4 mr-1.5" />
-              Versions
-            </Button>
-            {/* Users tab (admin only) */}
-            {isAdmin && (() => { const active = currentView === 'users'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('users')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <Users className="w-4 h-4 mr-1.5" />
-                Users
-              </Button>
-            ); })()}
-            {/* Price Portal tab */}
-            {canPricePortal && (() => { const active = currentView === 'portal-accounts'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('portal-accounts')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <ShieldCheck className="w-4 h-4 mr-1.5" />
-                Price Portal
-              </Button>
-            ); })()}
-            {/* Customer Portal (separate route) */}
-            {canPricePortal && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/price-list')}>
-                <Eye className="w-4 h-4 mr-1.5" />
-                Customer Portal
-              </Button>
-            )}
-            {/* Settings tab (admin only) */}
-            {isAdmin && (() => { const active = currentView === 'settings'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('settings')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <SettingsIcon className="w-4 h-4 mr-1.5" />
-                Settings
-              </Button>
-            ); })()}
+
+            {/* Desktop inline tabs */}
+            <div className="hidden lg:flex items-center gap-1.5 flex-wrap">
+              {navItems.map(item => (
+                <Button
+                  key={item.id}
+                  aria-current={item.active ? 'page' : undefined}
+                  variant={item.active ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={item.onClick}
+                  className={`relative ${item.active ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
+                >
+                  <item.icon className="w-4 h-4 mr-1.5" />
+                  {item.label}
+                  {item.badge != null && (
+                    <span
+                      className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
+                      aria-label={`${item.badge} archived quotations`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
+
+            {/* Mobile drawer trigger */}
+            <div className="lg:hidden ml-auto">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" aria-label="Open navigation menu">
+                    <Menu className="w-4 h-4 mr-1.5" />
+                    Menu
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px] sm:w-[300px]">
+                  <SheetHeader>
+                    <SheetTitle>Navigation</SheetTitle>
+                  </SheetHeader>
+                  <nav aria-label="Mobile navigation" className="flex flex-col gap-1.5 px-3 mt-2">
+                    {navItems.map(item => (
+                      <Button
+                        key={item.id}
+                        aria-current={item.active ? 'page' : undefined}
+                        variant={item.active ? 'default' : 'outline'}
+                        onClick={item.onClick}
+                        className="justify-start w-full"
+                      >
+                        <item.icon className="w-4 h-4 mr-2" />
+                        {item.label}
+                        {item.badge != null && (
+                          <span
+                            className="ml-auto text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
+                            aria-label={`${item.badge} archived quotations`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Button>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
             </div>
           </nav>
         </div>

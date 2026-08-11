@@ -2,7 +2,20 @@ import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { calculateTotal, formatDate } from '@/lib/quotation-utils';
-import { FileText, CheckCircle2, Clock, Package, TrendingUp, XCircle } from 'lucide-react';
+import { FileText, CheckCircle2, Clock, Package, TrendingUp, XCircle, PieChart as PieChartIcon, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+  LineChart, Line, CartesianGrid, Legend,
+} from 'recharts';
+
+const STATUS_COLORS: Record<string, string> = {
+  draft: '#94a3b8',
+  sent: '#3b82f6',
+  accepted: '#22c55e',
+  declined: '#ef4444',
+  finished: '#f59e0b',
+};
+const CHART_COLORS = ['#06b6d4', '#22c55e', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6', '#14b8a6', '#ef4444'];
 
 export interface PortalQuoteRow {
   id: string;
@@ -38,12 +51,15 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
     const orderValueByCurrency: Record<string, number> = {};
     const itemCount: Record<string, { qty: number; description: string }> = {};
     const monthly: Record<string, { quotes: number; orders: number }> = {};
+    const statusValue: Record<string, Record<string, number>> = {};
 
     quotes.forEach((q) => {
       const st = (q.status || 'draft').toLowerCase();
       byStatus[st] = (byStatus[st] || 0) + 1;
       const total = quoteTotal(q);
       valueByCurrency[q.currency] = (valueByCurrency[q.currency] || 0) + total;
+      if (!statusValue[st]) statusValue[st] = {};
+      statusValue[st][q.currency] = (statusValue[st][q.currency] || 0) + total;
       if (ORDER_STATUSES.includes(st)) {
         orderValueByCurrency[q.currency] = (orderValueByCurrency[q.currency] || 0) + total;
       }
@@ -66,7 +82,28 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
     const months = Object.entries(monthly).sort((a, b) => a[0].localeCompare(b[0])).slice(-6);
     const maxMonth = Math.max(1, ...months.map(([, m]) => m.quotes));
 
+    const currencies = Object.keys(valueByCurrency);
+    const statusData = Object.entries(byStatus).map(([status, count]) => ({ status, count }));
+    const valueByStatus = Object.entries(statusValue).map(([status, m]) => ({ status, ...m }));
+    const topItemsChart = Object.entries(itemCount)
+      .sort((a, b) => b[1].qty - a[1].qty)
+      .slice(0, 10)
+      .map(([sku, info]) => ({ sku, qty: info.qty }));
+    const trend = Object.entries(monthly)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-12)
+      .map(([month, m]) => ({ month, quotations: m.quotes, orders: m.orders }));
+    const avgOrder = orders.length
+      ? Object.entries(orderValueByCurrency).map(([ccy, v]) => fmtMoney(v / orders.length, ccy)).join(' · ')
+      : '—';
+
     return {
+      currencies,
+      statusData,
+      valueByStatus,
+      topItemsChart,
+      trend,
+      avgOrder,
       total: quotes.length,
       orders: orders.length,
       pending: quotes.filter((q) => ['sent', 'draft'].includes((q.status || 'draft').toLowerCase())).length,
@@ -112,6 +149,13 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
         <Stat icon={Package} label="Orders placed" value={stats.orders} sub={`${stats.conversion}% conversion`} />
         <Stat icon={Clock} label="Open / pending" value={stats.pending} />
         <Stat icon={XCircle} label="Declined" value={stats.declined} />
+        <Stat icon={TrendingUp} label="Average order value" value={<span className="text-lg">{stats.avgOrder}</span>} />
+        <Stat
+          icon={CheckCircle2}
+          label="Last quotation"
+          value={<span className="text-lg">{stats.lastQuote?.quote_number || '—'}</span>}
+          sub={stats.lastQuote ? formatDate(new Date(stats.lastQuote.created_at)) : undefined}
+        />
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -140,6 +184,92 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
                 <div key={ccy} className="text-lg font-semibold">{fmtMoney(v, ccy)}</div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-3">
+              <PieChartIcon className="w-4 h-4" /> Status distribution
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={stats.statusData}
+                  dataKey="count"
+                  nameKey="status"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={85}
+                  label={({ status, count }: any) => `${status} (${count})`}
+                >
+                  {stats.statusData.map((entry, i) => (
+                    <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || CHART_COLORS[i % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-3">
+              <BarChart3 className="w-4 h-4" /> Value by status (per currency)
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={stats.valueByStatus}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="status" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: any) => Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 })} />
+                <Legend />
+                {stats.currencies.map((cur, i) => (
+                  <Bar key={cur} dataKey={cur} name={cur} stackId="value" fill={CHART_COLORS[i % CHART_COLORS.length]} radius={[4, 4, 0, 0]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-3">
+              <LineChartIcon className="w-4 h-4" /> Quotations & orders over time
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={stats.trend}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="quotations" stroke={CHART_COLORS[0]} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="orders" stroke={CHART_COLORS[1]} strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-3">
+              <Package className="w-4 h-4" /> Top 10 products by quantity
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={stats.topItemsChart} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="sku" width={110} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="qty" name="Quantity" fill={CHART_COLORS[0]} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

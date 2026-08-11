@@ -51,18 +51,40 @@ const CustomerPrices = () => {
     (async () => setCustomList(await fetchCustomPriceList(customListId)))();
   }, [customListId]);
 
-  // Admin/staff: load approved customer accounts so they can browse the portal directly
+  // Admin/staff: load portal accounts + all customers so they can browse any portal
+  const [staffOverrideList, setStaffOverrideList] = useState<string>('');
   useEffect(() => {
     if (!user || !canManagePortal) return;
     setAccountsLoading(true);
     (async () => {
-      const { data } = await (supabase
-        .from('customer_accounts' as any)
-        .select('id, email, company_name, price_list, status')
-        .eq('status', 'approved')
-        .not('price_list', 'is', null)
-        .order('company_name', { ascending: true }) as any);
-      const rows = (data as any[]) || [];
+      const [accRes, custRes] = await Promise.all([
+        (supabase
+          .from('customer_accounts' as any)
+          .select('id, email, company_name, price_list, status')
+          .order('company_name', { ascending: true }) as any),
+        (supabase
+          .from('customers' as any)
+          .select('id, name, email, price_list')
+          .order('name', { ascending: true }) as any),
+      ]);
+      const accounts = ((accRes.data as any[]) || []).map((a) => ({
+        id: `acct:${a.id}`,
+        email: a.email,
+        company_name: a.company_name,
+        price_list: a.price_list,
+        status: a.status,
+      }));
+      const accountEmails = new Set(accounts.map((a) => (a.email || '').toLowerCase()));
+      const customers = ((custRes.data as any[]) || [])
+        .filter((c) => c.email && !accountEmails.has(String(c.email).split(/[,;]/)[0].trim().toLowerCase()))
+        .map((c) => ({
+          id: `cust:${c.id}`,
+          email: String(c.email).split(/[,;]/)[0].trim(),
+          company_name: c.name,
+          price_list: c.price_list,
+          status: 'customer',
+        }));
+      const rows = [...accounts, ...customers];
       setPortalAccounts(rows);
       if (rows.length > 0 && !selectedAccountId) setSelectedAccountId(rows[0].id);
       setAccountsLoading(false);
@@ -70,6 +92,7 @@ const CustomerPrices = () => {
   }, [user, canManagePortal]);
 
   const selectedAccount = portalAccounts.find((a) => a.id === selectedAccountId) || null;
+
 
 
 

@@ -5,8 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus, Users, Trash2 } from 'lucide-react';
+import { Loader2, UserPlus, Users, Trash2, UserMinus } from 'lucide-react';
+
 
 interface TeamMember {
   id: string;
@@ -25,6 +36,7 @@ export const PortalTeam = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<TeamMember | null>(null);
 
   const invoke = useCallback(async (action: string, body?: object) => {
     const { data, error } = await supabase.functions.invoke(`portal-team?action=${action}`, {
@@ -85,6 +97,21 @@ export const PortalTeam = () => {
     }
   };
 
+  const deleteUser = async (member: TeamMember) => {
+    setBusy(true);
+    try {
+      const res = await invoke('delete', { memberId: member.id });
+      setTeam(res.team || []);
+      toast({ title: 'User deleted', description: `${member.email} no longer has an account.` });
+    } catch (err: any) {
+      toast({ title: 'Could not delete user', description: err.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+      setPendingDelete(null);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="py-10 flex justify-center">
@@ -125,11 +152,31 @@ export const PortalTeam = () => {
                         <Badge variant="destructive">Removed</Badge>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right">
-                      {isOwner && !m.is_owner && m.status === 'approved' && (
-                        <Button size="sm" variant="ghost" disabled={busy} onClick={() => removeUser(m.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      {isOwner && !m.is_owner && (
+                        <div className="inline-flex gap-1">
+                          {m.status === 'approved' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy}
+                              title="Revoke access (keeps the account)"
+                              onClick={() => removeUser(m.id)}
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            disabled={busy}
+                            title="Delete user permanently"
+                            onClick={() => setPendingDelete(m)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -164,6 +211,30 @@ export const PortalTeam = () => {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete?.email} will be permanently deleted and will no longer be able to sign in to the
+              portal. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={(e) => {
+                e.preventDefault();
+                if (pendingDelete) deleteUser(pendingDelete);
+              }}
+            >
+              Delete user
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

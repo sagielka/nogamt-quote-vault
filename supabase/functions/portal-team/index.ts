@@ -143,6 +143,37 @@ Deno.serve(async (req) => {
       return json({ success: true, team: await listTeam() });
     }
 
+    if (req.method === "POST" && action === "delete") {
+      if (account.id !== rootId) {
+        return json({ error: "Only the main account holder can delete users." }, 403);
+      }
+      const { memberId } = await req.json();
+      if (!memberId || memberId === rootId) return json({ error: "Invalid member" }, 400);
+
+      const { data: member } = await admin
+        .from("customer_accounts")
+        .select("id, user_id")
+        .eq("id", memberId)
+        .eq("parent_account_id", rootId)
+        .maybeSingle();
+      if (!member) return json({ error: "Member not found" }, 404);
+
+      const { error: delErr } = await admin
+        .from("customer_accounts")
+        .delete()
+        .eq("id", memberId)
+        .eq("parent_account_id", rootId);
+      if (delErr) throw delErr;
+
+      if (member.user_id) {
+        await admin.from("user_roles").delete().eq("user_id", member.user_id);
+        const { error: authErr } = await admin.auth.admin.deleteUser(member.user_id);
+        if (authErr) console.error("auth delete failed:", authErr.message);
+      }
+
+      return json({ success: true, team: await listTeam() });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
     console.error("portal-team error:", e);

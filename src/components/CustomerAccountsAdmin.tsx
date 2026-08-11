@@ -418,6 +418,10 @@ export const CustomerAccountsAdmin = () => {
         <span className="text-xs text-muted-foreground ml-auto">
           {rootRows.length} compan{rootRows.length !== 1 ? 'ies' : 'y'} · {rows.length} user{rows.length !== 1 ? 's' : ''}
         </span>
+        <Button size="sm" variant="outline" onClick={() => window.open('/#/price-list', '_blank')}>
+          <Eye className="w-4 h-4 mr-2" />
+          Open customer portal
+        </Button>
         <Button size="sm" variant="outline" onClick={() => copyPortalLink()}>
           <Link2 className="w-4 h-4 mr-2" />
           Copy portal link
@@ -426,6 +430,7 @@ export const CustomerAccountsAdmin = () => {
           <UserPlus className="w-4 h-4 mr-2" />
           New portal user
         </Button>
+
       </div>
 
       <Card>

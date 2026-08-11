@@ -629,10 +629,11 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b no-print">
         <div className="container py-2.5">
+          <h1 className="sr-only">Quotation Dashboard</h1>
           {/* Brand row */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
-              <img src={logo} alt="NogaMT Logo" className="h-11 w-auto shrink-0" />
+              <img src={logo} alt="Noga Engineering &amp; Technology" className="h-11 w-auto shrink-0" />
 
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 shrink-0">
                 <Avatar className="h-6 w-6">

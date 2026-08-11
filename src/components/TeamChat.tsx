@@ -19,10 +19,17 @@ interface ChatMessage {
   email?: string;
 }
 
+interface ReadReceipt {
+  message_id: string;
+  user_id: string;
+  read_at: string;
+}
+
 export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, string> }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [reads, setReads] = useState<Record<string, ReadReceipt[]>>({});
   const [newMessage, setNewMessage] = useState('');
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null; email: string }>>({});
   const [unread, setUnread] = useState(0);

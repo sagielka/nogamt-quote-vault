@@ -140,6 +140,20 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return Object.values(map).sort((a, b) => b.totalRevenue - a.totalRevenue);
   }, [quotations]);
 
+  // === TOP SKUs NORMALIZED TO USD (across all currencies) ===
+  const skuUsdData = useMemo(() => {
+    const map: Record<string, { sku: string; description: string; totalRevenue: number }> = {};
+    skuData.forEach(s => {
+      const key = (s.sku || s.description || '—').toLowerCase();
+      if (!map[key]) map[key] = { sku: s.sku || s.description || '—', description: s.description, totalRevenue: 0 };
+      map[key].totalRevenue += toUSD(s.totalRevenue, s.currency, fx.rates);
+    });
+    return Object.values(map)
+      .map(s => ({ ...s, totalRevenue: Math.round(s.totalRevenue) }))
+      .sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }, [skuData, fx.rates]);
+
+
   const filteredSkuData = useMemo(() => {
     if (!skuSearch) return skuData;
     const q = skuSearch.toLowerCase();

@@ -32,7 +32,6 @@ interface TeamMember {
 export const PortalTeam = () => {
   const { toast } = useToast();
   const [team, setTeam] = useState<TeamMember[]>([]);
-  const [isOwner, setIsOwner] = useState(false);
   const [canManage, setCanManage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
@@ -60,7 +59,6 @@ export const PortalTeam = () => {
     try {
       const res = await invoke('list');
       setTeam(res.team || []);
-      setIsOwner(!!res.is_owner);
       setCanManage(!!res.can_manage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });

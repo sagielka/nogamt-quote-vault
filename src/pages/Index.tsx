@@ -610,6 +610,20 @@ const Index = () => {
     return null;
   }
 
+  const navItems = [
+    { id: 'quotations', label: 'Quotations', icon: FolderOpen, active: ['list', 'create', 'edit', 'preview'].includes(currentView), onClick: () => navigateToView('list'), badge: null as number | null, visible: true },
+    { id: 'archive', label: 'Archive', icon: Archive, active: currentView === 'archive', onClick: () => navigateToView('archive'), badge: archivedQuotations.length > 0 ? archivedQuotations.length : null, visible: true },
+    { id: 'customers', label: 'Customers', icon: BookUser, active: ['customers', 'report'].includes(currentView), onClick: () => { setReportCustomer(null); navigateToView('customers'); }, badge: null, visible: true },
+    { id: 'activity', label: 'Activity', icon: Activity, active: currentView === 'activity', onClick: () => navigateToView('activity'), badge: null, visible: true },
+    { id: 'reports', label: 'Reports', icon: BarChart3, active: currentView === 'reports', onClick: () => navigateToView('reports'), badge: null, visible: true },
+    { id: 'recurring', label: 'Recurring', icon: RepeatIcon, active: currentView === 'recurring', onClick: () => navigateToView('recurring'), badge: null, visible: true },
+    { id: 'versions', label: 'Versions', icon: History, active: false, onClick: () => navigate('/versions'), badge: null, visible: true },
+    { id: 'users', label: 'Users', icon: Users, active: currentView === 'users', onClick: () => navigateToView('users'), badge: null, visible: isAdmin },
+    { id: 'portal-accounts', label: 'Price Portal', icon: ShieldCheck, active: currentView === 'portal-accounts', onClick: () => navigateToView('portal-accounts'), badge: null, visible: canPricePortal },
+    { id: 'customer-portal', label: 'Customer Portal', icon: Eye, active: false, onClick: () => navigate('/price-list'), badge: null, visible: canPricePortal },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon, active: currentView === 'settings', onClick: () => navigateToView('settings'), badge: null, visible: isAdmin },
+  ].filter(item => item.visible);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

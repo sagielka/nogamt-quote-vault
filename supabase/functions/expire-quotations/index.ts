@@ -34,11 +34,17 @@ Deno.serve(async (req) => {
     const now = new Date();
 
     // Expired quotations that were never accepted / closed
-    const { data: expired, error: fetchError } = await supabase
+    const { data: expiredRaw, error: fetchError } = await supabase
       .from("quotations")
-      .select("id, user_id, quote_number, client_name, client_email, valid_until, status, currency, items, created_at")
+      .select("id, user_id, quote_number, client_name, client_email, valid_until, status, currency, items, created_at, ordered_items")
       .lt("valid_until", now.toISOString())
       .or("status.is.null,status.eq.draft,status.eq.sent");
+
+    // Never auto-close a quote that already has order lines selected
+    const expired = (expiredRaw ?? []).filter(
+      (q: any) => !Array.isArray(q.ordered_items) || q.ordered_items.length === 0
+    );
+
 
     if (fetchError) {
       console.error("Fetch error:", fetchError);

@@ -620,7 +620,7 @@ const Index = () => {
     { id: 'versions', label: 'Versions', icon: History, active: false, onClick: () => navigate('/versions'), badge: null, visible: true },
     { id: 'users', label: 'Users', icon: Users, active: currentView === 'users', onClick: () => navigateToView('users'), badge: null, visible: isAdmin },
     { id: 'portal-accounts', label: 'Price Portal', icon: ShieldCheck, active: currentView === 'portal-accounts', onClick: () => navigateToView('portal-accounts'), badge: null, visible: canPricePortal },
-    { id: 'customer-portal', label: 'Customer Portal', icon: Eye, active: false, onClick: () => navigate('/price-list'), badge: null, visible: canPricePortal },
+    
     { id: 'settings', label: 'Settings', icon: SettingsIcon, active: currentView === 'settings', onClick: () => navigateToView('settings'), badge: null, visible: isAdmin },
   ].filter(item => item.visible);
 

@@ -10,10 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge } from 'lucide-react';
+import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge, Shield } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 
 
@@ -29,6 +30,7 @@ interface Row {
   price_list: string | null;
   notes: string | null;
   parent_account_id: string | null;
+  is_account_admin?: boolean;
   created_at: string;
 }
 
@@ -51,12 +53,14 @@ export const CustomerAccountsAdmin = () => {
   const [editing, setEditing] = useState<Row | null>(null);
   const [preview, setPreview] = useState<Row | null>(null);
 
-  const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '' });
+  const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '', is_account_admin: false });
   const [newPassword, setNewPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [linkFor, setLinkFor] = useState<Row | null>(null);
+  const [approving, setApproving] = useState<Row | null>(null);
+  const [approveAdmin, setApproveAdmin] = useState(false);
   const [mergeFrom, setMergeFrom] = useState<Row | null>(null);
   const [mergeTargetId, setMergeTargetId] = useState('');
   const [linkForm, setLinkForm] = useState({ email: '', contact_name: '', password: '' });
@@ -108,13 +112,43 @@ export const CustomerAccountsAdmin = () => {
     return true;
   };
 
-  const approve = (row: Row) => {
+  const openApprove = (row: Row) => {
     if (!row.price_list) {
       toast({ title: 'Choose a price list first', description: 'Assign a price list before approving.', variant: 'destructive' });
       return;
     }
-    patch(row.id, { status: 'approved', approved_by: user?.id, approved_at: new Date().toISOString() });
-    toast({ title: 'Customer approved', description: `${row.email} can now see their prices.` });
+    setApproveAdmin(!row.parent_account_id || !!row.is_account_admin);
+    setApproving(row);
+  };
+
+  const confirmApprove = async () => {
+    if (!approving) return;
+    setBusy(true);
+    const ok = await patch(approving.id, {
+      status: 'approved',
+      approved_by: user?.id,
+      approved_at: new Date().toISOString(),
+      is_account_admin: approveAdmin,
+    });
+    setBusy(false);
+    if (ok) {
+      toast({
+        title: 'Customer approved',
+        description: `${approving.email} can now see their prices${approveAdmin ? ' and manage their team' : ''}.`,
+      });
+      setApproving(null);
+    }
+  };
+
+  const toggleAccountAdmin = async (row: Row) => {
+    const next = !row.is_account_admin;
+    const ok = await patch(row.id, { is_account_admin: next });
+    if (ok) {
+      toast({
+        title: next ? 'Admin privileges granted' : 'Admin privileges removed',
+        description: `${row.email} ${next ? 'can now revoke or delete other users' : 'can no longer manage other users'}.`,
+      });
+    }
   };
 
   const openEdit = (row: Row) => {
@@ -125,6 +159,7 @@ export const CustomerAccountsAdmin = () => {
       contact_name: row.contact_name || '',
       notes: row.notes || '',
       price_list: row.price_list || '',
+      is_account_admin: !!row.is_account_admin,
     });
   };
 
@@ -136,6 +171,7 @@ export const CustomerAccountsAdmin = () => {
       contact_name: form.contact_name || null,
       notes: form.notes || null,
       price_list: form.price_list || null,
+      is_account_admin: form.is_account_admin,
     });
     setBusy(false);
     if (ok) {
@@ -432,6 +468,11 @@ export const CustomerAccountsAdmin = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{row.company_name || '—'}</span>
                   {statusBadge(row.status)}
+                  {row.is_account_admin && (
+                    <Badge variant="outline" className="gap-1 border-primary/60 text-primary">
+                      <Shield className="w-3 h-3" /> Account admin
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground truncate">
                   {row.email}
@@ -454,7 +495,19 @@ export const CustomerAccountsAdmin = () => {
                           added {new Date(m.created_at).toLocaleDateString()}
                         </span>
                         {statusBadge(m.status)}
+                        {m.is_account_admin && (
+                          <Badge variant="outline" className="gap-1 border-primary/60 text-primary">
+                            <Shield className="w-3 h-3" /> Admin
+                          </Badge>
+                        )}
                         <div className="ml-auto flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-primary inline-flex items-center gap-1"
+                            onClick={() => toggleAccountAdmin(m)}
+                          >
+                            <Shield className="w-3 h-3" /> {m.is_account_admin ? 'Remove admin' : 'Make admin'}
+                          </button>
                           <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => openEdit(m)}>
                             <Pencil className="w-3 h-3" /> Edit
                           </button>
@@ -536,7 +589,7 @@ export const CustomerAccountsAdmin = () => {
                   Reset link
                 </Button>
                 {row.status !== 'approved' && (
-                  <Button size="sm" onClick={() => approve(row)}>
+                  <Button size="sm" onClick={() => openApprove(row)}>
                     <UserCheck className="w-4 h-4 mr-2" />
                     Approve
                   </Button>
@@ -552,6 +605,31 @@ export const CustomerAccountsAdmin = () => {
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!approving} onOpenChange={(o) => !o && setApproving(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Approve portal access</DialogTitle>
+            <DialogDescription>{approving?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
+            <div>
+              <Label className="flex items-center gap-2"><Shield className="w-4 h-4" /> Admin privileges</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Allow this user to add, revoke and delete other users on their company account.
+              </p>
+            </div>
+            <Switch checked={approveAdmin} onCheckedChange={setApproveAdmin} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproving(null)}>Cancel</Button>
+            <Button onClick={confirmApprove} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!mergeFrom} onOpenChange={(o) => !o && setMergeFrom(null)}>
         <DialogContent className="max-w-lg">
@@ -640,6 +718,16 @@ export const CustomerAccountsAdmin = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
+              <div>
+                <Label className="flex items-center gap-2"><Shield className="w-4 h-4" /> Admin privileges</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Can add, revoke and delete other users on this company's portal account.
+                </p>
+              </div>
+              <Switch checked={form.is_account_admin} onCheckedChange={(v) => setForm({ ...form, is_account_admin: v })} />
+            </div>
+
             <div className="space-y-1.5">
               <Label>Internal notes</Label>
               <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
@@ -836,6 +924,16 @@ export const CustomerAccountsAdmin = () => {
                 value={createForm.password}
                 onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
               />
+            </div>
+
+            <div className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
+              <div>
+                <Label className="flex items-center gap-2"><Shield className="w-4 h-4" /> Admin privileges</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Can add, revoke and delete other users on this company's portal account.
+                </p>
+              </div>
+              <Switch checked={form.is_account_admin} onCheckedChange={(v) => setForm({ ...form, is_account_admin: v })} />
             </div>
 
             <div className="space-y-1.5">

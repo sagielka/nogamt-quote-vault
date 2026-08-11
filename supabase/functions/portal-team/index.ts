@@ -58,10 +58,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!rootAccount) return json({ error: "Account not found" }, 404);
 
+    // The root holder always manages the team; staff can also grant admin rights to teammates
+    const canManage = account.id === rootId || account.is_account_admin === true;
+
     const listTeam = async () => {
       const { data } = await admin
         .from("customer_accounts")
-        .select("id, email, contact_name, company_name, status, created_at, parent_account_id")
+        .select("id, email, contact_name, company_name, status, created_at, parent_account_id, is_account_admin")
         .or(`id.eq.${rootId},parent_account_id.eq.${rootId}`)
         .order("created_at", { ascending: true });
       return (data || []).map((m: any) => ({ ...m, is_owner: m.id === rootId }));
@@ -71,12 +74,17 @@ Deno.serve(async (req) => {
     const action = url.searchParams.get("action") || "list";
 
     if (req.method === "GET" || action === "list") {
-      return json({ team: await listTeam(), owner_id: rootId, is_owner: account.id === rootId });
+      return json({
+        team: await listTeam(),
+        owner_id: rootId,
+        is_owner: account.id === rootId,
+        can_manage: canManage,
+      });
     }
 
     if (req.method === "POST" && action === "add") {
-      if (account.id !== rootId) {
-        return json({ error: "Only the main account holder can add users." }, 403);
+      if (!canManage) {
+        return json({ error: "Only account admins can add users." }, 403);
       }
 
       const body = await req.json();
@@ -127,11 +135,11 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "POST" && action === "remove") {
-      if (account.id !== rootId) {
-        return json({ error: "Only the main account holder can remove users." }, 403);
+      if (!canManage) {
+        return json({ error: "Only account admins can remove users." }, 403);
       }
       const { memberId } = await req.json();
-      if (!memberId || memberId === rootId) return json({ error: "Invalid member" }, 400);
+      if (!memberId || memberId === rootId || memberId === account.id) return json({ error: "Invalid member" }, 400);
 
       const { error: delErr } = await admin
         .from("customer_accounts")
@@ -144,11 +152,11 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === "POST" && action === "delete") {
-      if (account.id !== rootId) {
-        return json({ error: "Only the main account holder can delete users." }, 403);
+      if (!canManage) {
+        return json({ error: "Only account admins can delete users." }, 403);
       }
       const { memberId } = await req.json();
-      if (!memberId || memberId === rootId) return json({ error: "Invalid member" }, 400);
+      if (!memberId || memberId === rootId || memberId === account.id) return json({ error: "Invalid member" }, 400);
 
       const { data: member } = await admin
         .from("customer_accounts")

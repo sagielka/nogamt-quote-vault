@@ -230,6 +230,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         <TabsTrigger value="prices">Price list</TabsTrigger>
         <TabsTrigger value="quotes">My quotations ({quotes.length})</TabsTrigger>
         {showTeam && <TabsTrigger value="team">Team</TabsTrigger>}
+        {showTeam && <TabsTrigger value="account">Account settings</TabsTrigger>}
       </TabsList>
       </div>
 

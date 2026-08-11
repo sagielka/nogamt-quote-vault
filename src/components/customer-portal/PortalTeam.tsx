@@ -26,12 +26,14 @@ interface TeamMember {
   status: string;
   created_at: string;
   is_owner: boolean;
+  is_account_admin?: boolean;
 }
 
 export const PortalTeam = () => {
   const { toast } = useToast();
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [isOwner, setIsOwner] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -59,6 +61,7 @@ export const PortalTeam = () => {
       const res = await invoke('list');
       setTeam(res.team || []);
       setIsOwner(!!res.is_owner);
+      setCanManage(!!res.can_manage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -147,13 +150,13 @@ export const PortalTeam = () => {
                       {m.is_owner ? (
                         <Badge variant="secondary">Main contact</Badge>
                       ) : m.status === 'approved' ? (
-                        <Badge variant="outline">Team member</Badge>
+                        <Badge variant="outline">{m.is_account_admin ? 'Admin' : 'Team member'}</Badge>
                       ) : (
                         <Badge variant="destructive">Removed</Badge>
                       )}
                     </td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      {isOwner && !m.is_owner && (
+                      {canManage && !m.is_owner && (
                         <div className="inline-flex gap-1">
                           {m.status === 'approved' && (
                             <Button
@@ -187,7 +190,7 @@ export const PortalTeam = () => {
         </CardContent>
       </Card>
 
-      {isOwner && (
+      {canManage && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <h3 className="font-medium">Add a colleague</h3>

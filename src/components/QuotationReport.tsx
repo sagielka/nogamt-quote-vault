@@ -745,6 +745,11 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* MARKET */}
+        <TabsContent value="market" className="space-y-4">
+          <IndustryPulse />
+        </TabsContent>
       </Tabs>
     </div>
   );

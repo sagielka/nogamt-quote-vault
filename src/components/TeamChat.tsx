@@ -29,6 +29,13 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     const stored = localStorage.getItem('chat-sound-enabled');
     return stored !== null ? stored === 'true' : true;
   });
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordStartRef = useRef<number | null>(null);
+  const cancelRecordRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSeenRef = useRef<string | null>(null);
   const { toast } = useToast();

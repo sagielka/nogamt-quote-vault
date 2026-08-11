@@ -51,18 +51,40 @@ const CustomerPrices = () => {
     (async () => setCustomList(await fetchCustomPriceList(customListId)))();
   }, [customListId]);
 
-  // Admin/staff: load approved customer accounts so they can browse the portal directly
+  // Admin/staff: load portal accounts + all customers so they can browse any portal
+  const [staffOverrideList, setStaffOverrideList] = useState<string>('');
   useEffect(() => {
     if (!user || !canManagePortal) return;
     setAccountsLoading(true);
     (async () => {
-      const { data } = await (supabase
-        .from('customer_accounts' as any)
-        .select('id, email, company_name, price_list, status')
-        .eq('status', 'approved')
-        .not('price_list', 'is', null)
-        .order('company_name', { ascending: true }) as any);
-      const rows = (data as any[]) || [];
+      const [accRes, custRes] = await Promise.all([
+        (supabase
+          .from('customer_accounts' as any)
+          .select('id, email, company_name, price_list, status')
+          .order('company_name', { ascending: true }) as any),
+        (supabase
+          .from('customers' as any)
+          .select('id, name, email, price_list')
+          .order('name', { ascending: true }) as any),
+      ]);
+      const accounts = ((accRes.data as any[]) || []).map((a) => ({
+        id: `acct:${a.id}`,
+        email: a.email,
+        company_name: a.company_name,
+        price_list: a.price_list,
+        status: a.status,
+      }));
+      const accountEmails = new Set(accounts.map((a) => (a.email || '').toLowerCase()));
+      const customers = ((custRes.data as any[]) || [])
+        .filter((c) => c.email && !accountEmails.has(String(c.email).split(/[,;]/)[0].trim().toLowerCase()))
+        .map((c) => ({
+          id: `cust:${c.id}`,
+          email: String(c.email).split(/[,;]/)[0].trim(),
+          company_name: c.name,
+          price_list: c.price_list,
+          status: 'customer',
+        }));
+      const rows = [...accounts, ...customers];
       setPortalAccounts(rows);
       if (rows.length > 0 && !selectedAccountId) setSelectedAccountId(rows[0].id);
       setAccountsLoading(false);
@@ -70,6 +92,7 @@ const CustomerPrices = () => {
   }, [user, canManagePortal]);
 
   const selectedAccount = portalAccounts.find((a) => a.id === selectedAccountId) || null;
+
 
 
 
@@ -152,7 +175,7 @@ const CustomerPrices = () => {
 
   // Admin/staff with price_portal permission: browse customer portals directly
   if (user && canManagePortal && !approved) {
-    const selectedRawList = selectedAccount?.price_list || null;
+    const selectedRawList = staffOverrideList || selectedAccount?.price_list || null;
     return (
       <Shell>
         <div className="flex items-center gap-2 mb-4">
@@ -166,26 +189,47 @@ const CustomerPrices = () => {
         </div>
 
         <Card className="mb-4">
-          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
             <Label className="text-xs text-muted-foreground shrink-0">Viewing as</Label>
             {accountsLoading ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : portalAccounts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No approved customers with assigned price lists yet.</p>
+              <p className="text-sm text-muted-foreground">No customers found yet.</p>
             ) : (
-              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+              <Select
+                value={selectedAccountId}
+                onValueChange={(v) => {
+                  setSelectedAccountId(v);
+                  setStaffOverrideList('');
+                }}
+              >
                 <SelectTrigger className="w-full sm:w-80">
                   <SelectValue placeholder="Select a customer…" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-80">
                   {portalAccounts.map((a) => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.company_name || a.email} — {a.email}
+                      {a.status !== 'approved' ? ` (${a.status})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
+
+            <Label className="text-xs text-muted-foreground shrink-0 sm:ml-4">Price list</Label>
+            <Select value={staffOverrideList} onValueChange={setStaffOverrideList}>
+              <SelectTrigger className="w-full sm:w-60">
+                <SelectValue placeholder={selectedAccount?.price_list || 'Choose a price list…'} />
+              </SelectTrigger>
+              <SelectContent>
+                {PRICE_LISTS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
@@ -195,11 +239,12 @@ const CustomerPrices = () => {
           !accountsLoading && portalAccounts.length > 0 && (
             <Card>
               <CardContent className="p-10 text-center text-muted-foreground">
-                Select a customer above to view their price portal.
+                This customer has no price list assigned — pick one above to preview their portal.
               </CardContent>
             </Card>
           )
         )}
+
       </Shell>
     );
   }

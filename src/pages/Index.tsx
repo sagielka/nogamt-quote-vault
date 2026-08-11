@@ -26,7 +26,7 @@ import { CustomerList } from '@/components/CustomerList';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck, Eye, Settings as SettingsIcon } from 'lucide-react';
+import { Plus, ArrowLeft, LogOut, Archive, FolderOpen, Search, Users, User, BookUser, X, Circle, CheckCircle, Ban, Activity, RepeatIcon, BarChart3, Sparkles, ShieldCheck, Eye, Settings as SettingsIcon, Menu } from 'lucide-react';
 import { AIQuoteAssistant } from '@/components/AIQuoteAssistant';
 import {
   AlertDialog,
@@ -44,6 +44,7 @@ import { HelpSection } from '@/components/HelpSection';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 import thinkingInside from '@/assets/thinking-inside.png';
@@ -609,6 +610,20 @@ const Index = () => {
     return null;
   }
 
+  const navItems = [
+    { id: 'quotations', label: 'Quotations', icon: FolderOpen, active: ['list', 'create', 'edit', 'preview'].includes(currentView), onClick: () => navigateToView('list'), badge: null as number | null, visible: true },
+    { id: 'archive', label: 'Archive', icon: Archive, active: currentView === 'archive', onClick: () => navigateToView('archive'), badge: archivedQuotations.length > 0 ? archivedQuotations.length : null, visible: true },
+    { id: 'customers', label: 'Customers', icon: BookUser, active: ['customers', 'report'].includes(currentView), onClick: () => { setReportCustomer(null); navigateToView('customers'); }, badge: null, visible: true },
+    { id: 'activity', label: 'Activity', icon: Activity, active: currentView === 'activity', onClick: () => navigateToView('activity'), badge: null, visible: true },
+    { id: 'reports', label: 'Reports', icon: BarChart3, active: currentView === 'reports', onClick: () => navigateToView('reports'), badge: null, visible: true },
+    { id: 'recurring', label: 'Recurring', icon: RepeatIcon, active: currentView === 'recurring', onClick: () => navigateToView('recurring'), badge: null, visible: true },
+    { id: 'versions', label: 'Versions', icon: History, active: false, onClick: () => navigate('/versions'), badge: null, visible: true },
+    { id: 'users', label: 'Users', icon: Users, active: currentView === 'users', onClick: () => navigateToView('users'), badge: null, visible: isAdmin },
+    { id: 'portal-accounts', label: 'Price Portal', icon: ShieldCheck, active: currentView === 'portal-accounts', onClick: () => navigateToView('portal-accounts'), badge: null, visible: canPricePortal },
+    { id: 'customer-portal', label: 'Customer Portal', icon: Eye, active: false, onClick: () => navigate('/price-list'), badge: null, visible: canPricePortal },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon, active: currentView === 'settings', onClick: () => navigateToView('settings'), badge: null, visible: isAdmin },
+  ].filter(item => item.visible);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -684,143 +699,70 @@ const Index = () => {
                 </Button>
               </>
             )}
-            {/* Quotations tab — active for list/create/edit/preview */}
-            {(() => { const active = ['list', 'create', 'edit', 'preview'].includes(currentView); return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('list')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <FolderOpen className="w-4 h-4 mr-1.5" />
-                Quotations
-              </Button>
-            ); })()}
-            {/* Archive tab */}
-            {(() => { const active = currentView === 'archive'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('archive')}
-                className={`relative ${active ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
-              >
-                <Archive className="w-4 h-4 mr-1.5" />
-                Archive
-                {archivedQuotations.length > 0 && (
-                  <span
-                    className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
-                    aria-label={`${archivedQuotations.length} archived quotations`}
-                  >
-                    {archivedQuotations.length}
-                  </span>
-                )}
-              </Button>
-            ); })()}
-            {/* Customers tab — active for customers/report */}
-            {(() => { const active = ['customers', 'report'].includes(currentView); return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => { setReportCustomer(null); navigateToView('customers'); }}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <BookUser className="w-4 h-4 mr-1.5" />
-                Customers
-              </Button>
-            ); })()}
-            {/* Activity tab */}
-            {(() => { const active = currentView === 'activity'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('activity')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <Activity className="w-4 h-4 mr-1.5" />
-                Activity
-              </Button>
-            ); })()}
-            {/* Reports tab */}
-            {(() => { const active = currentView === 'reports'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('reports')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <BarChart3 className="w-4 h-4 mr-1.5" />
-                Reports
-              </Button>
-            ); })()}
-            {/* Recurring tab */}
-            {(() => { const active = currentView === 'recurring'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('recurring')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <RepeatIcon className="w-4 h-4 mr-1.5" />
-                Recurring
-              </Button>
-            ); })()}
-            {/* Versions tab (separate route) */}
-            <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
-              <History className="w-4 h-4 mr-1.5" />
-              Versions
-            </Button>
-            {/* Users tab (admin only) */}
-            {isAdmin && (() => { const active = currentView === 'users'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('users')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <Users className="w-4 h-4 mr-1.5" />
-                Users
-              </Button>
-            ); })()}
-            {/* Price Portal tab */}
-            {canPricePortal && (() => { const active = currentView === 'portal-accounts'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('portal-accounts')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <ShieldCheck className="w-4 h-4 mr-1.5" />
-                Price Portal
-              </Button>
-            ); })()}
-            {/* Customer Portal (separate route) */}
-            {canPricePortal && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/price-list')}>
-                <Eye className="w-4 h-4 mr-1.5" />
-                Customer Portal
-              </Button>
-            )}
-            {/* Settings tab (admin only) */}
-            {isAdmin && (() => { const active = currentView === 'settings'; return (
-              <Button
-                aria-current={active ? 'page' : undefined}
-                variant={active ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => navigateToView('settings')}
-                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-              >
-                <SettingsIcon className="w-4 h-4 mr-1.5" />
-                Settings
-              </Button>
-            ); })()}
+
+            {/* Desktop inline tabs */}
+            <div className="hidden lg:flex items-center gap-1.5 flex-wrap">
+              {navItems.map(item => (
+                <Button
+                  key={item.id}
+                  aria-current={item.active ? 'page' : undefined}
+                  variant={item.active ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={item.onClick}
+                  className={`relative ${item.active ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
+                >
+                  <item.icon className="w-4 h-4 mr-1.5" />
+                  {item.label}
+                  {item.badge != null && (
+                    <span
+                      className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
+                      aria-label={`${item.badge} archived quotations`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
+
+            {/* Mobile drawer trigger */}
+            <div className="lg:hidden ml-auto">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" aria-label="Open navigation menu">
+                    <Menu className="w-4 h-4 mr-1.5" />
+                    Menu
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px] sm:w-[300px]">
+                  <SheetHeader>
+                    <SheetTitle>Navigation</SheetTitle>
+                  </SheetHeader>
+                  <nav aria-label="Mobile navigation" className="flex flex-col gap-1.5 px-3 mt-2">
+                    {navItems.map(item => (
+                      <Button
+                        key={item.id}
+                        aria-current={item.active ? 'page' : undefined}
+                        variant={item.active ? 'default' : 'outline'}
+                        onClick={item.onClick}
+                        className="justify-start w-full"
+                      >
+                        <item.icon className="w-4 h-4 mr-2" />
+                        {item.label}
+                        {item.badge != null && (
+                          <span
+                            className="ml-auto text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
+                            aria-label={`${item.badge} archived quotations`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Button>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
             </div>
           </nav>
         </div>

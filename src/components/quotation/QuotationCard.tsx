@@ -331,6 +331,11 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   <span className="flex items-center gap-1 text-destructive font-medium">
                     <Mail className="w-3 h-3 shrink-0 animate-pulse" />
                     Needs Reminder
+                    {quotation.followUpNotifiedAt && (
+                      <span className="text-muted-foreground font-normal ml-1">
+                        · alerted {formatDate(quotation.followUpNotifiedAt)}
+                      </span>
+                    )}
                   </span>
                 )}
                 {quotation.status !== 'accepted' && quotation.status !== 'finished' && !quotation.reminderSentAt && (() => {
@@ -362,12 +367,6 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     </span>
                   );
                 })()}
-                {quotation.followUpNotifiedAt && (
-                  <span className="flex items-center gap-1 text-blue-600">
-                    <BellRing className="w-3 h-3 shrink-0" />
-                    Notified {formatDate(quotation.followUpNotifiedAt)}
-                  </span>
-                )}
                 {emailReadAt && (
                   <span className="flex items-center gap-1 text-green-600 font-medium">
                     <MailOpen className="w-3 h-3 shrink-0" />

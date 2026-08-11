@@ -98,6 +98,21 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     return Object.values(map).sort((a, b) => b.totalValue - a.totalValue);
   }, [quotations]);
 
+  // === TOP CUSTOMERS NORMALIZED TO USD (across all currencies) ===
+  const customerUsdData = useMemo(() => {
+    const map: Record<string, { name: string; totalValue: number; currencies: Set<Currency> }> = {};
+    customerData.forEach(c => {
+      const key = c.name.toLowerCase();
+      if (!map[key]) map[key] = { name: c.name, totalValue: 0, currencies: new Set() };
+      map[key].totalValue += toUSD(c.totalValue, c.currency, fx.rates);
+      map[key].currencies.add(c.currency);
+    });
+    return Object.values(map)
+      .map(c => ({ name: c.name, totalValue: Math.round(c.totalValue), currencies: Array.from(c.currencies).join(', ') }))
+      .sort((a, b) => b.totalValue - a.totalValue);
+  }, [customerData, fx.rates]);
+
+
   const filteredCustomerData = useMemo(() => {
     if (!customerSearch) return customerData;
     const q = customerSearch.toLowerCase();

@@ -564,17 +564,25 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                 </CardContent>
               </Card>
             </div>
-            {/* Top 10 customers */}
+            {/* Top 10 customers (USD normalized) */}
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4" /> Top 10 Customers by Value</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="w-4 h-4" /> Top 10 Customers by Value (USD)
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground">
+                  All currencies converted to USD · ILS {(fx.rates.ILS ?? 0).toFixed(3)} · EUR {(fx.rates.EUR ?? 0).toFixed(3)} per USD
+                  {fx.live ? ' · live rates' : ' · fallback rates'}
+                </p>
+              </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={customerData.slice(0, 10)} layout="vertical">
+                  <BarChart data={customerUsdData.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatUSD(Number(v))} />
                     <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="totalValue" name="Total Value ($)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="totalValue" name="Total Value (USD)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

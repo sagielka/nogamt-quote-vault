@@ -478,7 +478,9 @@ export const CustomerAccountsAdmin = () => {
                     {row.email}
                     {row.contact_name ? ` · ${row.contact_name}` : ''}
                   </p>
+                </div>
                 <Select
+
                   value={row.price_list || undefined}
                   onValueChange={(v) => patch(row.id, { price_list: v })}
                 >

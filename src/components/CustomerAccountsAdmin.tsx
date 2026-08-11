@@ -562,9 +562,10 @@ export const CustomerAccountsAdmin = () => {
                       className="px-3 py-2 flex flex-col xl:flex-row xl:items-center gap-2 text-xs"
                     >
                       <div className="min-w-0 xl:w-64">
-                        <div className="font-medium truncate">{m.email}</div>
-                        <div className="text-muted-foreground truncate">{m.contact_name || 'No name'}</div>
+                        <div className="font-medium break-all">{m.email}</div>
+                        <div className="text-muted-foreground break-words">{m.contact_name || 'No name'}</div>
                       </div>
+
                       <div className="min-w-0 xl:w-48 text-muted-foreground truncate">
                         {priceListOptions.find((p) => p.value === m.price_list)?.label || 'No price list'}
                       </div>

@@ -670,7 +670,8 @@ const Index = () => {
           </div>
 
           {/* Nav tabs row */}
-          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+          <nav aria-label="Main navigation" className="mt-2">
+            <div role="tablist" aria-label="Sections" className="flex items-center gap-1.5 flex-wrap">
             {currentView === 'list' && quotations.length > 0 && (
               <>
                 <Button variant="outline" size="sm" onClick={() => setAiAssistantOpen(true)} className="border-primary/40">
@@ -684,119 +685,162 @@ const Index = () => {
               </>
             )}
             {/* Quotations tab — active for list/create/edit/preview */}
-            <Button
-              variant={(['list', 'create', 'edit', 'preview'].includes(currentView)) ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => navigateToView('list')}
-              className={(['list', 'create', 'edit', 'preview'].includes(currentView)) ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-            >
-              <FolderOpen className="w-4 h-4 mr-1.5" />
-              Quotations
-            </Button>
+            {(() => { const active = ['list', 'create', 'edit', 'preview'].includes(currentView); return (
+              <Button
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('list')}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
+                <FolderOpen className="w-4 h-4 mr-1.5" />
+                Quotations
+              </Button>
+            ); })()}
             {/* Archive tab */}
-            <Button
-              variant={currentView === 'archive' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => navigateToView('archive')}
-              className={`relative ${currentView === 'archive' ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
-            >
-              <Archive className="w-4 h-4 mr-1.5" />
-              Archive
-              {archivedQuotations.length > 0 && (
-                <span className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full">
-                  {archivedQuotations.length}
-                </span>
-              )}
-            </Button>
+            {(() => { const active = currentView === 'archive'; return (
+              <Button
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('archive')}
+                className={`relative ${active ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
+              >
+                <Archive className="w-4 h-4 mr-1.5" />
+                Archive
+                {archivedQuotations.length > 0 && (
+                  <span
+                    className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full"
+                    aria-label={`${archivedQuotations.length} archived quotations`}
+                  >
+                    {archivedQuotations.length}
+                  </span>
+                )}
+              </Button>
+            ); })()}
             {/* Customers tab — active for customers/report */}
-            <Button
-              variant={(['customers', 'report'].includes(currentView)) ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => { setReportCustomer(null); navigateToView('customers'); }}
-              className={(['customers', 'report'].includes(currentView)) ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-            >
-              <BookUser className="w-4 h-4 mr-1.5" />
-              Customers
-            </Button>
+            {(() => { const active = ['customers', 'report'].includes(currentView); return (
+              <Button
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => { setReportCustomer(null); navigateToView('customers'); }}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
+                <BookUser className="w-4 h-4 mr-1.5" />
+                Customers
+              </Button>
+            ); })()}
             {/* Activity tab */}
-            <Button
-              variant={currentView === 'activity' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => navigateToView('activity')}
-              className={currentView === 'activity' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-            >
-              <Activity className="w-4 h-4 mr-1.5" />
-              Activity
-            </Button>
+            {(() => { const active = currentView === 'activity'; return (
+              <Button
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('activity')}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
+                <Activity className="w-4 h-4 mr-1.5" />
+                Activity
+              </Button>
+            ); })()}
             {/* Reports tab */}
-            <Button
-              variant={currentView === 'reports' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => navigateToView('reports')}
-              className={currentView === 'reports' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-            >
-              <BarChart3 className="w-4 h-4 mr-1.5" />
-              Reports
-            </Button>
+            {(() => { const active = currentView === 'reports'; return (
+              <Button
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('reports')}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
+                <BarChart3 className="w-4 h-4 mr-1.5" />
+                Reports
+              </Button>
+            ); })()}
             {/* Recurring tab */}
-            <Button
-              variant={currentView === 'recurring' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => navigateToView('recurring')}
-              className={currentView === 'recurring' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
-            >
-              <RepeatIcon className="w-4 h-4 mr-1.5" />
-              Recurring
-            </Button>
+            {(() => { const active = currentView === 'recurring'; return (
+              <Button
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('recurring')}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
+                <RepeatIcon className="w-4 h-4 mr-1.5" />
+                Recurring
+              </Button>
+            ); })()}
             {/* Versions tab (separate route) */}
-            <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
+            <Button role="tab" aria-selected={false} variant="outline" size="sm" onClick={() => navigate('/versions')}>
               <History className="w-4 h-4 mr-1.5" />
               Versions
             </Button>
             {/* Users tab (admin only) */}
-            {isAdmin && (
+            {isAdmin && (() => { const active = currentView === 'users'; return (
               <Button
-                variant={currentView === 'users' ? 'default' : 'outline'}
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => navigateToView('users')}
-                className={currentView === 'users' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
               >
                 <Users className="w-4 h-4 mr-1.5" />
                 Users
               </Button>
-            )}
+            ); })()}
             {/* Price Portal tab */}
-            {canPricePortal && (
+            {canPricePortal && (() => { const active = currentView === 'portal-accounts'; return (
               <Button
-                variant={currentView === 'portal-accounts' ? 'default' : 'outline'}
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => navigateToView('portal-accounts')}
-                className={currentView === 'portal-accounts' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
               >
                 <ShieldCheck className="w-4 h-4 mr-1.5" />
                 Price Portal
               </Button>
-            )}
+            ); })()}
             {/* Customer Portal (separate route) */}
             {canPricePortal && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/price-list')}>
+              <Button role="tab" aria-selected={false} variant="outline" size="sm" onClick={() => navigate('/price-list')}>
                 <Eye className="w-4 h-4 mr-1.5" />
                 Customer Portal
               </Button>
             )}
             {/* Settings tab (admin only) */}
-            {isAdmin && (
+            {isAdmin && (() => { const active = currentView === 'settings'; return (
               <Button
-                variant={currentView === 'settings' ? 'default' : 'outline'}
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                variant={active ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => navigateToView('settings')}
-                className={currentView === 'settings' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+                className={active ? 'ring-2 ring-primary/50 shadow-sm' : ''}
               >
                 <SettingsIcon className="w-4 h-4 mr-1.5" />
                 Settings
               </Button>
-            )}
-          </div>
+            ); })()}
+            </div>
+          </nav>
         </div>
       </header>
 

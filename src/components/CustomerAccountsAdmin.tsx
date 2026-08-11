@@ -464,21 +464,22 @@ export const CustomerAccountsAdmin = () => {
           >
             <CardContent className="p-4 space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-start gap-3">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 lg:min-w-[280px]">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium">{row.company_name || '—'}</span>
+                    <span className="font-medium break-words">{row.company_name || '—'}</span>
                     {statusBadge(row.status)}
                     {row.is_account_admin && (
-                      <Badge variant="outline" className="gap-1 border-primary/60 text-primary">
+                      <Badge variant="outline" className="gap-1 border-primary/60 text-primary whitespace-nowrap">
                         <Shield className="w-3 h-3" /> Account admin
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground truncate">
+                  <p className="text-sm text-muted-foreground break-all">
                     {row.email}
                     {row.contact_name ? ` · ${row.contact_name}` : ''}
                   </p>
                 </div>
+
                 <Select
 
                   value={row.price_list || undefined}

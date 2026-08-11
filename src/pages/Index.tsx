@@ -683,86 +683,117 @@ const Index = () => {
                 </Button>
               </>
             )}
-            {currentView === 'list' && (
+            {/* Quotations tab — active for list/create/edit/preview */}
+            <Button
+              variant={(['list', 'create', 'edit', 'preview'].includes(currentView)) ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => navigateToView('list')}
+              className={(['list', 'create', 'edit', 'preview'].includes(currentView)) ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+            >
+              <FolderOpen className="w-4 h-4 mr-1.5" />
+              Quotations
+            </Button>
+            {/* Archive tab */}
+            <Button
+              variant={currentView === 'archive' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => navigateToView('archive')}
+              className={`relative ${currentView === 'archive' ? 'ring-2 ring-primary/50 shadow-sm' : ''}`}
+            >
+              <Archive className="w-4 h-4 mr-1.5" />
+              Archive
+              {archivedQuotations.length > 0 && (
+                <span className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full">
+                  {archivedQuotations.length}
+                </span>
+              )}
+            </Button>
+            {/* Customers tab — active for customers/report */}
+            <Button
+              variant={(['customers', 'report'].includes(currentView)) ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => { setReportCustomer(null); navigateToView('customers'); }}
+              className={(['customers', 'report'].includes(currentView)) ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+            >
+              <BookUser className="w-4 h-4 mr-1.5" />
+              Customers
+            </Button>
+            {/* Activity tab */}
+            <Button
+              variant={currentView === 'activity' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => navigateToView('activity')}
+              className={currentView === 'activity' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+            >
+              <Activity className="w-4 h-4 mr-1.5" />
+              Activity
+            </Button>
+            {/* Reports tab */}
+            <Button
+              variant={currentView === 'reports' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => navigateToView('reports')}
+              className={currentView === 'reports' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+            >
+              <BarChart3 className="w-4 h-4 mr-1.5" />
+              Reports
+            </Button>
+            {/* Recurring tab */}
+            <Button
+              variant={currentView === 'recurring' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => navigateToView('recurring')}
+              className={currentView === 'recurring' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+            >
+              <RepeatIcon className="w-4 h-4 mr-1.5" />
+              Recurring
+            </Button>
+            {/* Versions tab (separate route) */}
+            <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
+              <History className="w-4 h-4 mr-1.5" />
+              Versions
+            </Button>
+            {/* Users tab (admin only) */}
+            {isAdmin && (
               <Button
-                variant="outline"
+                variant={currentView === 'users' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => navigateToView('archive')}
-                className="relative"
+                onClick={() => navigateToView('users')}
+                className={currentView === 'users' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
               >
-                <Archive className="w-4 h-4 mr-1.5" />
-                Archive
-                {archivedQuotations.length > 0 && (
-                  <span className="ml-1 text-xs bg-muted-foreground/20 px-1.5 py-0.5 rounded-full">
-                    {archivedQuotations.length}
-                  </span>
-                )}
-              </Button>
-            )}
-            {currentView === 'list' && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('customers')}>
-                <BookUser className="w-4 h-4 mr-1.5" />
-                Customers
-              </Button>
-            )}
-            {currentView === 'list' && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('activity')}>
-                <Activity className="w-4 h-4 mr-1.5" />
-                Activity
-              </Button>
-            )}
-            {currentView === 'list' && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('reports')}>
-                <BarChart3 className="w-4 h-4 mr-1.5" />
-                Reports
-              </Button>
-            )}
-            {currentView === 'list' && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('recurring')}>
-                <RepeatIcon className="w-4 h-4 mr-1.5" />
-                Recurring
-              </Button>
-            )}
-            {currentView === 'list' && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/versions')}>
-                <History className="w-4 h-4 mr-1.5" />
-                Versions
-              </Button>
-            )}
-            {currentView === 'list' && isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('users')}>
                 <Users className="w-4 h-4 mr-1.5" />
                 Users
               </Button>
             )}
-            {currentView === 'list' && canPricePortal && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('portal-accounts')}>
+            {/* Price Portal tab */}
+            {canPricePortal && (
+              <Button
+                variant={currentView === 'portal-accounts' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('portal-accounts')}
+                className={currentView === 'portal-accounts' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
                 <ShieldCheck className="w-4 h-4 mr-1.5" />
                 Price Portal
               </Button>
             )}
-            {currentView === 'list' && canPricePortal && (
+            {/* Customer Portal (separate route) */}
+            {canPricePortal && (
               <Button variant="outline" size="sm" onClick={() => navigate('/price-list')}>
                 <Eye className="w-4 h-4 mr-1.5" />
                 Customer Portal
               </Button>
             )}
-            {currentView === 'list' && isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('settings')}>
+            {/* Settings tab (admin only) */}
+            {isAdmin && (
+              <Button
+                variant={currentView === 'settings' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => navigateToView('settings')}
+                className={currentView === 'settings' ? 'ring-2 ring-primary/50 shadow-sm' : ''}
+              >
                 <SettingsIcon className="w-4 h-4 mr-1.5" />
                 Settings
-              </Button>
-            )}
-            {(currentView === 'archive' || currentView === 'users' || currentView === 'customers' || currentView === 'activity' || currentView === 'reports' || currentView === 'portal-accounts' || currentView === 'recurring' || currentView === 'settings') && (
-              <Button variant="outline" size="sm" onClick={() => navigateToView('list')}>
-                <FolderOpen className="w-4 h-4 mr-1.5" />
-                Quotations
-              </Button>
-            )}
-            {currentView === 'report' && (
-              <Button variant="outline" size="sm" onClick={() => { setReportCustomer(null); navigateToView('customers'); }}>
-                <BookUser className="w-4 h-4 mr-1.5" />
-                Customers
               </Button>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Volume2, VolumeX, Mic, Square, Trash2, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Volume2, VolumeX, Mic, Square, Trash2, Loader2, Check, CheckCheck } from 'lucide-react';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,17 @@ interface ChatMessage {
   email?: string;
 }
 
+interface ReadReceipt {
+  message_id: string;
+  user_id: string;
+  read_at: string;
+}
+
 export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, string> }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [reads, setReads] = useState<Record<string, ReadReceipt[]>>({});
   const [newMessage, setNewMessage] = useState('');
   const [profiles, setProfiles] = useState<Record<string, { display_name: string | null; email: string }>>({});
   const [unread, setUnread] = useState(0);
@@ -110,6 +117,61 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
       window.removeEventListener('focus', onFocus);
     };
   }, [fetchMessages]);
+
+  // ---- Read receipts ----
+  const fetchReads = useCallback(async () => {
+    const { data } = await (supabase
+      .from('message_reads' as any)
+      .select('message_id, user_id, read_at') as any);
+    if (!data) return;
+    const map: Record<string, ReadReceipt[]> = {};
+    (data as ReadReceipt[]).forEach((r) => {
+      (map[r.message_id] ||= []).push(r);
+    });
+    setReads(map);
+  }, []);
+
+  useEffect(() => {
+    fetchReads();
+    const interval = setInterval(fetchReads, 8000);
+    return () => clearInterval(interval);
+  }, [fetchReads]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('team-chat-reads')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_reads' }, (payload) => {
+        const r = payload.new as ReadReceipt;
+        setReads((prev) => {
+          const list = prev[r.message_id] || [];
+          if (list.some((x) => x.user_id === r.user_id)) return prev;
+          return { ...prev, [r.message_id]: [...list, r] };
+        });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Mark visible messages from others as read while the panel is open
+  useEffect(() => {
+    if (!open || !user) return;
+    const toMark = messages
+      .filter((m) => m.user_id !== user.id && !(reads[m.id] || []).some((r) => r.user_id === user.id))
+      .map((m) => m.id);
+    if (toMark.length === 0) return;
+    (async () => {
+      await (supabase
+        .from('message_reads' as any)
+        .upsert(
+          toMark.map((message_id) => ({ message_id, user_id: user.id })) as any,
+          { onConflict: 'message_id,user_id', ignoreDuplicates: true } as any
+        ) as any);
+      fetchReads();
+    })();
+  }, [open, messages, reads, user, fetchReads]);
+
 
   // Notify on genuinely new messages from others
   useEffect(() => {
@@ -341,8 +403,25 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
                         msg.content
                       )}
                     </div>
-
+                    {isMe && (() => {
+                      const readers = (reads[msg.id] || []).filter((r) => r.user_id !== user.id);
+                      const names = readers.map((r) => getUserLabel(r.user_id));
+                      return (
+                        <p
+                          className={`mt-0.5 flex items-center gap-1 justify-end text-[10px] ${readers.length ? 'text-primary' : 'text-muted-foreground'}`}
+                          title={
+                            readers.length
+                              ? `Read by ${names.join(', ')}`
+                              : 'Sent — not read yet'
+                          }
+                        >
+                          {readers.length ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                          {readers.length ? `Read by ${names.join(', ')}` : 'Sent'}
+                        </p>
+                      );
+                    })()}
                   </div>
+
                 </div>
               );
             })}

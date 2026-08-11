@@ -56,6 +56,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
   const [skuSearch, setSkuSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const chartsRef = useRef<HTMLDivElement>(null);
+  const fx = useExchangeRates();
 
   // === KPI CALCULATIONS (grouped by currency) ===
   const kpis = useMemo(() => {

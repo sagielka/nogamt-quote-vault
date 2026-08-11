@@ -317,8 +317,11 @@ export const CustomerAccountsAdmin = () => {
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
-    return <Badge variant="secondary">Pending</Badge>;
+    return <Badge className="bg-amber-500 hover:bg-amber-500 text-black animate-pulse">Pending approval</Badge>;
   };
+
+  const pendingCount = rows.filter((r) => r.status === 'pending').length;
+
 
   if (loading) {
     return (

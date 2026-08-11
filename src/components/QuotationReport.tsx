@@ -498,12 +498,13 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="customers">By Customer</TabsTrigger>
           <TabsTrigger value="products">By Product/SKU</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="items">All Line Items</TabsTrigger>
+          <TabsTrigger value="market">Market</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}

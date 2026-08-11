@@ -393,26 +393,45 @@ export const CustomerAccountsAdmin = () => {
                   {row.contact_name ? ` · ${row.contact_name}` : ''}
                 </p>
                 {membersOf(row.id).length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <div className="mt-2 rounded-md border border-border/60 divide-y divide-border/60">
+                    <div className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      {membersOf(row.id).length} additional email{membersOf(row.id).length !== 1 ? 's' : ''}
-                    </p>
+                      {membersOf(row.id).length} additional user{membersOf(row.id).length !== 1 ? 's' : ''} on this account
+                    </div>
                     {membersOf(row.id).map((m) => (
-                      <div key={m.id} className="flex items-center gap-2 text-xs">
-                        <span className="truncate">{m.email}{m.contact_name ? ` · ${m.contact_name}` : ''}</span>
+                      <div key={m.id} className="px-2 py-1.5 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="truncate font-medium">{m.email}</span>
+                        <span className="text-muted-foreground">{m.contact_name || 'No name'}</span>
+                        <span className="text-muted-foreground">
+                          {priceListOptions.find((p) => p.value === m.price_list)?.label || 'No price list'}
+                        </span>
+                        <span className="text-muted-foreground">
+                          added {new Date(m.created_at).toLocaleDateString()}
+                        </span>
                         {statusBadge(m.status)}
-                        <button
-                          type="button"
-                          className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
-                          onClick={() => unlinkEmail(m)}
-                        >
-                          <Unlink className="w-3 h-3" /> Remove
-                        </button>
+                        <div className="ml-auto flex items-center gap-2">
+                          <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => openEdit(m)}>
+                            <Pencil className="w-3 h-3" /> Edit
+                          </button>
+                          <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => sendReset(m)}>
+                            <Mail className="w-3 h-3" /> Reset
+                          </button>
+                          <button type="button" className="text-muted-foreground hover:text-primary inline-flex items-center gap-1" onClick={() => splitAccount(m)}>
+                            <Split className="w-3 h-3" /> Split out
+                          </button>
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                            onClick={() => unlinkEmail(m)}
+                          >
+                            <Unlink className="w-3 h-3" /> Remove
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
+
               </div>
 
               <Select

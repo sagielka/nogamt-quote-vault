@@ -509,6 +509,12 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
           <PortalTeam />
         </TabsContent>
       )}
+
+      {showTeam && (
+        <TabsContent value="account">
+          <PortalAccountSettings />
+        </TabsContent>
+      )}
     </Tabs>
 
   );

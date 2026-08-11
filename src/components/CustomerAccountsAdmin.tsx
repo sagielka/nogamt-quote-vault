@@ -57,6 +57,8 @@ export const CustomerAccountsAdmin = () => {
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [linkFor, setLinkFor] = useState<Row | null>(null);
+  const [mergeFrom, setMergeFrom] = useState<Row | null>(null);
+  const [mergeTargetId, setMergeTargetId] = useState('');
   const [linkForm, setLinkForm] = useState({ email: '', contact_name: '', password: '' });
   const [createForm, setCreateForm] = useState({
     customerId: '',

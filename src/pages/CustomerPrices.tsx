@@ -16,6 +16,41 @@ import { Loader2, LogOut, Clock, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 import logo from '@/assets/logo.jpg';
 
+const PortalShell = ({
+  user,
+  onSignOut,
+  children,
+}: {
+  user: { email?: string | null } | null;
+  onSignOut: () => void;
+  children: React.ReactNode;
+}) => (
+  <div className="min-h-screen bg-background">
+    <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+      <div className="container py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src={logo} alt="Noga Engineering logo" className="h-10 w-auto" />
+          <Badge variant="outline">Customer Price Portal</Badge>
+        </div>
+        {user && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
+            <Button variant="outline" size="sm" onClick={onSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign out
+            </Button>
+          </div>
+        )}
+      </div>
+    </header>
+    <main className="container py-8">{children}</main>
+    <footer className="text-center pb-8 text-xs text-muted-foreground">
+      <p className="font-semibold">Noga Engineering &amp; Technology Ltd.</p>
+      <p>Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
+    </footer>
+  </div>
+);
+
 const CustomerPrices = () => {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const { account, loading: accountLoading, createAccount } = useCustomerAccount();
@@ -146,32 +181,18 @@ const CustomerPrices = () => {
     );
   }
 
-  const Shell = ({ children }: { children: React.ReactNode }) => (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
-        <div className="container py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Noga Engineering logo" className="h-10 w-auto" />
-            <Badge variant="outline">Customer Price Portal</Badge>
-          </div>
-          {user && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign out
-              </Button>
-            </div>
-          )}
-        </div>
-      </header>
-      <main className="container py-8">{children}</main>
-      <footer className="text-center pb-8 text-xs text-muted-foreground">
-        <p className="font-semibold">Noga Engineering &amp; Technology Ltd.</p>
-        <p>Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>
-      </footer>
-    </div>
+  const Shell = useMemo(
+    () =>
+      ({ children }: { children: React.ReactNode }) =>
+        (
+          <PortalShell user={user} onSignOut={() => signOut()}>
+            {children}
+          </PortalShell>
+        ),
+    [user],
   );
+
+
 
   // Admin/staff with price_portal permission: browse customer portals directly
   if (user && canManagePortal && !approved) {

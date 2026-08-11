@@ -96,6 +96,21 @@ export const PortalTeam = () => {
     }
   };
 
+  const deleteUser = async (member: TeamMember) => {
+    setBusy(true);
+    try {
+      const res = await invoke('delete', { memberId: member.id });
+      setTeam(res.team || []);
+      toast({ title: 'User deleted', description: `${member.email} no longer has an account.` });
+    } catch (err: any) {
+      toast({ title: 'Could not delete user', description: err.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+      setPendingDelete(null);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="py-10 flex justify-center">

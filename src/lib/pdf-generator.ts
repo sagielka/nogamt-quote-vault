@@ -320,18 +320,32 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   setFont(pdf, 'normal');
   pdf.setFontSize(8);
 
-  // Pre-load all line item images
+  // Pre-load all line item images. When a line has no manual image, fall back to
+  // the product media picture (rendered from the STEP/3D model) so the PDF shows
+  // the same part the interactive viewer displays on screen.
   const itemImages: Record<number, { data: string; width: number; height: number }[]> = {};
   for (let i = 0; i < quotation.items.length; i++) {
-    const imgs = quotation.items[i].images || [];
-    if (imgs.length === 0) continue;
+    const item = quotation.items[i];
+    const imgs = item.images || [];
     const loaded: { data: string; width: number; height: number }[] = [];
     for (const p of imgs) {
       const res = await resolveLineItemImage(p);
       if (res) loaded.push(res);
     }
+    if (loaded.length === 0) {
+      try {
+        const media = await getProductMediaFor(item.sku, item.description);
+        if (media?.imageUrl) {
+          const res = await loadImageAsBase64(media.imageUrl).catch(() => null);
+          if (res) loaded.push(res);
+        }
+      } catch {
+        /* product picture is optional */
+      }
+    }
     if (loaded.length) itemImages[i] = loaded;
   }
+
 
   // ===== Auto-fit to one page =====
   // Estimate space needed for totals + notes + tail spacing

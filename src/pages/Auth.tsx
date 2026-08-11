@@ -118,8 +118,9 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <h1 className="sr-only">Sign In to Noga Engineering</h1>
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Company Logo" className="h-16 w-auto" />
+            <img src={logo} alt="Noga Engineering &amp; Technology" className="h-16 w-auto" />
           </div>
           <CardTitle className="text-2xl">
             {isLogin ? 'Welcome Back' : 'Create Account'}
@@ -162,6 +163,7 @@ const Auth = () => {
                 />
                 <button
                   type="button"
+                  aria-label="Toggle password visibility"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}

@@ -113,6 +113,8 @@ export default function Versions() {
 
         {isAdmin && <ForceUpdateSettings />}
 
+        <h2 className="text-lg font-semibold text-foreground">Release notes</h2>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">

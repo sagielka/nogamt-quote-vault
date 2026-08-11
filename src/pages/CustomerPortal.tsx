@@ -114,7 +114,7 @@ const CustomerPortal = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="container py-4 flex items-center justify-between">
-          <img src={logo} alt="Logo" className="h-10 w-auto" />
+          <img src={logo} alt="Noga Engineering &amp; Technology" className="h-10 w-auto" />
           <Badge variant="outline">Customer Portal</Badge>
         </div>
       </header>

@@ -52,11 +52,20 @@ export const useCustomerAccount = () => {
         contact_name: contactName || null,
         status: 'pending',
       } as any) as any);
-      if (!error) await refresh();
+      if (!error) {
+        // De-duplicate, auto-assign to the matching company and notify the admin
+        try {
+          await supabase.functions.invoke('notify-portal-signup');
+        } catch (e) {
+          console.error('Portal signup notification failed', e);
+        }
+        await refresh();
+      }
       return { error };
     },
     [user, refresh]
   );
+
 
   return { account, loading: loading || authLoading, refresh, createAccount };
 };

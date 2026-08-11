@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Volume2, VolumeX } from 'lucide-react';
+import { MessageCircle, X, Send, Volume2, VolumeX, Mic, Square, Trash2, Loader2 } from 'lucide-react';
+import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';

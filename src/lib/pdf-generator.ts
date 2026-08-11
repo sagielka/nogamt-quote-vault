@@ -322,7 +322,35 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     }
   }
 
+  // Cover image (product picture / 3D model snapshot) beside the Bill To block
+  const rtlBilling = clientNameIsHebrew || containsHebrew(quotation.clientAddress || '');
+  if (coverImage && !rtlBilling) {
+    const boxH = 22;
+    const ratio = coverImage.width / coverImage.height || 1;
+    let drawH = boxH;
+    let drawW = boxH * ratio;
+    const maxW = 34;
+    if (drawW > maxW) {
+      drawW = maxW;
+      drawH = maxW / ratio;
+    }
+    const boxX = pageWidth - margin - drawW;
+    try {
+      pdf.addImage(coverImage.data, 'PNG', boxX, billToStartY, drawW, drawH);
+      if (coverImage.sku) {
+        pdf.setFontSize(7);
+        setFont(pdf, 'normal');
+        pdf.setTextColor(...gray);
+        pdf.text(coverImage.sku.slice(0, 28), pageWidth - margin, billToStartY + drawH + 3, { align: 'right' });
+      }
+    } catch (e) {
+      console.warn('Could not embed cover image:', e);
+    }
+    y = Math.max(y, billToStartY + drawH + 5);
+  }
+
   y += 6;
+
 
   // Table header
   const colX = {

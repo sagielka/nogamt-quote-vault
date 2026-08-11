@@ -36,6 +36,7 @@ export const PortalTeam = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<TeamMember | null>(null);
 
   const invoke = useCallback(async (action: string, body?: object) => {
     const { data, error } = await supabase.functions.invoke(`portal-team?action=${action}`, {

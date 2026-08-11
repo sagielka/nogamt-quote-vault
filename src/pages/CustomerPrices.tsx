@@ -125,7 +125,7 @@ const CustomerPrices = () => {
 
   const Shell = ({ children }: { children: React.ReactNode }) => (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="container py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logo} alt="Noga Engineering logo" className="h-10 w-auto" />

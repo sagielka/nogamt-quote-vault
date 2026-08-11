@@ -224,12 +224,14 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
 
   return (
     <Tabs defaultValue="overview">
-      <TabsList className="mb-4">
+      <div className="sticky top-[73px] z-20 -mx-4 px-4 pb-2 mb-4 bg-background/95 backdrop-blur border-b">
+      <TabsList className="w-full justify-start sm:w-auto">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="prices">Price list</TabsTrigger>
         <TabsTrigger value="quotes">My quotations ({quotes.length})</TabsTrigger>
         {showTeam && <TabsTrigger value="team">Team</TabsTrigger>}
       </TabsList>
+      </div>
 
       <TabsContent value="overview">
         <PortalStats quotes={quotes} />

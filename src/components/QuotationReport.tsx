@@ -18,6 +18,8 @@ import {
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
+import { IndustryPulse } from '@/components/IndustryPulse';
+import { useExchangeRates, toUSD, formatUSD } from '@/lib/fx';
 
 interface QuotationReportProps {
   quotations: Quotation[];
@@ -54,6 +56,7 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
   const [skuSearch, setSkuSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const chartsRef = useRef<HTMLDivElement>(null);
+  const fx = useExchangeRates();
 
   // === KPI CALCULATIONS (grouped by currency) ===
   const kpis = useMemo(() => {
@@ -95,6 +98,21 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
     });
     return Object.values(map).sort((a, b) => b.totalValue - a.totalValue);
   }, [quotations]);
+
+  // === TOP CUSTOMERS NORMALIZED TO USD (across all currencies) ===
+  const customerUsdData = useMemo(() => {
+    const map: Record<string, { name: string; totalValue: number; currencies: Set<Currency> }> = {};
+    customerData.forEach(c => {
+      const key = c.name.toLowerCase();
+      if (!map[key]) map[key] = { name: c.name, totalValue: 0, currencies: new Set() };
+      map[key].totalValue += toUSD(c.totalValue, c.currency, fx.rates);
+      map[key].currencies.add(c.currency);
+    });
+    return Object.values(map)
+      .map(c => ({ name: c.name, totalValue: Math.round(c.totalValue), currencies: Array.from(c.currencies).join(', ') }))
+      .sort((a, b) => b.totalValue - a.totalValue);
+  }, [customerData, fx.rates]);
+
 
   const filteredCustomerData = useMemo(() => {
     if (!customerSearch) return customerData;
@@ -498,12 +516,13 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="customers">By Customer</TabsTrigger>
           <TabsTrigger value="products">By Product/SKU</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="items">All Line Items</TabsTrigger>
+          <TabsTrigger value="market">Market</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -545,17 +564,25 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
                 </CardContent>
               </Card>
             </div>
-            {/* Top 10 customers */}
+            {/* Top 10 customers (USD normalized) */}
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4" /> Top 10 Customers by Value</CardTitle></CardHeader>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="w-4 h-4" /> Top 10 Customers by Value (USD)
+                </CardTitle>
+                <p className="text-[10px] text-muted-foreground">
+                  All currencies converted to USD · ILS {(fx.rates.ILS ?? 0).toFixed(3)} · EUR {(fx.rates.EUR ?? 0).toFixed(3)} per USD
+                  {fx.live ? ' · live rates' : ' · fallback rates'}
+                </p>
+              </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={customerData.slice(0, 10)} layout="vertical">
+                  <BarChart data={customerUsdData.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatUSD(Number(v))} />
                     <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="totalValue" name="Total Value ($)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="totalValue" name="Total Value (USD)" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -743,6 +770,11 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* MARKET */}
+        <TabsContent value="market" className="space-y-4">
+          <IndustryPulse />
         </TabsContent>
       </Tabs>
     </div>

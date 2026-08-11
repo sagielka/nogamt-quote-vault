@@ -506,6 +506,16 @@ export const CustomerAccountsAdmin = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   Add email
                 </Button>
+                {rootRows.length > 1 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => { setMergeFrom(row); setMergeTargetId(''); }}
+                  >
+                    <Merge className="w-4 h-4 mr-2" />
+                    Merge
+                  </Button>
+                )}
                 <Button size="sm" variant="outline" onClick={() => copyPortalLink(row)}>
                   <Link2 className="w-4 h-4 mr-2" />
                   Copy link

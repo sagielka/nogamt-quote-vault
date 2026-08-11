@@ -603,15 +603,15 @@ export const QuotationReport = ({ quotations, onBack, onViewQuotation, userNameM
             </Card>
             {/* Top 10 SKUs */}
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Package className="w-4 h-4" /> Top 10 Products by Revenue</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Package className="w-4 h-4" /> Top 10 Products by Revenue (USD)</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={skuData.slice(0, 10)} layout="vertical">
+                  <BarChart data={skuUsdData.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => formatUSD(Number(v))} />
                     <YAxis dataKey="sku" type="category" width={120} tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="totalRevenue" name="Revenue ($)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="totalRevenue" name="Revenue (USD)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

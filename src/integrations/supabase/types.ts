@@ -325,6 +325,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_account_admin: boolean
           notes: string | null
           parent_account_id: string | null
           price_list: string | null
@@ -340,6 +341,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          is_account_admin?: boolean
           notes?: string | null
           parent_account_id?: string | null
           price_list?: string | null
@@ -355,6 +357,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_account_admin?: boolean
           notes?: string | null
           parent_account_id?: string | null
           price_list?: string | null

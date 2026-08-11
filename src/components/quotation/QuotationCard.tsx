@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { formatCurrency, formatDate, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateTotal, getStatusColor, getStatusLabel } from '@/lib/quotation-utils';
 import { downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -279,7 +279,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   {quotation.quoteNumber}
                 </h3>
                 <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
-                  {quotation.status.charAt(0).toUpperCase() + quotation.status.slice(1)}
+                  {getStatusLabel(quotation.status)}
                 </Badge>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">

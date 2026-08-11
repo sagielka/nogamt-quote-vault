@@ -841,7 +841,7 @@ const Index = () => {
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      Finished ({finishedCount})
+                      Done — No Order ({finishedCount})
                     </button>
                     <button
                       onClick={() => setStatusFilter('all')}

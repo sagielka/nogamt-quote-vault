@@ -236,6 +236,24 @@ export const getStatusColor = (status: Quotation['status']): string => {
   }
 };
 
+export const getStatusLabel = (status: Quotation['status']): string => {
+  switch (status) {
+    case 'draft':
+      return 'Draft';
+    case 'sent':
+      return 'Sent';
+    case 'accepted':
+      return 'Order Received';
+    case 'declined':
+      return 'Declined';
+    case 'finished':
+      return 'Done — No Order';
+    default:
+      return String(status);
+  }
+};
+
+
 export const createEmptyLineItem = (): LineItem => ({
   id: crypto.randomUUID(),
   sku: '',

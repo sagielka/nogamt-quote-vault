@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Quotation } from '@/types/quotation';
 import { QuotationCard } from '@/components/quotation/QuotationCard';
 import { ViewMode } from '@/components/ViewModeToggle';
-import { formatCurrency, formatDate, calculateTotal, getStatusColor } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateTotal, getStatusColor, getStatusLabel } from '@/lib/quotation-utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -25,13 +25,6 @@ interface Props {
 }
 
 const STATUS_COLUMNS: Quotation['status'][] = ['draft', 'sent', 'accepted', 'declined', 'finished'];
-const STATUS_LABEL: Record<Quotation['status'], string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  accepted: 'Accepted',
-  declined: 'Declined',
-  finished: 'Finished',
-};
 
 type SortKey = 'quoteNumber' | 'clientName' | 'total' | 'status' | 'createdAt' | 'validUntil';
 
@@ -89,7 +82,7 @@ const CompactList = ({ quotations, selectedIds, onToggleSelect, onView, userName
             />
             <span className="font-mono text-xs text-primary w-32 shrink-0 truncate">{q.quoteNumber}</span>
             <span className="text-sm truncate flex-1 min-w-0">{q.clientName}</span>
-            <Badge variant="outline" className={`${getStatusColor(q.status)} text-[10px]`}>{STATUS_LABEL[q.status]}</Badge>
+            <Badge variant="outline" className={`${getStatusColor(q.status)} text-[10px]`}>{getStatusLabel(q.status)}</Badge>
             <span className="text-sm font-medium w-28 text-right shrink-0">{formatCurrency(total, q.currency)}</span>
             <span className="text-xs text-muted-foreground w-24 text-right shrink-0 hidden sm:inline">{formatDate(q.createdAt)}</span>
             <span className="text-xs text-muted-foreground w-20 text-right shrink-0 hidden md:inline">
@@ -177,7 +170,7 @@ const TableView = (props: Props) => {
                 </td>
                 <td className="px-3 py-2 font-mono text-xs text-primary whitespace-nowrap">{q.quoteNumber}</td>
                 <td className="px-3 py-2 max-w-xs truncate">{q.clientName}</td>
-                <td className="px-3 py-2"><Badge variant="outline" className={`${getStatusColor(q.status)} text-[10px]`}>{STATUS_LABEL[q.status]}</Badge></td>
+                <td className="px-3 py-2"><Badge variant="outline" className={`${getStatusColor(q.status)} text-[10px]`}>{getStatusLabel(q.status)}</Badge></td>
                 <td className="px-3 py-2 text-right font-medium whitespace-nowrap">{formatCurrency(total, q.currency)}</td>
                 <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{formatDate(q.createdAt)}</td>
                 <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{formatDate(q.validUntil)}</td>
@@ -205,7 +198,7 @@ const KanbanView = ({ quotations, onView, selectedIds, onToggleSelect }: Props) 
       {STATUS_COLUMNS.map(status => (
         <div key={status} className="rounded-lg border border-primary/10 bg-card p-2 min-h-[200px]">
           <div className="flex items-center justify-between px-1 py-1 mb-2">
-            <Badge variant="outline" className={`${getStatusColor(status)} text-[10px]`}>{STATUS_LABEL[status]}</Badge>
+            <Badge variant="outline" className={`${getStatusColor(status)} text-[10px]`}>{getStatusLabel(status)}</Badge>
             <span className="text-xs text-muted-foreground">{grouped[status].length}</span>
           </div>
           <div className="flex flex-col gap-2">

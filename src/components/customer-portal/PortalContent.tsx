@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
 import { PortalQuoteDialog } from './PortalQuoteDialog';
 import { PortalTeam } from './PortalTeam';
+import { PortalAccountSettings } from './PortalAccountSettings';
 import * as XLSX from 'xlsx';
 import { ProductMediaThumb } from '@/components/product-media/ProductMediaThumb';
 import { ProductMediaDownload } from '@/components/product-media/ProductMediaDownload';
@@ -230,6 +231,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         <TabsTrigger value="prices">Price list</TabsTrigger>
         <TabsTrigger value="quotes">My quotations ({quotes.length})</TabsTrigger>
         {showTeam && <TabsTrigger value="team">Team</TabsTrigger>}
+        {showTeam && <TabsTrigger value="account">Account settings</TabsTrigger>}
       </TabsList>
       </div>
 
@@ -506,6 +508,12 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       {showTeam && (
         <TabsContent value="team">
           <PortalTeam />
+        </TabsContent>
+      )}
+
+      {showTeam && (
+        <TabsContent value="account">
+          <PortalAccountSettings />
         </TabsContent>
       )}
     </Tabs>

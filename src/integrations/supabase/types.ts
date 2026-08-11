@@ -1065,6 +1065,10 @@ export type Database = {
         Args: { _comment: string; _response: string; _token: string }
         Returns: boolean
       }
+      update_my_portal_account: {
+        Args: { _company_name: string; _contact_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "viewer"

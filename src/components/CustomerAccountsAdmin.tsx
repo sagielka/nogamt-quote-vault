@@ -549,57 +549,65 @@ export const CustomerAccountsAdmin = () => {
                   )}
                 </div>
               </div>
-                {membersOf(row.id).length > 0 && (
-                  <div className="mt-2 rounded-md border border-border/60 divide-y divide-border/60">
-                    <div className="px-2 py-1 text-xs text-muted-foreground flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {membersOf(row.id).length} additional user{membersOf(row.id).length !== 1 ? 's' : ''} on this account
-                    </div>
-                    {membersOf(row.id).map((m) => (
-                      <div key={m.id} className="px-2 py-1.5 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="truncate font-medium">{m.email}</span>
-                        <span className="text-muted-foreground">{m.contact_name || 'No name'}</span>
-                        <span className="text-muted-foreground">
-                          {priceListOptions.find((p) => p.value === m.price_list)?.label || 'No price list'}
-                        </span>
-                        <span className="text-muted-foreground">
-                          added {new Date(m.created_at).toLocaleDateString()}
-                        </span>
+              {membersOf(row.id).length > 0 && (
+                <div className="rounded-md border border-border/60 divide-y divide-border/60 overflow-hidden">
+                  <div className="px-3 py-1.5 bg-muted/40 text-xs text-muted-foreground flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {membersOf(row.id).length} additional user{membersOf(row.id).length !== 1 ? 's' : ''} on this account
+                  </div>
+                  {membersOf(row.id).map((m) => (
+                    <div
+                      key={m.id}
+                      className="px-3 py-2 flex flex-col xl:flex-row xl:items-center gap-2 text-xs"
+                    >
+                      <div className="min-w-0 xl:w-64">
+                        <div className="font-medium truncate">{m.email}</div>
+                        <div className="text-muted-foreground truncate">{m.contact_name || 'No name'}</div>
+                      </div>
+                      <div className="min-w-0 xl:w-48 text-muted-foreground truncate">
+                        {priceListOptions.find((p) => p.value === m.price_list)?.label || 'No price list'}
+                      </div>
+                      <div className="text-muted-foreground xl:w-32 whitespace-nowrap">
+                        added {new Date(m.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
                         {statusBadge(m.status)}
                         {m.is_account_admin && (
                           <Badge variant="outline" className="gap-1 border-primary/60 text-primary">
                             <Shield className="w-3 h-3" /> Admin
                           </Badge>
                         )}
-                        <div className="ml-auto flex items-center gap-2">
-                          <button
-                            type="button"
-                            className="text-muted-foreground hover:text-primary inline-flex items-center gap-1"
-                            onClick={() => toggleAccountAdmin(m)}
-                          >
-                            <Shield className="w-3 h-3" /> {m.is_account_admin ? 'Remove admin' : 'Make admin'}
-                          </button>
-                          <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => openEdit(m)}>
-                            <Pencil className="w-3 h-3" /> Edit
-                          </button>
-                          <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => sendReset(m)}>
-                            <Mail className="w-3 h-3" /> Reset
-                          </button>
-                          <button type="button" className="text-muted-foreground hover:text-primary inline-flex items-center gap-1" onClick={() => splitAccount(m)}>
-                            <Split className="w-3 h-3" /> Split out
-                          </button>
-                          <button
-                            type="button"
-                            className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
-                            onClick={() => unlinkEmail(m)}
-                          >
-                            <Unlink className="w-3 h-3" /> Remove
-                          </button>
-                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="xl:ml-auto flex items-center gap-3 flex-wrap whitespace-nowrap">
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-primary inline-flex items-center gap-1"
+                          onClick={() => toggleAccountAdmin(m)}
+                        >
+                          <Shield className="w-3 h-3" /> {m.is_account_admin ? 'Remove admin' : 'Make admin'}
+                        </button>
+                        <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => openEdit(m)}>
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                        <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => sendReset(m)}>
+                          <Mail className="w-3 h-3" /> Reset
+                        </button>
+                        <button type="button" className="text-muted-foreground hover:text-primary inline-flex items-center gap-1" onClick={() => splitAccount(m)}>
+                          <Split className="w-3 h-3" /> Split out
+                        </button>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                          onClick={() => unlinkEmail(m)}
+                        >
+                          <Unlink className="w-3 h-3" /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             </CardContent>
           </Card>
         ))}

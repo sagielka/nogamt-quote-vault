@@ -111,6 +111,61 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     };
   }, [fetchMessages]);
 
+  // ---- Read receipts ----
+  const fetchReads = useCallback(async () => {
+    const { data } = await (supabase
+      .from('message_reads' as any)
+      .select('message_id, user_id, read_at') as any);
+    if (!data) return;
+    const map: Record<string, ReadReceipt[]> = {};
+    (data as ReadReceipt[]).forEach((r) => {
+      (map[r.message_id] ||= []).push(r);
+    });
+    setReads(map);
+  }, []);
+
+  useEffect(() => {
+    fetchReads();
+    const interval = setInterval(fetchReads, 8000);
+    return () => clearInterval(interval);
+  }, [fetchReads]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('team-chat-reads')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_reads' }, (payload) => {
+        const r = payload.new as ReadReceipt;
+        setReads((prev) => {
+          const list = prev[r.message_id] || [];
+          if (list.some((x) => x.user_id === r.user_id)) return prev;
+          return { ...prev, [r.message_id]: [...list, r] };
+        });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Mark visible messages from others as read while the panel is open
+  useEffect(() => {
+    if (!open || !user) return;
+    const toMark = messages
+      .filter((m) => m.user_id !== user.id && !(reads[m.id] || []).some((r) => r.user_id === user.id))
+      .map((m) => m.id);
+    if (toMark.length === 0) return;
+    (async () => {
+      await (supabase
+        .from('message_reads' as any)
+        .upsert(
+          toMark.map((message_id) => ({ message_id, user_id: user.id })) as any,
+          { onConflict: 'message_id,user_id', ignoreDuplicates: true } as any
+        ) as any);
+      fetchReads();
+    })();
+  }, [open, messages, reads, user, fetchReads]);
+
+
   // Notify on genuinely new messages from others
   useEffect(() => {
     if (messages.length === 0) return;

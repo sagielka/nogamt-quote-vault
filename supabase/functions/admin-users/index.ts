@@ -250,11 +250,19 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Cannot delete yourself" }, 400);
       }
 
-      // Delete from auth (cascades to user_roles via FK if set, or clean up manually)
+      // Delete from auth. If the auth login no longer exists (orphaned portal
+      // account), continue with cleanup of the remaining records.
       const { error: deleteError } =
         await adminClient.auth.admin.deleteUser(userId);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        const msg = String(deleteError.message || "").toLowerCase();
+        const notFound =
+          (deleteError as { status?: number }).status === 404 ||
+          msg.includes("not found") ||
+          msg.includes("user_not_found");
+        if (!notFound) throw deleteError;
+      }
 
       // Clean up related data
       await adminClient.from("user_roles").delete().eq("user_id", userId);

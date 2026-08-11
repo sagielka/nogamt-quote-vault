@@ -328,8 +328,19 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
                       {getUserLabel(msg.user_id)} · {format(new Date(msg.created_at), 'HH:mm')}
                     </p>
                     <div className={`px-3 py-1.5 rounded-xl text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
-                      {msg.content}
+                      {msg.content.startsWith('voice:') ? (
+                        (() => {
+                          const rest = msg.content.slice(6);
+                          const lastColon = rest.lastIndexOf(':');
+                          const path = lastColon > 0 ? rest.slice(0, lastColon) : rest;
+                          const dur = lastColon > 0 ? Number(rest.slice(lastColon + 1)) : undefined;
+                          return <VoiceMessagePlayer path={path} duration={dur} isMe={isMe} />;
+                        })()
+                      ) : (
+                        msg.content
+                      )}
                     </div>
+
                   </div>
                 </div>
               );

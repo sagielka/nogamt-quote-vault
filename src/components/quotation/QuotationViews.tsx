@@ -25,13 +25,6 @@ interface Props {
 }
 
 const STATUS_COLUMNS: Quotation['status'][] = ['draft', 'sent', 'accepted', 'declined', 'finished'];
-const STATUS_LABEL: Record<Quotation['status'], string> = {
-  draft: 'Draft',
-  sent: 'Sent',
-  accepted: 'Accepted',
-  declined: 'Declined',
-  finished: 'Finished',
-};
 
 type SortKey = 'quoteNumber' | 'clientName' | 'total' | 'status' | 'createdAt' | 'validUntil';
 

@@ -14,7 +14,11 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge, Shield } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, Trash2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge, Shield } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 
 
@@ -52,6 +56,7 @@ export const CustomerAccountsAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Row | null>(null);
   const [preview, setPreview] = useState<Row | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
 
   const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '', is_account_admin: false });
   const [newPassword, setNewPassword] = useState('');
@@ -393,6 +398,21 @@ export const CustomerAccountsAdmin = () => {
 
 
 
+  // Permanently delete the login and the portal account record
+  const deleteAccount = async (row: Row) => {
+    setBusy(true);
+    try {
+      await callAdmin('delete-user', { userId: row.user_id });
+      toast({ title: 'Account deleted', description: `${row.email} was permanently removed.` });
+      setDeleteTarget(null);
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
@@ -553,6 +573,10 @@ export const CustomerAccountsAdmin = () => {
                       {row.status === 'approved' ? 'Revoke' : 'Reject'}
                     </Button>
                   )}
+                  <Button size="sm" variant="destructive" disabled={busy} onClick={() => setDeleteTarget(row)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
                 </div>
               </div>
               {membersOf(row.id).length > 0 && (
@@ -608,6 +632,13 @@ export const CustomerAccountsAdmin = () => {
                           onClick={() => unlinkEmail(m)}
                         >
                           <Unlink className="w-3 h-3" /> Remove
+                        </button>
+                        <button
+                          type="button"
+                          className="text-destructive/80 hover:text-destructive inline-flex items-center gap-1"
+                          onClick={() => setDeleteTarget(m)}
+                        >
+                          <Trash2 className="w-3 h-3" /> Delete
                         </button>
                       </div>
                     </div>
@@ -681,6 +712,29 @@ export const CustomerAccountsAdmin = () => {
         </DialogContent>
       </Dialog>
 
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this account permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.email} will be deleted completely — the login, the portal account and any
+              roles or permissions. Users linked under this account become standalone accounts.
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => { e.preventDefault(); if (deleteTarget) deleteAccount(deleteTarget); }}
+            >
+              {busy ? 'Deleting…' : 'Delete permanently'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">

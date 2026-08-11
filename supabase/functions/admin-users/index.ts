@@ -258,7 +258,21 @@ Deno.serve(async (req) => {
 
       // Clean up related data
       await adminClient.from("user_roles").delete().eq("user_id", userId);
+      await adminClient.from("user_permissions").delete().eq("user_id", userId);
       await adminClient.from("profiles").delete().eq("user_id", userId);
+
+      // Portal account cleanup: detach any linked members, then remove the account row
+      const { data: accts } = await adminClient
+        .from("customer_accounts")
+        .select("id")
+        .eq("user_id", userId);
+      for (const a of accts ?? []) {
+        await adminClient
+          .from("customer_accounts")
+          .update({ parent_account_id: null })
+          .eq("parent_account_id", a.id);
+      }
+      await adminClient.from("customer_accounts").delete().eq("user_id", userId);
 
       return jsonResponse({ success: true });
     }

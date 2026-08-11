@@ -74,10 +74,11 @@ const renderPng = async (group: THREE.Group, maxDim: number, size = 512): Promis
   canvas.height = size;
   let renderer: THREE.WebGLRenderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
   } catch {
     return null;
   }
+  renderer.setClearColor(0xffffff, 1);
   renderer.setSize(size, size, false);
 
   const scene = new THREE.Scene();

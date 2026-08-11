@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCustomerAccount } from '@/hooks/useCustomerAccount';
@@ -181,24 +181,11 @@ const CustomerPrices = () => {
     );
   }
 
-  const Shell = useMemo(
-    () =>
-      ({ children }: { children: React.ReactNode }) =>
-        (
-          <PortalShell user={user} onSignOut={() => signOut()}>
-            {children}
-          </PortalShell>
-        ),
-    [user],
-  );
-
-
-
   // Admin/staff with price_portal permission: browse customer portals directly
   if (user && canManagePortal && !approved) {
     const selectedRawList = staffOverrideList || selectedAccount?.price_list || null;
     return (
-      <Shell>
+      <PortalShell user={user} onSignOut={signOut}>
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="sm" onClick={() => window.location.hash = '#/'}>
             <ArrowLeft className="w-4 h-4 mr-1" />
@@ -266,14 +253,14 @@ const CustomerPrices = () => {
           )
         )}
 
-      </Shell>
+      </PortalShell>
     );
   }
 
   // Not signed in
   if (!user) {
     return (
-      <Shell>
+      <PortalShell user={user} onSignOut={signOut}>
         <Card className="max-w-md mx-auto">
           <CardContent className="p-8">
             <h1 className="heading-display text-2xl mb-1">
@@ -312,14 +299,14 @@ const CustomerPrices = () => {
             </button>
           </CardContent>
         </Card>
-      </Shell>
+      </PortalShell>
     );
   }
 
   // Signed in but no account record yet
   if (!account) {
     return (
-      <Shell>
+      <PortalShell user={user} onSignOut={signOut}>
         <Card className="max-w-md mx-auto">
           <CardContent className="p-8">
             <h1 className="heading-display text-2xl mb-1">Complete your registration</h1>
@@ -342,14 +329,14 @@ const CustomerPrices = () => {
             </form>
           </CardContent>
         </Card>
-      </Shell>
+      </PortalShell>
     );
   }
 
   // Pending / rejected / approved without a price list
   if (!approved) {
     return (
-      <Shell>
+      <PortalShell user={user} onSignOut={signOut}>
         <Card className="max-w-md mx-auto">
           <CardContent className="p-8 text-center">
             <Clock className="w-10 h-10 mx-auto text-muted-foreground/60 mb-4" />
@@ -363,12 +350,12 @@ const CustomerPrices = () => {
             </p>
           </CardContent>
         </Card>
-      </Shell>
+      </PortalShell>
     );
   }
 
   return (
-    <Shell>
+    <PortalShell user={user} onSignOut={signOut}>
       <div className="flex items-center gap-2 mb-4">
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h1 className="heading-display text-2xl">
@@ -380,7 +367,7 @@ const CustomerPrices = () => {
       </div>
 
       <PortalContent rawList={rawList} email={user.email as string} />
-    </Shell>
+    </PortalShell>
   );
 };
 

@@ -89,9 +89,6 @@ export const BulkActionsBar = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setStatusConfirm('sent')}>
-                <Send className="w-3.5 h-3.5 mr-2" /> Mark as Sent
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setStatusConfirm('accepted')}>
                 <CheckCircle className="w-3.5 h-3.5 mr-2" /> Mark as Accepted
               </DropdownMenuItem>

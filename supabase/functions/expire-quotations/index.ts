@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     // Expired quotations that were never accepted / closed
     const { data: expired, error: fetchError } = await supabase
       .from("quotations")
-      .select("id, quote_number, client_name, client_email, valid_until, status, currency, items, created_at")
+      .select("id, user_id, quote_number, client_name, client_email, valid_until, status, currency, items, created_at")
       .lt("valid_until", now.toISOString())
       .or("status.is.null,status.eq.draft,status.eq.sent");
 

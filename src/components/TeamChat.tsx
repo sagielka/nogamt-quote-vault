@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Volume2, VolumeX } from 'lucide-react';
+import { MessageCircle, X, Send, Volume2, VolumeX, Mic, Square, Trash2, Loader2 } from 'lucide-react';
+import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -29,6 +30,13 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     const stored = localStorage.getItem('chat-sound-enabled');
     return stored !== null ? stored === 'true' : true;
   });
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordStartRef = useRef<number | null>(null);
+  const cancelRecordRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastSeenRef = useRef<string | null>(null);
   const { toast } = useToast();
@@ -165,6 +173,90 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     if (data) mergeMessages([data as ChatMessage]);
   };
 
+  const startRecording = async () => {
+    if (!user) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const recorder = new MediaRecorder(stream, { mimeType: mime });
+      const chunks: BlobPart[] = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const seconds = Math.max(1, Math.round((Date.now() - (recordStartRef.current || Date.now())) / 1000));
+        const blob = new Blob(chunks, { type: mime });
+        setRecording(false);
+        setRecordSeconds(0);
+        if (cancelRecordRef.current) {
+          cancelRecordRef.current = false;
+          return;
+        }
+        if (blob.size < 1500) {
+          toast({ title: 'Recording too short', description: 'Hold the mic a bit longer.', variant: 'destructive' });
+          return;
+        }
+        setUploading(true);
+        const ext = mime === 'audio/webm' ? 'webm' : 'm4a';
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('voice-messages')
+          .upload(path, blob, { contentType: mime, upsert: false });
+        if (upErr) {
+          setUploading(false);
+          toast({ title: 'Voice message not sent', description: upErr.message, variant: 'destructive' });
+          return;
+        }
+        const { data, error } = await (supabase
+          .from('messages' as any)
+          .insert({ user_id: user.id, content: `voice:${path}:${seconds}` } as any)
+          .select()
+          .maybeSingle() as any);
+        setUploading(false);
+        if (error) {
+          toast({ title: 'Voice message not sent', description: error.message, variant: 'destructive' });
+          return;
+        }
+        if (data) mergeMessages([data as ChatMessage]);
+      };
+      recorderRef.current = recorder;
+      cancelRecordRef.current = false;
+      recordStartRef.current = Date.now();
+      recorder.start();
+      setRecording(true);
+      setRecordSeconds(0);
+      timerRef.current = window.setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+    } catch {
+      toast({
+        title: 'Microphone unavailable',
+        description: 'Allow microphone access to record a voice message.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    cancelRecordRef.current = cancel;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    recorderRef.current?.state === 'recording' && recorderRef.current.stop();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (recorderRef.current?.state === 'recording') {
+        cancelRecordRef.current = true;
+        recorderRef.current.stop();
+      }
+    };
+  }, []);
+
+
+
 
   const getUserLabel = (userId: string) => {
     if (userNameMap[userId]) return userNameMap[userId];
@@ -237,8 +329,19 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
                       {getUserLabel(msg.user_id)} · {format(new Date(msg.created_at), 'HH:mm')}
                     </p>
                     <div className={`px-3 py-1.5 rounded-xl text-sm ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
-                      {msg.content}
+                      {msg.content.startsWith('voice:') ? (
+                        (() => {
+                          const rest = msg.content.slice(6);
+                          const lastColon = rest.lastIndexOf(':');
+                          const path = lastColon > 0 ? rest.slice(0, lastColon) : rest;
+                          const dur = lastColon > 0 ? Number(rest.slice(lastColon + 1)) : undefined;
+                          return <VoiceMessagePlayer path={path} duration={dur} isMe={isMe} />;
+                        })()
+                      ) : (
+                        msg.content
+                      )}
                     </div>
+
                   </div>
                 </div>
               );
@@ -247,25 +350,66 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
 
           {/* Input */}
           <div className="px-3 py-2 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="text-sm h-9"
-                autoFocus
-              />
-              <Button type="submit" size="sm" className="h-9 px-3" disabled={!newMessage.trim()}>
-                <Send className="w-4 h-4" />
-              </Button>
-            </form>
+            {recording ? (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-2 flex-1 text-sm text-destructive">
+                  <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  Recording {Math.floor(recordSeconds / 60)}:{String(recordSeconds % 60).padStart(2, '0')}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-9 px-3"
+                  onClick={() => stopRecording(true)}
+                  aria-label="Cancel recording"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-9 px-3"
+                  onClick={() => stopRecording(false)}
+                  aria-label="Send voice message"
+                >
+                  <Square className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="flex gap-2"
+              >
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  className="text-sm h-9"
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 px-3"
+                  onClick={startRecording}
+                  disabled={uploading}
+                  aria-label="Record voice message"
+                  title="Record voice message"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mic className="w-4 h-4" />}
+                </Button>
+                <Button type="submit" size="sm" className="h-9 px-3" disabled={!newMessage.trim()}>
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            )}
           </div>
+
         </div>
       )}
     </>

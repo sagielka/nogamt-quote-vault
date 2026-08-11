@@ -379,7 +379,9 @@ export const CustomerAccountsAdmin = () => {
       <div className="flex items-center gap-2">
         <ShieldCheck className="w-5 h-5 text-primary" />
         <h2 className="heading-display text-xl">Customer Portal Accounts</h2>
-        <span className="text-xs text-muted-foreground ml-auto">{rows.length} accounts</span>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {rootRows.length} compan{rootRows.length !== 1 ? 'ies' : 'y'} · {rows.length} user{rows.length !== 1 ? 's' : ''}
+        </span>
         <Button size="sm" variant="outline" onClick={() => copyPortalLink()}>
           <Link2 className="w-4 h-4 mr-2" />
           Copy portal link

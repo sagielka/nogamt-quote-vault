@@ -553,6 +553,43 @@ export const CustomerAccountsAdmin = () => {
         ))}
       </div>
 
+      <Dialog open={!!mergeFrom} onOpenChange={(o) => !o && setMergeFrom(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Merge portal accounts</DialogTitle>
+            <DialogDescription>
+              {mergeFrom?.company_name || mergeFrom?.email} and everyone linked to it will move under the account you
+              choose, and share its company name and price list.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label>Merge into</Label>
+            <Select value={mergeTargetId || undefined} onValueChange={setMergeTargetId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose the main account to keep" />
+              </SelectTrigger>
+              <SelectContent>
+                {rootRows
+                  .filter((r) => r.id !== mergeFrom?.id)
+                  .map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {(r.company_name || '—') + ' · ' + r.email}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMergeFrom(null)}>Cancel</Button>
+            <Button onClick={mergeAccounts} disabled={busy || !mergeTargetId}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Merge
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

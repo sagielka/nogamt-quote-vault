@@ -43,7 +43,7 @@ const validateRequest = (data: any): { valid: boolean; error?: string } => {
   if (!data.clientName || typeof data.clientName !== 'string' || data.clientName.length > 200) {
     return { valid: false, error: 'Invalid client name' };
   }
-  if (!data.quoteNumber || typeof data.quoteNumber !== 'string' || data.quoteNumber.length > 50) {
+  if (!data.quoteNumber || typeof data.quoteNumber !== 'string' || data.quoteNumber.length > 200) {
     return { valid: false, error: 'Invalid quote number' };
   }
   if (!data.total || typeof data.total !== 'string' || data.total.length > 100) {

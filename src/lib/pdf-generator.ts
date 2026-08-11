@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
 import { supabase } from '@/integrations/supabase/client';
+import { getProductMediaFor } from '@/hooks/useProductMedia';
 
 export type GeneratedPdf = {
   blob: Blob;

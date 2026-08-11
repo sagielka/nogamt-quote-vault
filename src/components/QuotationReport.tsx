@@ -18,6 +18,8 @@ import {
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
+import { IndustryPulse } from '@/components/IndustryPulse';
+import { useExchangeRates, toUSD, formatUSD } from '@/lib/fx';
 
 interface QuotationReportProps {
   quotations: Quotation[];

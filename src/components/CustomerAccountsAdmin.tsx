@@ -314,6 +314,47 @@ export const CustomerAccountsAdmin = () => {
     if (ok) toast({ title: 'Access removed', description: `${member.email} no longer shares this account.` });
   };
 
+  // Detach a linked user so they become their own standalone portal account
+  const splitAccount = async (member: Row) => {
+    const ok = await patch(member.id, { parent_account_id: null });
+    if (ok) toast({ title: 'Account split', description: `${member.email} is now a separate portal account.` });
+  };
+
+  // Merge one root account (and everyone under it) into another company account
+  const mergeAccounts = async () => {
+    if (!mergeFrom || !mergeTargetId) return;
+    setBusy(true);
+    try {
+      const target = rows.find((r) => r.id === mergeTargetId);
+      const childIds = membersOf(mergeFrom.id).map((m) => m.id);
+      if (childIds.length) {
+        await (supabase.from('customer_accounts' as any).update({ parent_account_id: mergeTargetId } as any).in('id', childIds) as any);
+      }
+      const { error } = await (supabase
+        .from('customer_accounts' as any)
+        .update({
+          parent_account_id: mergeTargetId,
+          company_name: target?.company_name ?? mergeFrom.company_name,
+          price_list: target?.price_list ?? mergeFrom.price_list,
+        } as any)
+        .eq('id', mergeFrom.id) as any);
+      if (error) throw error;
+      toast({
+        title: 'Accounts merged',
+        description: `${mergeFrom.email} now shares the ${target?.company_name || target?.email} account.`,
+      });
+      setMergeFrom(null);
+      setMergeTargetId('');
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
+
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;

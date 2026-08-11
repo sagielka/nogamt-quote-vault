@@ -181,9 +181,17 @@ const CustomerPrices = () => {
     );
   }
 
-  const Shell = ({ children }: { children: React.ReactNode }) => (
-    <PortalShell user={user} onSignOut={() => signOut()}>{children}</PortalShell>
+  const Shell = useMemo(
+    () =>
+      ({ children }: { children: React.ReactNode }) =>
+        (
+          <PortalShell user={user} onSignOut={() => signOut()}>
+            {children}
+          </PortalShell>
+        ),
+    [user],
   );
+
 
 
   // Admin/staff with price_portal permission: browse customer portals directly

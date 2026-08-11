@@ -5,6 +5,7 @@ import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
 import { supabase } from '@/integrations/supabase/client';
 import { getProductMediaFor } from '@/hooks/useProductMedia';
+import { renderGlbSnapshot } from '@/lib/glb-snapshot';
 
 export type GeneratedPdf = {
   blob: Blob;
@@ -243,12 +244,51 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   pdf.line(margin, y, pageWidth - margin, y);
   y += 8;
 
+  // Pre-load all line item images. When a line has no manual image, fall back to
+  // the product media picture, and if only a 3D model exists render a snapshot of
+  // the GLB so the PDF shows the same part the interactive viewer displays.
+  const itemImages: Record<number, { data: string; width: number; height: number }[]> = {};
+  let coverImage: { data: string; width: number; height: number; sku: string } | null = null;
+  for (let i = 0; i < quotation.items.length; i++) {
+    const item = quotation.items[i];
+    const imgs = item.images || [];
+    const loaded: { data: string; width: number; height: number }[] = [];
+    for (const p of imgs) {
+      const res = await resolveLineItemImage(p);
+      if (res) loaded.push(res);
+    }
+    if (loaded.length === 0) {
+      try {
+        const media = await getProductMediaFor(item.sku, item.description);
+        if (media?.imageUrl) {
+          const res = await loadImageAsBase64(media.imageUrl).catch(() => null);
+          if (res) loaded.push(res);
+        }
+        if (loaded.length === 0 && media?.modelUrl) {
+          const snap = await renderGlbSnapshot(media.modelUrl);
+          if (snap) {
+            const res = await loadImageAsBase64(snap).catch(() => null);
+            if (res) loaded.push(res);
+          }
+        }
+      } catch {
+        /* product picture is optional */
+      }
+    }
+    if (loaded.length) {
+      itemImages[i] = loaded;
+      if (!coverImage) coverImage = { ...loaded[0], sku: item.sku || item.description || '' };
+    }
+  }
+
   // Bill To
+  const billToStartY = y;
   pdf.setFontSize(8);
   pdf.setTextColor(...gray);
   setFont(pdf, 'normal');
   pdf.text('BILL TO', margin, y);
   y += 5;
+
 
   pdf.setFontSize(10);
   pdf.setTextColor(...black);
@@ -282,7 +322,35 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     }
   }
 
+  // Cover image (product picture / 3D model snapshot) beside the Bill To block
+  const rtlBilling = clientNameIsHebrew || containsHebrew(quotation.clientAddress || '');
+  if (coverImage && !rtlBilling) {
+    const boxH = 22;
+    const ratio = coverImage.width / coverImage.height || 1;
+    let drawH = boxH;
+    let drawW = boxH * ratio;
+    const maxW = 34;
+    if (drawW > maxW) {
+      drawW = maxW;
+      drawH = maxW / ratio;
+    }
+    const boxX = pageWidth - margin - drawW;
+    try {
+      pdf.addImage(coverImage.data, 'PNG', boxX, billToStartY, drawW, drawH);
+      if (coverImage.sku) {
+        pdf.setFontSize(7);
+        setFont(pdf, 'normal');
+        pdf.setTextColor(...gray);
+        pdf.text(coverImage.sku.slice(0, 28), pageWidth - margin, billToStartY + drawH + 3, { align: 'right' });
+      }
+    } catch (e) {
+      console.warn('Could not embed cover image:', e);
+    }
+    y = Math.max(y, billToStartY + drawH + 5);
+  }
+
   y += 6;
+
 
   // Table header
   const colX = {
@@ -321,31 +389,8 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   setFont(pdf, 'normal');
   pdf.setFontSize(8);
 
-  // Pre-load all line item images. When a line has no manual image, fall back to
-  // the product media picture (rendered from the STEP/3D model) so the PDF shows
-  // the same part the interactive viewer displays on screen.
-  const itemImages: Record<number, { data: string; width: number; height: number }[]> = {};
-  for (let i = 0; i < quotation.items.length; i++) {
-    const item = quotation.items[i];
-    const imgs = item.images || [];
-    const loaded: { data: string; width: number; height: number }[] = [];
-    for (const p of imgs) {
-      const res = await resolveLineItemImage(p);
-      if (res) loaded.push(res);
-    }
-    if (loaded.length === 0) {
-      try {
-        const media = await getProductMediaFor(item.sku, item.description);
-        if (media?.imageUrl) {
-          const res = await loadImageAsBase64(media.imageUrl).catch(() => null);
-          if (res) loaded.push(res);
-        }
-      } catch {
-        /* product picture is optional */
-      }
-    }
-    if (loaded.length) itemImages[i] = loaded;
-  }
+
+
 
 
   // ===== Auto-fit to one page =====

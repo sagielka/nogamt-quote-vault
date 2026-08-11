@@ -31,6 +31,7 @@ import thinkingInside from '@/assets/thinking-inside-new.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
+import ProductMediaThumb from '@/components/product-media/ProductMediaThumb';
 
 // electronAPI types are declared globally in src/vite-env.d.ts
 

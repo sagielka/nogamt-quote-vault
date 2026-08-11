@@ -152,11 +152,31 @@ export const PortalTeam = () => {
                         <Badge variant="destructive">Removed</Badge>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right">
-                      {isOwner && !m.is_owner && m.status === 'approved' && (
-                        <Button size="sm" variant="ghost" disabled={busy} onClick={() => removeUser(m.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                    <td className="px-3 py-2 text-right whitespace-nowrap">
+                      {isOwner && !m.is_owner && (
+                        <div className="inline-flex gap-1">
+                          {m.status === 'approved' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy}
+                              title="Revoke access (keeps the account)"
+                              onClick={() => removeUser(m.id)}
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            disabled={busy}
+                            title="Delete user permanently"
+                            onClick={() => setPendingDelete(m)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       )}
                     </td>
                   </tr>

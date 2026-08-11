@@ -59,7 +59,7 @@ export const setPermission = async (userId: string, permission: string, enabled:
   if (enabled) {
     const { error } = await supabase
       .from('user_permissions')
-      .insert({ user_id: userId, permission });
+      .upsert({ user_id: userId, permission }, { onConflict: 'user_id,permission', ignoreDuplicates: true });
     return error;
   }
   const { error } = await supabase

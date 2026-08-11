@@ -317,8 +317,11 @@ export const CustomerAccountsAdmin = () => {
   const statusBadge = (status: string) => {
     if (status === 'approved') return <Badge className="bg-emerald-600 hover:bg-emerald-600">Approved</Badge>;
     if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
-    return <Badge variant="secondary">Pending</Badge>;
+    return <Badge className="bg-amber-500 hover:bg-amber-500 text-black animate-pulse">Pending approval</Badge>;
   };
+
+  const pendingCount = rows.filter((r) => r.status === 'pending').length;
+
 
   if (loading) {
     return (
@@ -353,9 +356,16 @@ export const CustomerAccountsAdmin = () => {
       </Card>
 
 
-
-
-
+      {pendingCount > 0 && (
+        <Card className="border-amber-500/60 bg-amber-500/10">
+          <CardContent className="p-4 text-sm">
+            <span className="font-medium text-amber-500">
+              {pendingCount} customer{pendingCount !== 1 ? 's are' : ' is'} waiting for approval
+            </span>
+            <span className="text-muted-foreground"> — review the highlighted accounts below.</span>
+          </CardContent>
+        </Card>
+      )}
 
       {rows.length === 0 && (
         <Card>
@@ -367,8 +377,12 @@ export const CustomerAccountsAdmin = () => {
 
       <div className="space-y-3">
         {rootRows.map((row) => (
-          <Card key={row.id}>
+          <Card
+            key={row.id}
+            className={row.status === 'pending' ? 'border-amber-500/70 bg-amber-500/5 ring-1 ring-amber-500/30' : undefined}
+          >
             <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-3">
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium">{row.company_name || '—'}</span>

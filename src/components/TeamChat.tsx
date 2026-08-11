@@ -165,6 +165,90 @@ export const TeamChat = ({ userNameMap = {} }: { userNameMap?: Record<string, st
     if (data) mergeMessages([data as ChatMessage]);
   };
 
+  const startRecording = async () => {
+    if (!user) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const recorder = new MediaRecorder(stream, { mimeType: mime });
+      const chunks: BlobPart[] = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const seconds = Math.max(1, Math.round((Date.now() - (recordStartRef.current || Date.now())) / 1000));
+        const blob = new Blob(chunks, { type: mime });
+        setRecording(false);
+        setRecordSeconds(0);
+        if (cancelRecordRef.current) {
+          cancelRecordRef.current = false;
+          return;
+        }
+        if (blob.size < 1500) {
+          toast({ title: 'Recording too short', description: 'Hold the mic a bit longer.', variant: 'destructive' });
+          return;
+        }
+        setUploading(true);
+        const ext = mime === 'audio/webm' ? 'webm' : 'm4a';
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from('voice-messages')
+          .upload(path, blob, { contentType: mime, upsert: false });
+        if (upErr) {
+          setUploading(false);
+          toast({ title: 'Voice message not sent', description: upErr.message, variant: 'destructive' });
+          return;
+        }
+        const { data, error } = await (supabase
+          .from('messages' as any)
+          .insert({ user_id: user.id, content: `voice:${path}:${seconds}` } as any)
+          .select()
+          .maybeSingle() as any);
+        setUploading(false);
+        if (error) {
+          toast({ title: 'Voice message not sent', description: error.message, variant: 'destructive' });
+          return;
+        }
+        if (data) mergeMessages([data as ChatMessage]);
+      };
+      recorderRef.current = recorder;
+      cancelRecordRef.current = false;
+      recordStartRef.current = Date.now();
+      recorder.start();
+      setRecording(true);
+      setRecordSeconds(0);
+      timerRef.current = window.setInterval(() => setRecordSeconds((s) => s + 1), 1000);
+    } catch {
+      toast({
+        title: 'Microphone unavailable',
+        description: 'Allow microphone access to record a voice message.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    cancelRecordRef.current = cancel;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    recorderRef.current?.state === 'recording' && recorderRef.current.stop();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (recorderRef.current?.state === 'recording') {
+        cancelRecordRef.current = true;
+        recorderRef.current.stop();
+      }
+    };
+  }, []);
+
+
+
 
   const getUserLabel = (userId: string) => {
     if (userNameMap[userId]) return userNameMap[userId];

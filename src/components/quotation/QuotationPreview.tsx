@@ -31,6 +31,7 @@ import thinkingInside from '@/assets/thinking-inside-new.png';
 import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog';
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
+import ProductMediaThumb from '@/components/product-media/ProductMediaThumb';
 
 // electronAPI types are declared globally in src/vite-env.d.ts
 
@@ -884,7 +885,14 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         {isOrdered && <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />}
                       </div>
                     </td>
-                    <td className={`py-1.5 align-middle font-mono text-sm leading-5 text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>{item.sku || '—'}</td>
+                    <td className={`py-1.5 align-middle font-mono text-sm leading-5 text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="print:hidden">
+                          <ProductMediaThumb sku={item.sku} description={item.description} size={32} />
+                        </span>
+                        <span>{item.sku || '—'}</span>
+                      </div>
+                    </td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : 'font-normal'}`}>
                       <div>{item.description || '—'}</div>
                       {item.notes && (

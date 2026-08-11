@@ -121,3 +121,28 @@ export const useProductMedia = () => {
     reload: () => loadProductMedia(true),
   };
 };
+
+/** Resolve media for a SKU/description against an already-loaded map. */
+export function resolveProductMedia(
+  map: MediaMap,
+  sku?: string | null,
+  description?: string | null
+): ProductMedia | undefined {
+  if (sku) {
+    const direct = map[normalize(sku)];
+    if (direct) return direct;
+  }
+  for (const key of familyCandidates(description)) {
+    if (map[key]) return map[key];
+  }
+  return undefined;
+}
+
+/** Async lookup (loads/caches the media map first). Used outside React, e.g. PDF export. */
+export async function getProductMediaFor(
+  sku?: string | null,
+  description?: string | null
+): Promise<ProductMedia | undefined> {
+  const map = await loadProductMedia();
+  return resolveProductMedia(map, sku, description);
+}

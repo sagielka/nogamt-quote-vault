@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, Newspaper } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Newspaper, CalendarDays } from 'lucide-react';
+import { INDUSTRY_EVENTS } from '@/data/industry-events';
 import type { Currency } from '@/types/quotation';
 
 interface StockRow { symbol: string; name: string; price: number | null; changePct: number | null }
@@ -15,6 +17,7 @@ interface PulseData {
 }
 
 const TRACKED: Currency[] = ['ILS', 'EUR', 'GBP', 'CNY', 'JPY'];
+
 
 /** Compact market status strip for the landing page. */
 export const MarketTicker = () => {
@@ -37,8 +40,14 @@ export const MarketTicker = () => {
     return () => { cancelled = true; };
   }, []);
 
+  const upcoming = INDUSTRY_EVENTS
+    .filter(e => new Date(e.end) >= new Date())
+    .sort((a, b) => a.start.localeCompare(b.start))
+    .slice(0, 4);
+
   if (loading && !data) return <Skeleton className="h-20 w-full" />;
   if (!data) return null;
+
 
   return (
     <Card>
@@ -67,19 +76,50 @@ export const MarketTicker = () => {
           })}
         </div>
         {data.news?.length ? (
-          <div className="flex items-center gap-2 overflow-hidden">
-            <Newspaper className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <a
-              href={data.news[0].link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-foreground hover:text-primary transition-colors truncate"
-            >
-              {data.news[0].title}
-            </a>
+          <div className="space-y-1 border-t border-border pt-2">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <Newspaper className="w-3.5 h-3.5" /> Industry news
+            </div>
+            {data.news.slice(0, 3).map((n, i) => (
+              <a
+                key={i}
+                href={n.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-xs text-foreground hover:text-primary transition-colors truncate"
+              >
+                {n.title}
+                {n.source ? <span className="text-muted-foreground"> · {n.source}</span> : null}
+              </a>
+            ))}
+          </div>
+        ) : null}
+
+        {upcoming.length ? (
+          <div className="space-y-1 border-t border-border pt-2">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <CalendarDays className="w-3.5 h-3.5" /> Upcoming events
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {upcoming.map(ev => (
+                <a
+                  key={ev.name}
+                  href={ev.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-md border border-border px-2 py-1 hover:border-primary transition-colors"
+                >
+                  <span className="text-xs text-foreground truncate max-w-[220px]">{ev.name}</span>
+                  <Badge variant="outline" className="text-[10px] whitespace-nowrap">
+                    {new Date(ev.start).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {ev.location}
+                  </Badge>
+                </a>
+              ))}
+            </div>
           </div>
         ) : null}
       </CardContent>
     </Card>
   );
+
 };

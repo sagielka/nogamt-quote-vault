@@ -12,6 +12,8 @@ import { QuotationPreview } from '@/components/quotation/QuotationPreview';
 import { ArchivedQuotationCard } from '@/components/quotation/ArchivedQuotationCard';
 import { EmptyState } from '@/components/quotation/EmptyState';
 import { QuotationStats } from '@/components/quotation/QuotationStats';
+import { MarketTicker } from '@/components/MarketTicker';
+
 import { CustomerReport } from '@/components/CustomerReport';
 import { QuotationReport } from '@/components/QuotationReport';
 import { ActivityFeed } from '@/components/ActivityFeed';
@@ -787,7 +789,9 @@ const Index = () => {
                   }}
                   expiringSoonActive={expiringSoonFilter}
                 />
+                <MarketTicker />
                 <ItemPricesView compact />
+
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, TrendingDown, Newspaper } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Newspaper, CalendarDays } from 'lucide-react';
+import { INDUSTRY_EVENTS } from '@/data/industry-events';
 import type { Currency } from '@/types/quotation';
 
 interface StockRow { symbol: string; name: string; price: number | null; changePct: number | null }
@@ -15,6 +17,7 @@ interface PulseData {
 }
 
 const TRACKED: Currency[] = ['ILS', 'EUR', 'GBP', 'CNY', 'JPY'];
+
 
 /** Compact market status strip for the landing page. */
 export const MarketTicker = () => {

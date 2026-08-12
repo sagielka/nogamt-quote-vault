@@ -5,13 +5,16 @@ const corsHeaders = {
 };
 
 const STOCKS: { symbol: string; name: string }[] = [
-  { symbol: "kmt.us", name: "Kennametal" },
-  { symbol: "hurc.us", name: "Hurco" },
-  { symbol: "leco.us", name: "Lincoln Electric" },
-  { symbol: "tkr.us", name: "Timken" },
-  { symbol: "sand.st", name: "Sandvik" },
-  { symbol: "mkta.us", name: "Makita" },
+  { symbol: "KMT", name: "Kennametal" },
+  { symbol: "HURC", name: "Hurco" },
+  { symbol: "LECO", name: "Lincoln Electric" },
+  { symbol: "TKR", name: "Timken" },
+  { symbol: "SAND.ST", name: "Sandvik" },
+  { symbol: "MKTAY", name: "Makita" },
 ];
+
+const UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
 
 async function getRates() {
   try {
@@ -25,31 +28,35 @@ async function getRates() {
   }
 }
 
-async function getStocks() {
+async function getStock(meta: { symbol: string; name: string }) {
   try {
-    const symbols = STOCKS.map((s) => s.symbol).join(",");
-    const res = await fetch(`https://stooq.com/q/l/?s=${symbols}&f=sd2t2ohlcv&h&e=csv`);
-    if (!res.ok) throw new Error(`stooq ${res.status}`);
-    const csv = await res.text();
-    const lines = csv.trim().split("\n").slice(1);
-    return lines.map((line) => {
-      const [symbol, date, _time, open, _high, _low, close] = line.split(",");
-      const o = parseFloat(open);
-      const c = parseFloat(close);
-      const meta = STOCKS.find((s) => s.symbol.toLowerCase() === symbol.toLowerCase());
-      const changePct = isFinite(o) && o > 0 && isFinite(c) ? ((c - o) / o) * 100 : null;
-      return {
-        symbol: symbol.toUpperCase(),
-        name: meta?.name ?? symbol.toUpperCase(),
-        price: isFinite(c) ? c : null,
-        changePct,
-        date,
-      };
-    }).filter((s) => s.price !== null);
+    const res = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(meta.symbol)}?range=5d&interval=1d`,
+      { headers: { "User-Agent": UA, Accept: "application/json" } },
+    );
+    if (!res.ok) throw new Error(`yahoo ${res.status}`);
+    const json = await res.json();
+    const m = json?.chart?.result?.[0]?.meta;
+    const price = m?.regularMarketPrice ?? null;
+    const prev = m?.chartPreviousClose ?? m?.previousClose ?? null;
+    const changePct = price && prev ? ((price - prev) / prev) * 100 : null;
+    if (price == null) return null;
+    return {
+      symbol: meta.symbol,
+      name: meta.name,
+      price,
+      changePct,
+      date: m?.regularMarketTime ? new Date(m.regularMarketTime * 1000).toISOString() : undefined,
+    };
   } catch (e) {
-    console.error("Stocks error:", e);
-    return [];
+    console.error("Stock error", meta.symbol, e);
+    return null;
   }
+}
+
+async function getStocks() {
+  const rows = await Promise.all(STOCKS.map(getStock));
+  return rows.filter((r) => r !== null);
 }
 
 async function getNews() {
@@ -57,7 +64,7 @@ async function getNews() {
     const q = encodeURIComponent(
       '("metal cutting" OR "machine tools" OR CNC OR machining OR "cutting tools") industry'
     );
-    const res = await fetch(`https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`);
+    const res = await fetch(`https://news.google.com/rss/search?q=${q}&hl=en-US&gl=US&ceid=US:en`, { headers: { "User-Agent": UA } });
     if (!res.ok) throw new Error(`news ${res.status}`);
     const xml = await res.text();
     const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 12).map((m) => {

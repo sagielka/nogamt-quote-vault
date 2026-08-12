@@ -40,8 +40,14 @@ export const MarketTicker = () => {
     return () => { cancelled = true; };
   }, []);
 
+  const upcoming = INDUSTRY_EVENTS
+    .filter(e => new Date(e.end) >= new Date())
+    .sort((a, b) => a.start.localeCompare(b.start))
+    .slice(0, 4);
+
   if (loading && !data) return <Skeleton className="h-20 w-full" />;
   if (!data) return null;
+
 
   return (
     <Card>

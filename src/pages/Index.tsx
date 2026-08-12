@@ -787,7 +787,9 @@ const Index = () => {
                   }}
                   expiringSoonActive={expiringSoonFilter}
                 />
+                <MarketTicker />
                 <ItemPricesView compact />
+
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <h2 className="heading-display text-2xl text-foreground">
                     Your Quotations

@@ -26,7 +26,7 @@ export const MarketTicker = () => {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const load = async () => {
       try {
         const { data: res, error } = await supabase.functions.invoke('market-pulse');
         if (error) throw error;
@@ -36,8 +36,19 @@ export const MarketTicker = () => {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
+    };
+    load();
+    // Auto-refresh every 5 minutes and whenever the tab regains focus
+    const id = setInterval(load, 5 * 60 * 1000);
+    const onVisible = () => { if (document.visibilityState === 'visible') load(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', load);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', load);
+    };
   }, []);
 
   const upcoming = INDUSTRY_EVENTS

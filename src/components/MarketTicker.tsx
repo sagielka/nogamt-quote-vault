@@ -85,10 +85,10 @@ export const MarketTicker = () => {
                 </span>
               </span>
             );
-          </div>
-        )}
+          })}
         </div>
-        {data.news?.length ? (
+        )}
+        {data?.news?.length ? (
           <div className="space-y-1 border-t border-border pt-2">
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
               <Newspaper className="w-3.5 h-3.5" /> Industry news

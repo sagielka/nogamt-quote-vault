@@ -293,6 +293,7 @@ export const CustomerAccountsAdmin = () => {
         notes: createForm.notes || null,
       });
       toast({ title: 'Portal user created', description: `${createForm.email} is approved with the ${createForm.price_list} price list.` });
+      sendApprovalEmail({ email: createForm.email.trim() });
       setCreateOpen(false);
       setCreateForm({ customerId: '', email: '', company_name: '', contact_name: '', price_list: '', password: '', notes: '' });
       await load();

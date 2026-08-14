@@ -59,6 +59,8 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       ? PRICE_LISTS.find((p) => p.value === priceList)?.baseCurrency || 'USD'
       : 'USD';
   const symbol = SYMBOLS[baseCurrency] || '$';
+  /** Noga BV customers also see the standard Euro list price next to their BV price. */
+  const showEuroCompare = !customListId && priceList === 'NOGA_BV_EURO';
 
   useEffect(() => {
     if (!customListId) return;

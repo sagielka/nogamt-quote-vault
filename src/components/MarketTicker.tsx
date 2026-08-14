@@ -57,13 +57,14 @@ export const MarketTicker = () => {
     .slice(0, 4);
 
   if (loading && !data) return <Skeleton className="h-20 w-full" />;
-  if (!data) return null;
+  if (!data && upcoming.length === 0) return null;
 
 
   return (
     <Card>
       <CardContent className="py-3 space-y-2">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        {data && (
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Market status</span>
           {TRACKED.map(cur => {
             const rate = data.fx?.rates?.[cur];
@@ -84,7 +85,8 @@ export const MarketTicker = () => {
                 </span>
               </span>
             );
-          })}
+          </div>
+        )}
         </div>
         {data.news?.length ? (
           <div className="space-y-1 border-t border-border pt-2">

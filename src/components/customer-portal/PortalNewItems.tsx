@@ -11,6 +11,7 @@ interface NewRow {
   sku: string;
   description: string;
   price: number | null;
+  euroPrice: number | null;
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ const COLUMN: Record<PriceList, string> = {
 export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: Props) => {
   const [rows, setRows] = useState<NewRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const showEuroCompare = !customListId && priceList === 'NOGA_BV_EURO';
 
   const legacySkus = useMemo(
     () => new Set(productCatalog.map((p) => p.sku.toUpperCase())),
@@ -69,6 +71,7 @@ export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: 
             sku: r.sku,
             description: r.description || r.sku,
             price,
+            euroPrice: r.euro == null ? null : Number(r.euro),
             createdAt: r.created_at,
           };
         })
@@ -119,7 +122,17 @@ export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: 
               </div>
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.description}</p>
               {r.price != null && (
-                <p className="text-sm font-semibold mt-2 text-primary">{fmt(r.price)}</p>
+                <div className="mt-2 flex items-baseline gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-primary">{fmt(r.price)}</p>
+                  {showEuroCompare && (
+                    <span className="text-xs text-muted-foreground">
+                      Euro list{' '}
+                      {r.euroPrice == null
+                        ? '—'
+                        : `€${r.euroPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </CardContent>

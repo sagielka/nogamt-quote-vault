@@ -59,6 +59,8 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       ? PRICE_LISTS.find((p) => p.value === priceList)?.baseCurrency || 'USD'
       : 'USD';
   const symbol = SYMBOLS[baseCurrency] || '$';
+  /** Noga BV customers also see the standard Euro list price next to their BV price. */
+  const showEuroCompare = !customListId && priceList === 'NOGA_BV_EURO';
 
   useEffect(() => {
     if (!customListId) return;
@@ -197,6 +199,12 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
   const fmt = (v: number) =>
     `${symbol}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  const fmtEuro = (v: number | null | undefined) =>
+    v == null
+      ? '—'
+      : `€${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+
   const exportExcel = () => {
     const rows = filtered.map((p: any) => {
       const unit = (customListId ? p.customPrice : p.prices[priceList as PriceList]) as number;
@@ -207,6 +215,10 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         Currency: baseCurrency,
         'Unit price': Number(unit?.toFixed?.(2) ?? unit),
       };
+      if (showEuroCompare) {
+        const euro = p.prices?.EURO as number | null | undefined;
+        row['Euro price'] = euro == null ? '' : Number(euro.toFixed(2));
+      }
       if (isUsPriceBreakItem(item)) {
         US_PRICE_TIERS.forEach((qty) => {
           row[`${qty} pcs`] = Number(getTierNetUnitPrice(item, qty).toFixed(2));
@@ -336,6 +348,11 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                     <div className="text-sm font-medium leading-tight mb-3">{p.description}</div>
                     <div className="mt-auto">
                       <div className="text-2xl font-semibold text-right text-foreground">{fmt(unit)}</div>
+                      {showEuroCompare && (
+                        <div className="text-xs text-muted-foreground text-right mt-0.5">
+                          Euro list {fmtEuro(p.prices?.EURO)}
+                        </div>
+                      )}
                       {hasBreaks && (
                         <div className="mt-3 space-y-1">
                           <p className="text-xs text-muted-foreground">Quantity price breaks</p>
@@ -366,7 +383,8 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                   <th className="px-3 py-2 font-medium w-8"></th>
                   <th className="px-3 py-2 font-medium">Item</th>
                   <th className="px-3 py-2 font-medium">Description</th>
-                  <th className="px-3 py-2 font-medium text-right">Unit price</th>
+                  <th className="px-3 py-2 font-medium text-right">{showEuroCompare ? 'BV price' : 'Unit price'}</th>
+                  {showEuroCompare && <th className="px-3 py-2 font-medium text-right">Euro price</th>}
                 </tr>
               </thead>
               <tbody>
@@ -377,9 +395,9 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                   const open = expanded === p.sku;
                   return (
                     <tr key={p.sku} className="border-t border-border align-top">
-                      <td colSpan={4} className="p-0">
+                      <td colSpan={showEuroCompare ? 5 : 4} className="p-0">
                         <div
-                          className={`grid grid-cols-[2rem_10rem_1fr_10rem] items-center hover:bg-muted/30 ${hasBreaks ? 'cursor-pointer' : ''}`}
+                          className={`grid ${showEuroCompare ? 'grid-cols-[2rem_10rem_1fr_10rem_10rem]' : 'grid-cols-[2rem_10rem_1fr_10rem]'} items-center hover:bg-muted/30 ${hasBreaks ? 'cursor-pointer' : ''}`}
                           onClick={() => hasBreaks && setExpanded(open ? null : p.sku)}
                         >
                           <div className="px-3 py-1.5 text-muted-foreground">
@@ -397,6 +415,11 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                             <span className="font-medium">{fmt(unit)}</span>
                             <ProductMediaDownload sku={p.sku} description={p.description} />
                           </div>
+                          {showEuroCompare && (
+                            <div className="px-3 py-1.5 text-right text-muted-foreground">
+                              {fmtEuro(p.prices?.EURO)}
+                            </div>
+                          )}
                         </div>
                         {hasBreaks && open && (
                           <div className="bg-muted/20 border-t border-border px-3 py-2">
@@ -417,7 +440,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
+                    <td colSpan={showEuroCompare ? 5 : 4} className="px-3 py-8 text-center text-muted-foreground">
                       No items match your search.
                     </td>
                   </tr>

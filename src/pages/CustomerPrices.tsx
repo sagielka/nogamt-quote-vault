@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogOut, Clock, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
+import { MarketTicker } from '@/components/MarketTicker';
 import logo from '@/assets/logo.jpg';
 
 const PortalShell = ({
@@ -43,7 +44,12 @@ const PortalShell = ({
         )}
       </div>
     </header>
-    <main className="container py-8">{children}</main>
+    <main className="container py-8">
+      <div className="mb-6">
+        <MarketTicker />
+      </div>
+      {children}
+    </main>
     <footer className="text-center pb-8 text-xs text-muted-foreground">
       <p className="font-semibold">Noga Engineering &amp; Technology Ltd.</p>
       <p>Hakryia 1, Dora Industrial Area, 2283201, Shlomi, Israel</p>

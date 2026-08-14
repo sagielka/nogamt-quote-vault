@@ -23,6 +23,7 @@ import { PortalTeam } from './PortalTeam';
 import { PortalAccountSettings } from './PortalAccountSettings';
 import * as XLSX from 'xlsx';
 import { ProductMediaThumb } from '@/components/product-media/ProductMediaThumb';
+import { PortalNewItems } from './PortalNewItems';
 import { ProductMediaDownload } from '@/components/product-media/ProductMediaDownload';
 import { GritColorBadge } from '@/components/product-media/GritColorBadge';
 
@@ -229,6 +230,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
       <TabsList className="w-full justify-start sm:w-auto">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="prices">Price list</TabsTrigger>
+        <TabsTrigger value="new">New items</TabsTrigger>
         <TabsTrigger value="quotes">My quotations ({quotes.length})</TabsTrigger>
         {showTeam && <TabsTrigger value="team">Team</TabsTrigger>}
         {showTeam && <TabsTrigger value="account">Account settings</TabsTrigger>}
@@ -237,6 +239,15 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
 
       <TabsContent value="overview">
         <PortalStats quotes={quotes} />
+      </TabsContent>
+
+      <TabsContent value="new">
+        <PortalNewItems
+          priceList={priceList}
+          customListId={customListId}
+          customRows={customRows}
+          symbol={symbol}
+        />
       </TabsContent>
 
 

@@ -395,9 +395,9 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                   const open = expanded === p.sku;
                   return (
                     <tr key={p.sku} className="border-t border-border align-top">
-                      <td colSpan={4} className="p-0">
+                      <td colSpan={showEuroCompare ? 5 : 4} className="p-0">
                         <div
-                          className={`grid grid-cols-[2rem_10rem_1fr_10rem] items-center hover:bg-muted/30 ${hasBreaks ? 'cursor-pointer' : ''}`}
+                          className={`grid ${showEuroCompare ? 'grid-cols-[2rem_10rem_1fr_10rem_10rem]' : 'grid-cols-[2rem_10rem_1fr_10rem]'} items-center hover:bg-muted/30 ${hasBreaks ? 'cursor-pointer' : ''}`}
                           onClick={() => hasBreaks && setExpanded(open ? null : p.sku)}
                         >
                           <div className="px-3 py-1.5 text-muted-foreground">

@@ -31,7 +31,12 @@ export interface PortalQuoteRow {
   ordered_items?: any;
 }
 
-const ORDER_STATUSES = ['accepted', 'finished'];
+const isOrder = (q: PortalQuoteRow) => {
+  const st = (q.status || '').toLowerCase();
+  if (st === 'accepted') return true;
+  const ordered = q.ordered_items;
+  return st === 'finished' && Array.isArray(ordered) && ordered.length > 0;
+};
 
 const quoteTotal = (q: PortalQuoteRow) =>
   calculateTotal(
@@ -60,13 +65,13 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
       valueByCurrency[q.currency] = (valueByCurrency[q.currency] || 0) + total;
       if (!statusValue[st]) statusValue[st] = {};
       statusValue[st][q.currency] = (statusValue[st][q.currency] || 0) + total;
-      if (ORDER_STATUSES.includes(st)) {
+      if (isOrder(q)) {
         orderValueByCurrency[q.currency] = (orderValueByCurrency[q.currency] || 0) + total;
       }
       const key = new Date(q.created_at).toISOString().slice(0, 7);
       if (!monthly[key]) monthly[key] = { quotes: 0, orders: 0 };
       monthly[key].quotes += 1;
-      if (ORDER_STATUSES.includes(st)) monthly[key].orders += 1;
+      if (isOrder(q)) monthly[key].orders += 1;
 
       (Array.isArray(q.items) ? q.items : []).forEach((it: any) => {
         const sku = it?.sku || it?.description?.slice(0, 24) || 'Item';
@@ -75,7 +80,7 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
       });
     });
 
-    const orders = quotes.filter((q) => ORDER_STATUSES.includes((q.status || '').toLowerCase()));
+    const orders = quotes.filter(isOrder);
     const topItems = Object.entries(itemCount)
       .sort((a, b) => b[1].qty - a[1].qty)
       .slice(0, 5);

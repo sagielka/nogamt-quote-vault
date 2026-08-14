@@ -25,3 +25,6 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.notify-portal-approval]
+verify_jwt = false

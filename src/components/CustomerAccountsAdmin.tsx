@@ -126,6 +126,25 @@ export const CustomerAccountsAdmin = () => {
     setApproving(row);
   };
 
+  const sendApprovalEmail = async (payload: { accountId?: string; email: string }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { error } = await supabase.functions.invoke('notify-portal-approval', {
+        body: payload,
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+      });
+      if (error) throw error;
+      toast({ title: 'Approval email sent', description: `Confirmation emailed to ${payload.email}.` });
+    } catch (e: any) {
+      toast({
+        title: 'Approval email not sent',
+        description: `${payload.email} was approved, but the email could not be sent.`,
+        variant: 'destructive',
+      });
+      console.error('notify-portal-approval failed', e);
+    }
+  };
+
   const confirmApprove = async () => {
     if (!approving) return;
     setBusy(true);
@@ -141,6 +160,7 @@ export const CustomerAccountsAdmin = () => {
         title: 'Customer approved',
         description: `${approving.email} can now see their prices${approveAdmin ? ' and manage their team' : ''}.`,
       });
+      sendApprovalEmail({ accountId: approving.id, email: approving.email });
       setApproving(null);
     }
   };
@@ -273,6 +293,7 @@ export const CustomerAccountsAdmin = () => {
         notes: createForm.notes || null,
       });
       toast({ title: 'Portal user created', description: `${createForm.email} is approved with the ${createForm.price_list} price list.` });
+      sendApprovalEmail({ email: createForm.email.trim() });
       setCreateOpen(false);
       setCreateForm({ customerId: '', email: '', company_name: '', contact_name: '', price_list: '', password: '', notes: '' });
       await load();

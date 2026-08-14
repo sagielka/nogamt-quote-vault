@@ -348,6 +348,11 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                     <div className="text-sm font-medium leading-tight mb-3">{p.description}</div>
                     <div className="mt-auto">
                       <div className="text-2xl font-semibold text-right text-foreground">{fmt(unit)}</div>
+                      {showEuroCompare && (
+                        <div className="text-xs text-muted-foreground text-right mt-0.5">
+                          Euro list {fmtEuro(p.prices?.EURO)}
+                        </div>
+                      )}
                       {hasBreaks && (
                         <div className="mt-3 space-y-1">
                           <p className="text-xs text-muted-foreground">Quantity price breaks</p>

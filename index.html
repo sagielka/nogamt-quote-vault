@@ -23,6 +23,39 @@
     <meta name="twitter:card" content="summary_large_image" />
     
     <meta name="twitter:image" content="https://quote.noga-mt.com/og-image.jpg" />
+    <!-- Runs before the app bundle: on preview/iframe/dev hosts a leftover
+         service worker must never serve a stale build. Unregister it, wipe its
+         caches and reload once so the newest assets are always fetched. -->
+    <script>
+      (function () {
+        try {
+          var h = location.hostname;
+          var stale =
+            window.self !== window.top ||
+            h === 'localhost' ||
+            h.indexOf('id-preview--') === 0 ||
+            h.indexOf('preview--') === 0 ||
+            /lovableproject(-dev)?\.com$/.test(h) ||
+            /lovable\.app$/.test(h) && h.indexOf('id-preview--') === 0;
+          if (!stale || !('serviceWorker' in navigator)) return;
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            if (!regs.length) return;
+            Promise.all(regs.map(function (r) { return r.unregister(); }))
+              .then(function () {
+                return window.caches ? caches.keys().then(function (k) {
+                  return Promise.all(k.map(function (n) { return caches.delete(n); }));
+                }) : null;
+              })
+              .then(function () {
+                if (!sessionStorage.getItem('sw-purged')) {
+                  sessionStorage.setItem('sw-purged', '1');
+                  location.reload();
+                }
+              });
+          });
+        } catch (e) { /* best effort */ }
+      })();
+    </script>
   </head>
 
   <body>

@@ -199,6 +199,12 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
   const fmt = (v: number) =>
     `${symbol}${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  const fmtEuro = (v: number | null | undefined) =>
+    v == null
+      ? '—'
+      : `€${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+
   const exportExcel = () => {
     const rows = filtered.map((p: any) => {
       const unit = (customListId ? p.customPrice : p.prices[priceList as PriceList]) as number;

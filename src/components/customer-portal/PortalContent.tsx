@@ -383,7 +383,8 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                   <th className="px-3 py-2 font-medium w-8"></th>
                   <th className="px-3 py-2 font-medium">Item</th>
                   <th className="px-3 py-2 font-medium">Description</th>
-                  <th className="px-3 py-2 font-medium text-right">Unit price</th>
+                  <th className="px-3 py-2 font-medium text-right">{showEuroCompare ? 'BV price' : 'Unit price'}</th>
+                  {showEuroCompare && <th className="px-3 py-2 font-medium text-right">Euro price</th>}
                 </tr>
               </thead>
               <tbody>

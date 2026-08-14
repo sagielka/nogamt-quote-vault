@@ -65,7 +65,7 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
       valueByCurrency[q.currency] = (valueByCurrency[q.currency] || 0) + total;
       if (!statusValue[st]) statusValue[st] = {};
       statusValue[st][q.currency] = (statusValue[st][q.currency] || 0) + total;
-      if (ORDER_STATUSES.includes(st)) {
+      if (isOrder(q)) {
         orderValueByCurrency[q.currency] = (orderValueByCurrency[q.currency] || 0) + total;
       }
       const key = new Date(q.created_at).toISOString().slice(0, 7);

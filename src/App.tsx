@@ -15,7 +15,6 @@ import NotFound from "./pages/NotFound";
 import Versions from "./pages/Versions";
 
 import DesktopUpdater from "./components/DesktopUpdater";
-import UpdateBanner from "./components/UpdateBanner";
 import { initForceUpdateWatcher } from "./lib/force-update";
 import { useVersionReporter } from "./hooks/useVersionReporter";
 
@@ -40,7 +39,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <DesktopUpdater />
-        <UpdateBanner />
         <VersionReporter />
         <ForceUpdateWatcher />
 

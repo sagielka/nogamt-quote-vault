@@ -109,7 +109,7 @@ export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: 
       {rows.map((r) => (
         <Card key={r.sku} className="overflow-hidden">
           <CardContent className="p-4 flex gap-3 items-start">
-            <ProductMediaThumb sku={r.sku} className="w-14 h-14 shrink-0 rounded-md" />
+            <ProductMediaThumb sku={r.sku} description={r.description} size={48} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono text-sm font-semibold">{r.sku}</span>

@@ -80,7 +80,7 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
       });
     });
 
-    const orders = quotes.filter((q) => ORDER_STATUSES.includes((q.status || '').toLowerCase()));
+    const orders = quotes.filter(isOrder);
     const topItems = Object.entries(itemCount)
       .sort((a, b) => b[1].qty - a[1].qty)
       .slice(0, 5);

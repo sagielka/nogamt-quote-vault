@@ -415,6 +415,11 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                             <span className="font-medium">{fmt(unit)}</span>
                             <ProductMediaDownload sku={p.sku} description={p.description} />
                           </div>
+                          {showEuroCompare && (
+                            <div className="px-3 py-1.5 text-right text-muted-foreground">
+                              {fmtEuro(p.prices?.EURO)}
+                            </div>
+                          )}
                         </div>
                         {hasBreaks && open && (
                           <div className="bg-muted/20 border-t border-border px-3 py-2">

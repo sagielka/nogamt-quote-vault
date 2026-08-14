@@ -440,7 +440,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
                 })}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-3 py-8 text-center text-muted-foreground">
+                    <td colSpan={showEuroCompare ? 5 : 4} className="px-3 py-8 text-center text-muted-foreground">
                       No items match your search.
                     </td>
                   </tr>

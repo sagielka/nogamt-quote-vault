@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Newspaper, CalendarDays } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, Newspaper, CalendarDays, RefreshCw } from 'lucide-react';
 import { INDUSTRY_EVENTS } from '@/data/industry-events';
 import type { Currency } from '@/types/quotation';
 
@@ -23,40 +24,49 @@ const TRACKED: Currency[] = ['ILS', 'EUR', 'GBP', 'CNY', 'JPY'];
 export const MarketTicker = () => {
   const [data, setData] = useState<PulseData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke('market-pulse');
+      if (error) throw error;
+      setData(res as PulseData);
+    } catch (e) {
+      console.error('market-pulse failed:', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     const loadingFallback = window.setTimeout(() => {
       if (!cancelled) setLoading(false);
     }, 4000);
-    const load = async () => {
-      try {
-        const { data: res, error } = await supabase.functions.invoke('market-pulse');
-        if (error) throw error;
-        if (!cancelled) setData(res as PulseData);
-      } catch (e) {
-        console.error('market-pulse failed:', e);
-      } finally {
-        if (!cancelled) {
-          window.clearTimeout(loadingFallback);
-          setLoading(false);
-        }
-      }
+    const autoLoad = () => {
+      load();
     };
-    load();
+    autoLoad();
     // Auto-refresh every 5 minutes and whenever the tab regains focus
-    const id = setInterval(load, 5 * 60 * 1000);
-    const onVisible = () => { if (document.visibilityState === 'visible') load(); };
+    const id = setInterval(autoLoad, 5 * 60 * 1000);
+    const onVisible = () => { if (document.visibilityState === 'visible') autoLoad(); };
     document.addEventListener('visibilitychange', onVisible);
-    window.addEventListener('focus', load);
+    window.addEventListener('focus', autoLoad);
     return () => {
       cancelled = true;
       window.clearTimeout(loadingFallback);
       clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
-      window.removeEventListener('focus', load);
+      window.removeEventListener('focus', autoLoad);
     };
-  }, []);
+  }, [load]);
+
+  const handleRefresh = () => {
+    if (refreshing) return;
+    load();
+  };
 
   const upcoming = INDUSTRY_EVENTS
     .filter(e => new Date(e.end) >= new Date())
@@ -72,7 +82,20 @@ export const MarketTicker = () => {
       <CardContent className="py-3 space-y-2">
         {data && (
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Market status</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Market status</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              aria-label="Refresh market data"
+              title="Refresh market data"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           {TRACKED.map(cur => {
             const rate = data.fx?.rates?.[cur];
             return (

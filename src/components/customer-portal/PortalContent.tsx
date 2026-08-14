@@ -215,6 +215,10 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
         Currency: baseCurrency,
         'Unit price': Number(unit?.toFixed?.(2) ?? unit),
       };
+      if (showEuroCompare) {
+        const euro = p.prices?.EURO as number | null | undefined;
+        row['Euro price'] = euro == null ? '' : Number(euro.toFixed(2));
+      }
       if (isUsPriceBreakItem(item)) {
         US_PRICE_TIERS.forEach((qty) => {
           row[`${qty} pcs`] = Number(getTierNetUnitPrice(item, qty).toFixed(2));

@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { applyPendingUpdate, checkForUpdate } from "@/lib/sw-register";
 
 const APPLIED_KEY = "app:force-update-applied-at";
 const PENDING_KEY = "app:force-update-pending";
@@ -39,10 +38,7 @@ export const triggerForceUpdate = () =>
   saveUpdateSettings({ force_update_at: new Date().toISOString() });
 
 const reloadNow = () => {
-  // Prefer activating a waiting service worker (it reloads once it takes over),
-  // otherwise do a plain reload to pull the newest index.html.
-  applyPendingUpdate();
-  window.setTimeout(() => window.location.reload(), 1500);
+  window.location.reload();
 };
 
 const markPending = () => {
@@ -102,7 +98,6 @@ export function initForceUpdateWatcher(): () => void {
       return;
     }
     writeApplied(at);
-    void checkForUpdate();
     if (document.visibilityState === "visible" && document.hasFocus()) {
       reloadNow();
     } else {

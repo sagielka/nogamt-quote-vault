@@ -71,7 +71,7 @@ export const PortalStats = ({ quotes }: { quotes: PortalQuoteRow[] }) => {
       const key = new Date(q.created_at).toISOString().slice(0, 7);
       if (!monthly[key]) monthly[key] = { quotes: 0, orders: 0 };
       monthly[key].quotes += 1;
-      if (ORDER_STATUSES.includes(st)) monthly[key].orders += 1;
+      if (isOrder(q)) monthly[key].orders += 1;
 
       (Array.isArray(q.items) ? q.items : []).forEach((it: any) => {
         const sku = it?.sku || it?.description?.slice(0, 24) || 'Item';

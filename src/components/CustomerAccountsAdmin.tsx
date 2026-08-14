@@ -141,6 +141,7 @@ export const CustomerAccountsAdmin = () => {
         title: 'Customer approved',
         description: `${approving.email} can now see their prices${approveAdmin ? ' and manage their team' : ''}.`,
       });
+      sendApprovalEmail({ accountId: approving.id, email: approving.email });
       setApproving(null);
     }
   };

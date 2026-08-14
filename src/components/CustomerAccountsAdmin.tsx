@@ -126,6 +126,25 @@ export const CustomerAccountsAdmin = () => {
     setApproving(row);
   };
 
+  const sendApprovalEmail = async (payload: { accountId?: string; email: string }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { error } = await supabase.functions.invoke('notify-portal-approval', {
+        body: payload,
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+      });
+      if (error) throw error;
+      toast({ title: 'Approval email sent', description: `Confirmation emailed to ${payload.email}.` });
+    } catch (e: any) {
+      toast({
+        title: 'Approval email not sent',
+        description: `${payload.email} was approved, but the email could not be sent.`,
+        variant: 'destructive',
+      });
+      console.error('notify-portal-approval failed', e);
+    }
+  };
+
   const confirmApprove = async () => {
     if (!approving) return;
     setBusy(true);

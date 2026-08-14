@@ -31,7 +31,12 @@ export interface PortalQuoteRow {
   ordered_items?: any;
 }
 
-const ORDER_STATUSES = ['accepted', 'finished'];
+const isOrder = (q: PortalQuoteRow) => {
+  const st = (q.status || '').toLowerCase();
+  if (st === 'accepted') return true;
+  const ordered = q.ordered_items;
+  return st === 'finished' && Array.isArray(ordered) && ordered.length > 0;
+};
 
 const quoteTotal = (q: PortalQuoteRow) =>
   calculateTotal(

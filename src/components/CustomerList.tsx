@@ -532,7 +532,12 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const liveMatches = useMemo(
+    () => findSimilarCustomers(name, email, customers, editingCustomer?.id),
+    [name, email, customers, editingCustomer],
+  );
+
+  const handleSave = async (skipDuplicateCheck = false) => {
     if (!name.trim() || !email.trim()) {
       toast({ title: 'Validation Error', description: 'Name and email are required.', variant: 'destructive' });
       return;
@@ -544,6 +549,13 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
       toast({ title: 'Invalid Email', description: `Invalid email(s): ${invalid.join(', ')}`, variant: 'destructive' });
       return;
     }
+
+    if (!editingCustomer && !skipDuplicateCheck && liveMatches.length > 0) {
+      setDupMatches(liveMatches);
+      setDupCustomerDialogOpen(true);
+      return;
+    }
+
 
     try {
       if (editingCustomer) {

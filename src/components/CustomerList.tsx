@@ -152,6 +152,75 @@ interface Customer {
   quotation_count?: number;
 }
 
+const normalizeName = (v: string) =>
+  v
+    .toLowerCase()
+    .replace(/[\.,'"`()\-_/&]/g, ' ')
+    .replace(/\b(ltd|limited|inc|llc|co|corp|corporation|company|gmbh|bv|b v|sa|srl|spa|as|ab|oy|kft|sarl|pte|pty|plc|group|industries|industrial|tools|tool|supply|international)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const emailDomains = (v: string) =>
+  v
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .map((e) => e.split('@')[1])
+    .filter((d): d is string => !!d && !['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'walla.com', 'icloud.com'].includes(d));
+
+const emailSet = (v: string) =>
+  new Set(v.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean));
+
+export type CustomerMatch = { customer: Customer; reason: string };
+
+export const findSimilarCustomers = (
+  name: string,
+  email: string,
+  customers: Customer[],
+  excludeId?: string,
+): CustomerMatch[] => {
+  const n = normalizeName(name);
+  const emails = emailSet(email);
+  const domains = new Set(emailDomains(email));
+  if (!n && emails.size === 0) return [];
+
+  const matches: CustomerMatch[] = [];
+  for (const c of customers) {
+    if (excludeId && c.id === excludeId) continue;
+    const cn = normalizeName(c.name);
+    const cEmails = emailSet(c.email || '');
+    const shared = [...emails].filter((e) => cEmails.has(e));
+
+    if (shared.length > 0) {
+      matches.push({ customer: c, reason: `Same email: ${shared.join(', ')}` });
+      continue;
+    }
+    if (n && cn && (cn === n)) {
+      matches.push({ customer: c, reason: 'Same company name' });
+      continue;
+    }
+    if (n.length >= 3 && cn.length >= 3 && (cn.includes(n) || n.includes(cn))) {
+      matches.push({ customer: c, reason: 'Very similar name' });
+      continue;
+    }
+    if (n && cn) {
+      const a = new Set(n.split(' ').filter((w) => w.length > 2));
+      const b = new Set(cn.split(' ').filter((w) => w.length > 2));
+      const common = [...a].filter((w) => b.has(w));
+      if (common.length > 0 && common.length >= Math.min(a.size, b.size)) {
+        matches.push({ customer: c, reason: `Matching words: ${common.join(', ')}` });
+        continue;
+      }
+    }
+    const cDomains = new Set(emailDomains(c.email || ''));
+    const sharedDomain = [...domains].filter((d) => cDomains.has(d));
+    if (sharedDomain.length > 0) {
+      matches.push({ customer: c, reason: `Same email domain: ${sharedDomain.join(', ')}` });
+    }
+  }
+  return matches.slice(0, 6);
+};
+
 interface CustomerListProps {
   onSelectCustomer?: (email: string) => void;
   onViewReport?: (customer: { name: string; email: string; address: string | null }) => void;

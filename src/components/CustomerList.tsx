@@ -67,6 +67,7 @@ import {
   Redo,
   Minimize2,
   Maximize2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -152,6 +153,75 @@ interface Customer {
   quotation_count?: number;
 }
 
+const normalizeName = (v: string) =>
+  v
+    .toLowerCase()
+    .replace(/[\.,'"`()\-_/&]/g, ' ')
+    .replace(/\b(ltd|limited|inc|llc|co|corp|corporation|company|gmbh|bv|b v|sa|srl|spa|as|ab|oy|kft|sarl|pte|pty|plc|group|industries|industrial|tools|tool|supply|international)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const emailDomains = (v: string) =>
+  v
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .map((e) => e.split('@')[1])
+    .filter((d): d is string => !!d && !['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'walla.com', 'icloud.com'].includes(d));
+
+const emailSet = (v: string) =>
+  new Set(v.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean));
+
+export type CustomerMatch = { customer: Customer; reason: string };
+
+export const findSimilarCustomers = (
+  name: string,
+  email: string,
+  customers: Customer[],
+  excludeId?: string,
+): CustomerMatch[] => {
+  const n = normalizeName(name);
+  const emails = emailSet(email);
+  const domains = new Set(emailDomains(email));
+  if (!n && emails.size === 0) return [];
+
+  const matches: CustomerMatch[] = [];
+  for (const c of customers) {
+    if (excludeId && c.id === excludeId) continue;
+    const cn = normalizeName(c.name);
+    const cEmails = emailSet(c.email || '');
+    const shared = [...emails].filter((e) => cEmails.has(e));
+
+    if (shared.length > 0) {
+      matches.push({ customer: c, reason: `Same email: ${shared.join(', ')}` });
+      continue;
+    }
+    if (n && cn && (cn === n)) {
+      matches.push({ customer: c, reason: 'Same company name' });
+      continue;
+    }
+    if (n.length >= 3 && cn.length >= 3 && (cn.includes(n) || n.includes(cn))) {
+      matches.push({ customer: c, reason: 'Very similar name' });
+      continue;
+    }
+    if (n && cn) {
+      const a = new Set(n.split(' ').filter((w) => w.length > 2));
+      const b = new Set(cn.split(' ').filter((w) => w.length > 2));
+      const common = [...a].filter((w) => b.has(w));
+      if (common.length > 0 && common.length >= Math.min(a.size, b.size)) {
+        matches.push({ customer: c, reason: `Matching words: ${common.join(', ')}` });
+        continue;
+      }
+    }
+    const cDomains = new Set(emailDomains(c.email || ''));
+    const sharedDomain = [...domains].filter((d) => cDomains.has(d));
+    if (sharedDomain.length > 0) {
+      matches.push({ customer: c, reason: `Same email domain: ${sharedDomain.join(', ')}` });
+    }
+  }
+  return matches.slice(0, 6);
+};
+
 interface CustomerListProps {
   onSelectCustomer?: (email: string) => void;
   onViewReport?: (customer: { name: string; email: string; address: string | null }) => void;
@@ -171,6 +241,8 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [dupCustomerDialogOpen, setDupCustomerDialogOpen] = useState(false);
+  const [dupMatches, setDupMatches] = useState<CustomerMatch[]>([]);
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -461,7 +533,12 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
+  const liveMatches = useMemo(
+    () => findSimilarCustomers(name, email, customers, editingCustomer?.id),
+    [name, email, customers, editingCustomer],
+  );
+
+  const handleSave = async (skipDuplicateCheck = false) => {
     if (!name.trim() || !email.trim()) {
       toast({ title: 'Validation Error', description: 'Name and email are required.', variant: 'destructive' });
       return;
@@ -473,6 +550,13 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
       toast({ title: 'Invalid Email', description: `Invalid email(s): ${invalid.join(', ')}`, variant: 'destructive' });
       return;
     }
+
+    if (!editingCustomer && !skipDuplicateCheck && liveMatches.length > 0) {
+      setDupMatches(liveMatches);
+      setDupCustomerDialogOpen(true);
+      return;
+    }
+
 
     try {
       if (editingCustomer) {
@@ -1083,13 +1167,72 @@ export const CustomerList = ({ onSelectCustomer, onViewReport }: CustomerListPro
               <Label>Address</Label>
               <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address" rows={3} />
             </div>
+            {!editingCustomer && liveMatches.length > 0 && (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-500">
+                  <AlertTriangle className="h-4 w-4" />
+                  Possible existing customer{liveMatches.length > 1 ? 's' : ''}
+                </div>
+                {liveMatches.map((m) => (
+                  <div key={m.customer.id} className="flex items-center justify-between gap-2 text-xs">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{m.customer.name}</div>
+                      <div className="text-muted-foreground truncate">{m.customer.email}</div>
+                      <div className="text-amber-500/90">{m.reason}</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs shrink-0"
+                      onClick={() => { setDialogOpen(false); openEdit(m.customer); }}
+                    >
+                      Open
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>{editingCustomer ? 'Update' : 'Add'}</Button>
+            <Button onClick={() => handleSave()}>{editingCustomer ? 'Update' : 'Add'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Duplicate Customer Warning */}
+      <AlertDialog open={dupCustomerDialogOpen} onOpenChange={setDupCustomerDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Similar customer{dupMatches.length > 1 ? 's' : ''} already exist{dupMatches.length > 1 ? '' : 's'}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Adding a duplicate splits quotations and price lists across records. Please review:</p>
+                <div className="space-y-2">
+                  {dupMatches.map((m) => (
+                    <div key={m.customer.id} className="rounded-md border p-2 text-xs text-left">
+                      <div className="font-medium text-foreground">{m.customer.name}</div>
+                      <div className="text-muted-foreground break-all">{m.customer.email}</div>
+                      <div className="text-amber-500">{m.reason}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setDupCustomerDialogOpen(false); handleSave(true); }}
+            >
+              Add anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

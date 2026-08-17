@@ -448,6 +448,16 @@ Deno.serve(async (req) => {
       if (!EMAIL_RE.test(normalizedEmail)) {
         return jsonResponse({ error: `"${normalizedEmail}" is not a valid email address` }, 400);
       }
+      if (parentAccount) {
+        const parentDomain = domainOf(parentAccount.email);
+        const newDomain = domainOf(normalizedEmail);
+        if (!parentDomain || parentDomain !== newDomain) {
+          return jsonResponse(
+            { error: `Domain must stay the same. Use an address on @${parentDomain || "the company domain"}.` },
+            400,
+          );
+        }
+      }
       let targetUserId: string | null = null;
 
       const { data: created, error: createError } = await adminClient.auth.admin.createUser({

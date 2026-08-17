@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@,;]+\.[A-Za-z]{2,}$/;
 const cleanEmail = (v: unknown) => String(v ?? "").trim().toLowerCase();
+const domainOf = (e: string) => (e.split("@")[1] || "").trim().toLowerCase();
 
 const jsonResponse = (data: object, status = 200) =>
   new Response(JSON.stringify(data), {

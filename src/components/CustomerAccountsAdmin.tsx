@@ -329,6 +329,41 @@ export const CustomerAccountsAdmin = () => {
   const rootRows = rows.filter((r) => !r.parent_account_id);
   const membersOf = (id: string) => rows.filter((r) => r.parent_account_id === id);
 
+  const PUBLIC_DOMAINS = new Set([
+    'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'walla.com', 'walla.co.il',
+    'icloud.com', 'aol.com', 'live.com', 'msn.com', 'protonmail.com', 'gmx.com',
+  ]);
+  const domainOf = (e: string) => (e.split('@')[1] || '').trim().toLowerCase();
+  const norm = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const accountDomain = linkFor ? domainOf(linkFor.email) : '';
+  const accountCompany = linkFor ? norm(linkFor.company_name || '') : '';
+
+  // Emails already used by this account family (root + members)
+  const familyEmails = linkFor
+    ? rows
+        .filter((r) => r.id === (linkFor.parent_account_id || linkFor.id) || r.parent_account_id === (linkFor.parent_account_id || linkFor.id))
+        .map((r) => r.email.toLowerCase())
+    : [];
+
+  const isAllowedEmail = (email: string) => {
+    const e = email.trim().toLowerCase();
+    if (!e.includes('@')) return false;
+    const d = domainOf(e);
+    if (accountDomain && !PUBLIC_DOMAINS.has(accountDomain) && d === accountDomain) return true;
+    // same company customer record
+    return customers.some((c) => {
+      const cn = norm(c.name);
+      if (!cn || !accountCompany) return false;
+      const sameCompany = cn === accountCompany || cn.includes(accountCompany) || accountCompany.includes(cn);
+      if (!sameCompany) return false;
+      return (c.email || '')
+        .split(/[,;]/)
+        .map((x) => x.trim().toLowerCase())
+        .includes(e);
+    });
+  };
+
   const knownEmails = Array.from(
     new Set(
       customers
@@ -336,7 +371,10 @@ export const CustomerAccountsAdmin = () => {
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean)
     )
-  ).filter((e) => !rows.some((r) => r.email.toLowerCase() === e));
+  )
+    .filter((e) => !rows.some((r) => r.email.toLowerCase() === e))
+    .filter((e) => isAllowedEmail(e));
+
 
   const addLinkedEmail = async () => {
     if (!linkFor) return;
@@ -345,6 +383,16 @@ export const CustomerAccountsAdmin = () => {
       toast({ title: 'Email required', description: 'Choose an existing email or type a new one.', variant: 'destructive' });
       return;
     }
+    if (!isAllowedEmail(email)) {
+
+      toast({
+        title: 'Email not allowed',
+        description: `Only colleagues of ${linkFor.company_name || linkFor.email} can be added — use an address on ${accountDomain ? '@' + accountDomain : 'the company domain'} or one listed on the company's customer record.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (linkForm.password && linkForm.password.length < 6) {
       toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
       return;

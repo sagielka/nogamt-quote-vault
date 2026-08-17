@@ -350,7 +350,7 @@ export const CustomerAccountsAdmin = () => {
     const e = email.trim().toLowerCase();
     if (!e.includes('@')) return false;
     const d = domainOf(e);
-    if (accountDomain && d === accountDomain) return true;
+    if (accountDomain && !PUBLIC_DOMAINS.has(accountDomain) && d === accountDomain) return true;
     // same company customer record
     return customers.some((c) => {
       const cn = norm(c.name);

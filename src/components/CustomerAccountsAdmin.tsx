@@ -382,7 +382,15 @@ export const CustomerAccountsAdmin = () => {
     if (!email) {
       toast({ title: 'Email required', description: 'Choose an existing email or type a new one.', variant: 'destructive' });
       return;
+    if (!isAllowedEmail(email)) {
+      toast({
+        title: 'Email not allowed',
+        description: `Only colleagues of ${linkFor.company_name || linkFor.email} can be added — use an address on ${accountDomain ? '@' + accountDomain : 'the company domain'} or one listed on the company's customer record.`,
+        variant: 'destructive',
+      });
+      return;
     }
+
     if (linkForm.password && linkForm.password.length < 6) {
       toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
       return;

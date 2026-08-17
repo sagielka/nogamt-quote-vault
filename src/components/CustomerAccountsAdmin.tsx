@@ -382,7 +382,9 @@ export const CustomerAccountsAdmin = () => {
     if (!email) {
       toast({ title: 'Email required', description: 'Choose an existing email or type a new one.', variant: 'destructive' });
       return;
+    }
     if (!isAllowedEmail(email)) {
+
       toast({
         title: 'Email not allowed',
         description: `Only colleagues of ${linkFor.company_name || linkFor.email} can be added — use an address on ${accountDomain ? '@' + accountDomain : 'the company domain'} or one listed on the company's customer record.`,

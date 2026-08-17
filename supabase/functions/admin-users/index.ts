@@ -8,6 +8,7 @@ const corsHeaders = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@,;]+\.[A-Za-z]{2,}$/;
 const cleanEmail = (v: unknown) => String(v ?? "").trim().toLowerCase();
+const domainOf = (e: string) => (e.split("@")[1] || "").trim().toLowerCase();
 
 const jsonResponse = (data: object, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -446,6 +447,16 @@ Deno.serve(async (req) => {
       const normalizedEmail = cleanEmail(email);
       if (!EMAIL_RE.test(normalizedEmail)) {
         return jsonResponse({ error: `"${normalizedEmail}" is not a valid email address` }, 400);
+      }
+      if (parentAccount) {
+        const parentDomain = domainOf(parentAccount.email);
+        const newDomain = domainOf(normalizedEmail);
+        if (!parentDomain || parentDomain !== newDomain) {
+          return jsonResponse(
+            { error: `Domain must stay the same. Use an address on @${parentDomain || "the company domain"}.` },
+            400,
+          );
+        }
       }
       let targetUserId: string | null = null;
 

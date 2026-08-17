@@ -19,13 +19,6 @@ const json = (body: unknown, status = 200) =>
 const escapeHtml = (v: string) =>
   v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-const PRICE_LIST_LABEL: Record<string, string> = {
-  EURO: "Euro price list",
-  DOLLAR: "US Dollar price list",
-  SHEKEL: "Shekel price list",
-  NOGA_BV_EURO: "Noga BV Euro price list",
-  CHINA_DOLLAR: "China Dollar price list",
-};
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -61,7 +54,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     let query = admin
       .from("customer_accounts")
-      .select("email, company_name, contact_name, price_list, status, is_account_admin");
+      .select("email, company_name, contact_name, status, is_account_admin");
     query = accountId ? query.eq("id", accountId) : query.ilike("email", emailInput!);
     const { data: account, error: accErr } = await query.maybeSingle();
 

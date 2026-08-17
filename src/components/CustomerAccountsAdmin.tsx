@@ -329,15 +329,9 @@ export const CustomerAccountsAdmin = () => {
   const rootRows = rows.filter((r) => !r.parent_account_id);
   const membersOf = (id: string) => rows.filter((r) => r.parent_account_id === id);
 
-  const PUBLIC_DOMAINS = new Set([
-    'gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'walla.com', 'walla.co.il',
-    'icloud.com', 'aol.com', 'live.com', 'msn.com', 'protonmail.com', 'gmx.com',
-  ]);
   const domainOf = (e: string) => (e.split('@')[1] || '').trim().toLowerCase();
-  const norm = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
   const accountDomain = linkFor ? domainOf(linkFor.email) : '';
-  const accountCompany = linkFor ? norm(linkFor.company_name || '') : '';
 
   // Emails already used by this account family (root + members)
   const familyEmails = linkFor

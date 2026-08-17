@@ -19,13 +19,6 @@ const json = (body: unknown, status = 200) =>
 const escapeHtml = (v: string) =>
   v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-const PRICE_LIST_LABEL: Record<string, string> = {
-  EURO: "Euro price list",
-  DOLLAR: "US Dollar price list",
-  SHEKEL: "Shekel price list",
-  NOGA_BV_EURO: "Noga BV Euro price list",
-  CHINA_DOLLAR: "China Dollar price list",
-};
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -61,7 +54,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     let query = admin
       .from("customer_accounts")
-      .select("email, company_name, contact_name, price_list, status, is_account_admin");
+      .select("email, company_name, contact_name, status, is_account_admin");
     query = accountId ? query.eq("id", accountId) : query.ilike("email", emailInput!);
     const { data: account, error: accErr } = await query.maybeSingle();
 
@@ -75,18 +68,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       account.company_name ||
       String(account.email).split("@")[0];
     const name = escapeHtml(String(nameRaw));
-    const priceListLabel = account.price_list
-      ? PRICE_LIST_LABEL[account.price_list] || account.price_list
-      : null;
 
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #222;">
       <h2 style="color:#ff9004; margin-bottom: 4px;">Your price portal access is approved</h2>
       <p>Dear ${name},</p>
       <p>Your account for the Noga MT customer price portal has been approved and is ready to use.</p>
-      ${priceListLabel
-        ? `<p>You have been assigned the <b>${escapeHtml(priceListLabel)}</b>.</p>`
-        : ""}
       <p>Sign in with the email address you registered with: <b>${escapeHtml(String(account.email))}</b></p>
       ${account.is_account_admin
         ? `<p>As the account administrator, you can also invite and manage colleagues from your company inside the portal.</p>`

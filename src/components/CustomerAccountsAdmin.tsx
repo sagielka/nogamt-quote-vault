@@ -895,10 +895,16 @@ export const CustomerAccountsAdmin = () => {
             <DialogTitle>Add email to this portal account</DialogTitle>
             <DialogDescription>
               The new email signs in separately but shares {linkFor?.company_name || linkFor?.email}'s price list and quotations.
+              The domain must stay the same.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
+            <div className="rounded-md border border-border/60 bg-muted/40 p-2.5 flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">Allowed domain for this account</span>
+              <Badge variant="outline" className="font-mono text-xs">@{accountDomain || '—'}</Badge>
+            </div>
+
             <div className="space-y-1.5">
               <Label>Choose an existing customer email</Label>
               <Select value={linkForm.email || undefined} onValueChange={(v) => setLinkForm({ ...linkForm, email: v })}>
@@ -917,7 +923,7 @@ export const CustomerAccountsAdmin = () => {
               <Label>Or type an email *</Label>
               <Input
                 type="email"
-                placeholder="colleague@company.com"
+                placeholder={`colleague@${accountDomain || 'company.com'}`}
                 value={linkForm.email}
                 onChange={(e) => setLinkForm({ ...linkForm, email: e.target.value })}
               />

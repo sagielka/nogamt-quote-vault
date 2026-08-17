@@ -350,18 +350,7 @@ export const CustomerAccountsAdmin = () => {
     const e = email.trim().toLowerCase();
     if (!e.includes('@')) return false;
     const d = domainOf(e);
-    if (accountDomain && !PUBLIC_DOMAINS.has(accountDomain) && d === accountDomain) return true;
-    // same company customer record
-    return customers.some((c) => {
-      const cn = norm(c.name);
-      if (!cn || !accountCompany) return false;
-      const sameCompany = cn === accountCompany || cn.includes(accountCompany) || accountCompany.includes(cn);
-      if (!sameCompany) return false;
-      return (c.email || '')
-        .split(/[,;]/)
-        .map((x) => x.trim().toLowerCase())
-        .includes(e);
-    });
+    return accountDomain ? d === accountDomain : false;
   };
 
   const knownEmails = Array.from(
@@ -384,10 +373,9 @@ export const CustomerAccountsAdmin = () => {
       return;
     }
     if (!isAllowedEmail(email)) {
-
       toast({
-        title: 'Email not allowed',
-        description: `Only colleagues of ${linkFor.company_name || linkFor.email} can be added — use an address on ${accountDomain ? '@' + accountDomain : 'the company domain'} or one listed on the company's customer record.`,
+        title: 'Domain must stay the same',
+        description: `Only addresses on @${accountDomain || 'the company domain'} can be added to this account.`,
         variant: 'destructive',
       });
       return;

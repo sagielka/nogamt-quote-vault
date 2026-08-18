@@ -611,6 +611,39 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_activity: {
+        Row: {
+          created_at: string
+          details: Json | null
+          email: string | null
+          event: string
+          id: string
+          path: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          event: string
+          id?: string
+          path?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          email?: string | null
+          event?: string
+          id?: string
+          path?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_cost_overrides: {
         Row: {
           cost_usd: number

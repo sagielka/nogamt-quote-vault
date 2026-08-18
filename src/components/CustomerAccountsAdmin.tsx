@@ -18,8 +18,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Trash2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge, Shield } from 'lucide-react';
+import { Loader2, Trash2, ShieldCheck, UserCheck, UserX, Pencil, KeyRound, Mail, UserPlus, Link2, Eye, Users, Plus, Unlink, Split, Merge, Shield, Activity } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
+import { PortalActivityDialog } from '@/components/customer-portal/PortalActivityDialog';
 
 
 const PORTAL_URL = 'https://quote.noga-mt.com/#/price-list';
@@ -57,6 +58,7 @@ export const CustomerAccountsAdmin = () => {
   const [editing, setEditing] = useState<Row | null>(null);
   const [preview, setPreview] = useState<Row | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
+  const [activityFor, setActivityFor] = useState<Row | null>(null);
 
   const [form, setForm] = useState({ company_name: '', contact_name: '', notes: '', price_list: '', is_account_admin: false });
   const [newPassword, setNewPassword] = useState('');
@@ -573,6 +575,10 @@ export const CustomerAccountsAdmin = () => {
                   </SelectContent>
                 </Select>
                 <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" variant="outline" onClick={() => setActivityFor(row)}>
+                    <Activity className="w-4 h-4 mr-2" />
+                    Activity
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => setPreview(row)}>
                     <Eye className="w-4 h-4 mr-2" />
                     View as customer
@@ -670,6 +676,9 @@ export const CustomerAccountsAdmin = () => {
                         </button>
                         <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => openEdit(m)}>
                           <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                        <button type="button" className="text-muted-foreground hover:text-primary inline-flex items-center gap-1" onClick={() => setActivityFor(m)}>
+                          <Activity className="w-3 h-3" /> Activity
                         </button>
                         <button type="button" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1" onClick={() => sendReset(m)}>
                           <Mail className="w-3 h-3" /> Reset
@@ -786,6 +795,18 @@ export const CustomerAccountsAdmin = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PortalActivityDialog
+        open={!!activityFor}
+        onOpenChange={(o) => !o && setActivityFor(null)}
+        title={activityFor?.company_name || activityFor?.email || ''}
+        userIds={
+          activityFor
+            ? [activityFor.user_id, ...rows.filter((r) => r.parent_account_id === activityFor.id).map((r) => r.user_id)]
+            : []
+        }
+      />
+
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">

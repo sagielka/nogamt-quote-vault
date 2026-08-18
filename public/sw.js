@@ -6,6 +6,9 @@ function isQuoteVaultCache(name) {
 
 self.addEventListener("install", () => self.skipWaiting());
 
+// Cleanup-only worker: wipe legacy caches and unregister. It must NOT navigate
+// clients — the page-level purge script owns the single reload, otherwise the
+// user sees two refreshes before getting the final build.
 self.addEventListener("activate", (event) =>
   event.waitUntil(
     (async () => {
@@ -13,12 +16,12 @@ self.addEventListener("activate", (event) =>
         const cacheNames = await caches.keys();
         const appCaches = cacheNames.filter(isQuoteVaultCache);
         await Promise.allSettled(appCaches.map((name) => caches.delete(name)));
-        await self.clients.claim();
-        const windowClients = await self.clients.matchAll({ type: "window" });
-        await Promise.allSettled(windowClients.map((client) => client.navigate(client.url)));
       } finally {
         await self.registration.unregister();
       }
     })(),
   ),
 );
+
+// Never serve anything from cache while this worker is alive.
+self.addEventListener("fetch", () => {});

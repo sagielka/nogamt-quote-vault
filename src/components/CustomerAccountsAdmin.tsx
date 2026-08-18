@@ -796,6 +796,18 @@ export const CustomerAccountsAdmin = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      <PortalActivityDialog
+        open={!!activityFor}
+        onOpenChange={(o) => !o && setActivityFor(null)}
+        title={activityFor?.company_name || activityFor?.email || ''}
+        userIds={
+          activityFor
+            ? [activityFor.user_id, ...rows.filter((r) => r.parent_account_id === activityFor.id).map((r) => r.user_id)]
+            : []
+        }
+      />
+
+
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

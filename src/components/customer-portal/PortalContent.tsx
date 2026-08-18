@@ -19,6 +19,7 @@ import { dbRowToQuotation } from '@/hooks/useQuotations';
 import { useToast } from '@/hooks/use-toast';
 import { PortalStats, type PortalQuoteRow } from './PortalStats';
 import { PortalQuoteDialog } from './PortalQuoteDialog';
+import { logPortalEvent } from '@/hooks/usePortalActivity';
 import { PortalTeam } from './PortalTeam';
 import { PortalAccountSettings } from './PortalAccountSettings';
 import * as XLSX from 'xlsx';
@@ -136,6 +137,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
     try {
       const res = await downloadQuotationPdf(dbRowToQuotation(row));
       if (!res.success) throw new Error(res.error || 'Failed to generate PDF');
+      logPortalEvent('quote_pdf_download', { quote: row.quote_number });
       toast({ title: 'Downloaded', description: res.fileName });
     } catch (e: any) {
       toast({ title: 'Download failed', description: e.message, variant: 'destructive' });
@@ -206,6 +208,7 @@ export const PortalContent = ({ rawList, email, showTeam = true }: Props) => {
 
 
   const exportExcel = () => {
+    logPortalEvent('price_list_download', { items: filtered.length, list: rawList });
     const rows = filtered.map((p: any) => {
       const unit = (customListId ? p.customPrice : p.prices[priceList as PriceList]) as number;
       const item: any = { sku: p.sku, description: p.description, unitPrice: unit, discountPercent: 0 };

@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogOut, Clock, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { PortalContent } from '@/components/customer-portal/PortalContent';
 import { MarketTicker } from '@/components/MarketTicker';
+import { logPortalEvent } from '@/hooks/usePortalActivity';
 import logo from '@/assets/logo.jpg';
 
 const PortalShell = ({
@@ -86,6 +87,11 @@ const CustomerPrices = () => {
   const listLabel = customListId
     ? customList?.name || 'Custom price list'
     : PRICE_LISTS.find((p) => p.value === priceList)?.label;
+
+  useEffect(() => {
+    if (!user || !approved) return;
+    logPortalEvent('portal_visit', { list: rawList, company: account?.company_name || null });
+  }, [user?.id, approved]);
 
   useEffect(() => {
     if (!customListId) return;

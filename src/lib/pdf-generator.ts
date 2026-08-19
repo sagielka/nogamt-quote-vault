@@ -244,42 +244,10 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
   pdf.line(margin, y, pageWidth - margin, y);
   y += 8;
 
-  // Pre-load all line item images. When a line has no manual image, fall back to
-  // the product media picture, and if only a 3D model exists render a snapshot of
-  // the GLB so the PDF shows the same part the interactive viewer displays.
+  // Product images are intentionally NOT embedded in the quotation PDF.
   const itemImages: Record<number, { data: string; width: number; height: number }[]> = {};
-  let coverImage: { data: string; width: number; height: number; sku: string } | null = null;
-  for (let i = 0; i < quotation.items.length; i++) {
-    const item = quotation.items[i];
-    const imgs = item.images || [];
-    const loaded: { data: string; width: number; height: number }[] = [];
-    for (const p of imgs) {
-      const res = await resolveLineItemImage(p);
-      if (res) loaded.push(res);
-    }
-    if (loaded.length === 0) {
-      try {
-        const media = await getProductMediaFor(item.sku, item.description);
-        if (media?.imageUrl) {
-          const res = await loadImageAsBase64(media.imageUrl).catch(() => null);
-          if (res) loaded.push(res);
-        }
-        if (loaded.length === 0 && media?.modelUrl) {
-          const snap = await renderGlbSnapshot(media.modelUrl);
-          if (snap) {
-            const res = await loadImageAsBase64(snap).catch(() => null);
-            if (res) loaded.push(res);
-          }
-        }
-      } catch {
-        /* product picture is optional */
-      }
-    }
-    if (loaded.length) {
-      itemImages[i] = loaded;
-      if (!coverImage) coverImage = { ...loaded[0], sku: item.sku || item.description || '' };
-    }
-  }
+  const coverImage: { data: string; width: number; height: number; sku: string } | null = null;
+
 
   // Bill To
   const billToStartY = y;

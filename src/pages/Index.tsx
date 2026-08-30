@@ -161,18 +161,42 @@ const Index = () => {
   const navigate = useNavigate();
 
   // Handle ?highlight= param from email links (HashRouter reads from hash query)
+  const highlightHandled = useRef(false);
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    const highlightId = params.get('highlight');
-    if (highlightId && quotations.length > 0) {
-      const found = quotations.find(q => q.id === highlightId);
-      if (found) {
-        navigateToView('preview', highlightId);
-        // Clean up the URL
-        window.history.replaceState(null, '', window.location.pathname + '#/');
-      }
+    if (highlightHandled.current) return;
+
+    const hash = window.location.hash;
+    const qIdx = hash.indexOf('?');
+    const fromUrl = qIdx >= 0 ? new URLSearchParams(hash.slice(qIdx + 1)).get('highlight') : null;
+    let pending: string | null = null;
+    try { pending = sessionStorage.getItem('pending-highlight'); } catch { /* ignore */ }
+    const highlightId = fromUrl || pending;
+    if (!highlightId) return;
+
+    // Not signed in yet: remember it and open the quote right after login.
+    if (!user) {
+      try { sessionStorage.setItem('pending-highlight', highlightId); } catch { /* ignore */ }
+      return;
     }
-  }, [quotations]);
+    if (quotations.length === 0) return;
+
+    highlightHandled.current = true;
+    try { sessionStorage.removeItem('pending-highlight'); } catch { /* ignore */ }
+    // Clean the URL through the router so the hash router stays in sync.
+    navigate('/', { replace: true });
+
+    const found = quotations.find(q => q.id === highlightId);
+    if (found) {
+      navigateToView('preview', highlightId);
+    } else {
+      toast({
+        title: 'Quotation not available',
+        description: 'It may have been archived or deleted.',
+        variant: 'destructive',
+      });
+    }
+  }, [quotations, user, navigate, navigateToView, toast]);
+
 
   useEffect(() => {
     if (!loading && !user) {

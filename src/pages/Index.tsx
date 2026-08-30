@@ -171,6 +171,7 @@ const Index = () => {
     let pending: string | null = null;
     try { pending = sessionStorage.getItem('pending-highlight'); } catch { /* ignore */ }
     const highlightId = fromUrl || pending;
+    console.log('[highlight] id=', highlightId, 'user=', !!user, 'quotes=', quotations.length);
     if (!highlightId) return;
 
     // Not signed in yet: remember it and open the quote right after login.

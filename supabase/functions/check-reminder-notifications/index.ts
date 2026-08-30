@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const appUrl = "https://nogamt-quote-vault.lovable.app";
+      const appUrl = "https://quote.noga-mt.com";
 
       // Build quotation rows for the consolidated email
       const quotationRows = userQuotations

@@ -101,7 +101,12 @@ const Index = () => {
         setCurrentView('list');
         setSelectedQuotationId(null);
       }
+      // The flag only guards the render pass triggered by this popstate. If it
+      // is never consumed it would silently swallow the next navigation
+      // (e.g. opening a quote from an email link), so always clear it.
+      setTimeout(() => { isPopState.current = false; }, 0);
     };
+
 
     window.addEventListener('popstate', handlePopState);
     // Replace initial history state

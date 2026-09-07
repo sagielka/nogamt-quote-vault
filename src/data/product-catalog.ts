@@ -93,26 +93,23 @@ export const convertPrice = (
   return priceInUsd * toRate;
 };
 
-// US SKU pricing table based on number (2-7) or letter (B-G)
-const US_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number }> = {
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 }, // G
+// Group price row shared by US/UC dynamic pricing
+type GroupPriceRow = { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number; WAYDART_DOLLAR: number };
+
+// Group pricing table: first digit after US/UC (1-7) == group letter (A-G)
+const GROUP_PRICES: Record<string, GroupPriceRow> = {
+  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 152.00, CHINA_DOLLAR: 46.80, WAYDART_DOLLAR: 40.53 },  // A
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75, WAYDART_DOLLAR: 49.15 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71, WAYDART_DOLLAR: 57.78 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43, WAYDART_DOLLAR: 67.94 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23, WAYDART_DOLLAR: 79.89 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47, WAYDART_DOLLAR: 93.96 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86, WAYDART_DOLLAR: 109.88 }, // G
 };
 
-// UC SKU pricing table based on number (1-7) corresponding to letters (A-G)
-const UC_SKU_PRICES: Record<string, { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number }> = {
-  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 152.00, CHINA_DOLLAR: 46.80 },  // A
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86 }, // G
-};
+const US_SKU_PRICES = GROUP_PRICES;
+const UC_SKU_PRICES = GROUP_PRICES;
+
 
 // Map letters to their corresponding number for US/UC SKU pricing
 const LETTER_TO_NUMBER: Record<string, string> = {
@@ -128,74 +125,43 @@ const LETTER_TO_NUMBER: Record<string, string> = {
 // Map letters to their corresponding number for US SKU pricing (legacy alias)
 const US_LETTER_TO_NUMBER = LETTER_TO_NUMBER;
 
-// Get price for US SKUs based on SKU number or description letter
-export const getUSSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
-  if (!sku.toUpperCase().startsWith('US')) return null;
-  
-  // Try to find the first digit after "US" in the SKU (position 2)
-  const skuAfterUS = sku.substring(2);
-  const firstDigit = skuAfterUS.match(/[2-7]/)?.[0];
-  
-  if (firstDigit && US_SKU_PRICES[firstDigit]) {
-    return US_SKU_PRICES[firstDigit][priceList];
+// Resolve the group key (1-7 == A-G) for a US/UC item.
+// Priority: the FIRST digit right after the US/UC prefix in the SKU,
+// then the group letter found in the description (e.g. US-d140-D300-D-R04 -> D).
+export const getGroupKey = (sku: string, description: string): string | null => {
+  const skuU = (sku || '').trim().toUpperCase();
+  const rest = skuU.replace(/^(US|UC)[^0-9A-G]*/, '');
+  const firstChar = rest.charAt(0);
+  if (/[1-7]/.test(firstChar)) return firstChar;
+  if (LETTER_TO_NUMBER[firstChar]) return LETTER_TO_NUMBER[firstChar];
+
+  const descU = (description || '').toUpperCase();
+  const parts = descU.split('-');
+  if (parts.length >= 4 && parts[3].length === 1 && LETTER_TO_NUMBER[parts[3]]) {
+    return LETTER_TO_NUMBER[parts[3]];
   }
-  
-  // Try to find the letter in the description (format: US-...-...-X-...-...)
-  // The letter is typically the 4th segment after splitting by '-'
-  const descParts = description.split('-');
-  if (descParts.length >= 4) {
-    const letterPart = descParts[3]; // Get the 4th part (index 3)
-    if (letterPart && letterPart.length === 1) {
-      const mappedNumber = US_LETTER_TO_NUMBER[letterPart];
-      if (mappedNumber && US_SKU_PRICES[mappedNumber]) {
-        return US_SKU_PRICES[mappedNumber][priceList];
-      }
-    }
+  for (const letter of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) {
+    if (descU.includes(`-${letter}-`)) return LETTER_TO_NUMBER[letter];
   }
-  
-  // Also try to find any matching letter anywhere in description
-  for (const [letter, number] of Object.entries(US_LETTER_TO_NUMBER)) {
-    if (description.includes(`-${letter}-`)) {
-      return US_SKU_PRICES[number][priceList];
-    }
-  }
-  
   return null;
 };
 
-// Get price for UC SKUs based on SKU number or description letter
+// Get price for US SKUs based on SKU group digit or description group letter
+export const getUSSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
+  if (!sku.toUpperCase().startsWith('US')) return null;
+  const key = getGroupKey(sku, description);
+  if (!key || !GROUP_PRICES[key]) return null;
+  return GROUP_PRICES[key][priceList] ?? null;
+};
+
+// Get price for UC SKUs based on SKU group digit or description group letter
 export const getUCSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
   if (!sku.toUpperCase().startsWith('UC')) return null;
-  
-  // Try to find the first digit after "UC" in the SKU (position 2)
-  const skuAfterUC = sku.substring(2);
-  const firstDigit = skuAfterUC.match(/[1-7]/)?.[0];
-  
-  if (firstDigit && UC_SKU_PRICES[firstDigit]) {
-    return UC_SKU_PRICES[firstDigit][priceList];
-  }
-  
-  // Try to find the letter in the description (format: UC-...-...-X-...-...)
-  const descParts = description.split('-');
-  if (descParts.length >= 4) {
-    const letterPart = descParts[3]; // Get the 4th part (index 3)
-    if (letterPart && letterPart.length === 1) {
-      const mappedNumber = LETTER_TO_NUMBER[letterPart];
-      if (mappedNumber && UC_SKU_PRICES[mappedNumber]) {
-        return UC_SKU_PRICES[mappedNumber][priceList];
-      }
-    }
-  }
-  
-  // Also try to find any matching letter anywhere in description
-  for (const [letter, number] of Object.entries(LETTER_TO_NUMBER)) {
-    if (description.includes(`-${letter}-`)) {
-      return UC_SKU_PRICES[number][priceList];
-    }
-  }
-  
-  return null;
+  const key = getGroupKey(sku, description);
+  if (!key || !GROUP_PRICES[key]) return null;
+  return GROUP_PRICES[key][priceList] ?? null;
 };
+
 
 // Convert US inserts JSON to ProductItem array (dynamically)
 const getUspotProducts = (): ProductItem[] => {
@@ -208,6 +174,7 @@ const getUspotProducts = (): ProductItem[] => {
       SHEKEL: US_SKU_PRICES[item.sku.charAt(2)]?.SHEKEL ?? null,
       NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
       CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.CHINA_DOLLAR ?? null,
+      WAYDART_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.WAYDART_DOLLAR ?? null,
     },
   }));
 };
@@ -227,6 +194,7 @@ const getUchamfProducts = (): ProductItem[] => {
         SHEKEL: UC_SKU_PRICES[priceKey]?.SHEKEL ?? null,
         NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
         CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.CHINA_DOLLAR ?? null,
+        WAYDART_DOLLAR: UC_SKU_PRICES[priceKey]?.WAYDART_DOLLAR ?? null,
       },
     };
   });

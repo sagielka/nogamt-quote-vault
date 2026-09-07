@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles, Layers } from 'lucide-react';
 import { formatCurrency, calculateLineTotal, calculateMoqLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, getActivePriceBreaks } from '@/lib/quotation-utils';
-import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, convertPrice } from '@/data/product-catalog';
+import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, getUCSkuPrice, convertPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
 import { useCostOverrides, saveCostOverride } from '@/data/cost-overrides';
 import { Currency } from '@/types/quotation';
@@ -218,8 +218,10 @@ export const LineItemWithSku = ({
     setHighlightedIndex(results.length > 0 ? 0 : -1);
     
     // Check for US SKU pricing when typing
-    if (value.toUpperCase().startsWith('US')) {
-      const usPrice = getUSSkuPrice(value, item.description, priceList);
+    if (/^U[SC]/i.test(value.trim())) {
+      const usPrice = value.trim().toUpperCase().startsWith('UC')
+        ? getUCSkuPrice(value, item.description || '', priceList)
+        : getUSSkuPrice(value, item.description || '', priceList);
       if (usPrice !== null) {
         const u: Partial<LineItem> = { sku: value, unitPrice: usPrice };
         if (cost != null) {
@@ -249,8 +251,10 @@ export const LineItemWithSku = ({
     setHighlightedIndex(results.length > 0 ? 0 : -1);
     
     // Check for US SKU pricing when description changes
-    if (item.sku?.toUpperCase().startsWith('US')) {
-      const usPrice = getUSSkuPrice(item.sku, value, priceList);
+    if (/^U[SC]/i.test((item.sku || '').trim())) {
+      const usPrice = item.sku.trim().toUpperCase().startsWith('UC')
+        ? getUCSkuPrice(item.sku, value, priceList)
+        : getUSSkuPrice(item.sku, value, priceList);
       if (usPrice !== null) {
         const u: Partial<LineItem> = { description: value, unitPrice: usPrice };
         if (cost != null) {

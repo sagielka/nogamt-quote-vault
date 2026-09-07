@@ -687,6 +687,26 @@ export const getGroupCostFromDescription = (
   return Math.round(converted * 100) / 100;
 };
 
+const DIGIT_TO_GROUP: Record<string, string> = {
+  "2": "B", "3": "C", "4": "D", "5": "E", "6": "F", "7": "G",
+};
+
+// Cost from the group digit right after the US/UC prefix (US4101 -> GROUP D)
+export const getGroupCostFromSku = (
+  sku: string,
+  currency: Currency = "USD",
+): number | null => {
+  const skuU = (sku || "").trim().toUpperCase();
+  if (!skuU.startsWith("US") && !skuU.startsWith("UC")) return null;
+  const rest = skuU.replace(/^(US|UC)[^0-9B-G]*/, "");
+  const first = rest.charAt(0);
+  const letter = /[2-7]/.test(first) ? DIGIT_TO_GROUP[first] : (/[B-G]/.test(first) ? first : null);
+  if (!letter) return null;
+  const usd = PRODUCT_COSTS_USD[`GROUP ${letter}`];
+  if (usd == null || usd <= 0) return null;
+  return Math.round(convertPrice(usd, "USD", currency) * 100) / 100;
+};
+
 export const getAutoCost = (
   sku: string,
   description: string,
@@ -701,7 +721,7 @@ export const getAutoCost = (
     descU.startsWith("US-") || descU.startsWith("US ") ||
     descU.startsWith("UC-") || descU.startsWith("UC ")
   ) {
-    return getGroupCostFromDescription(description, currency);
+    return getGroupCostFromSku(sku, currency) ?? getGroupCostFromDescription(description, currency);
   }
   return null;
 };

@@ -182,6 +182,7 @@ export type Database = {
           sku: string
           source_file: string | null
           updated_at: string
+          waydart_dollar: number | null
         }
         Insert: {
           china_dollar?: number | null
@@ -194,6 +195,7 @@ export type Database = {
           sku: string
           source_file?: string | null
           updated_at?: string
+          waydart_dollar?: number | null
         }
         Update: {
           china_dollar?: number | null
@@ -206,6 +208,7 @@ export type Database = {
           sku?: string
           source_file?: string | null
           updated_at?: string
+          waydart_dollar?: number | null
         }
         Relationships: []
       }

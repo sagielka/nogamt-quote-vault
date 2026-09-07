@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788765642054,
+      "tag": "0000_add_waydart_dollar_to_catalog_prices",
+      "breakpoints": true
+    }
+  ]
+}

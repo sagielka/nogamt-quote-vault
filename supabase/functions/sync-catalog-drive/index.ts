@@ -110,7 +110,8 @@ Deno.serve(async (req) => {
     const bvCol = pickColumn(headers, (h) => h.includes('BV'));
     const euroCol = pickColumn(headers, (h) => h.includes('EURO') && !h.includes('BV'));
     const chinaCol = pickColumn(headers, (h) => h.includes('CHINA'));
-    const dollarCol = pickColumn(headers, (h) => h.includes('DOLLAR') && !h.includes('CHINA'));
+    const waydartCol = pickColumn(headers, (h) => h.includes('WAYDART'));
+    const dollarCol = pickColumn(headers, (h) => h.includes('DOLLAR') && !h.includes('CHINA') && !h.includes('WAYDART'));
     const shekelCol = pickColumn(headers, (h) => h.includes('SHEKEL') || h.includes('NIS'));
 
     if (!skuCol) throw new Error(`Could not find a SKU column. Columns found: ${headers.join(', ')}`);
@@ -127,6 +128,7 @@ Deno.serve(async (req) => {
           shekel: shekelCol ? num(r[shekelCol]) : null,
           noga_bv_euro: bvCol ? num(r[bvCol]) : null,
           china_dollar: chinaCol ? num(r[chinaCol]) : null,
+          waydart_dollar: waydartCol ? num(r[waydartCol]) : null,
           source_file: meta.name as string,
           updated_at: new Date().toISOString(),
         };

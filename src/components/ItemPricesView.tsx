@@ -72,7 +72,7 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
+                <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
                   No items match your search.
                 </td>
               </tr>

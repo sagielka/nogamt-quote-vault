@@ -125,74 +125,43 @@ const LETTER_TO_NUMBER: Record<string, string> = {
 // Map letters to their corresponding number for US SKU pricing (legacy alias)
 const US_LETTER_TO_NUMBER = LETTER_TO_NUMBER;
 
-// Get price for US SKUs based on SKU number or description letter
-export const getUSSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
-  if (!sku.toUpperCase().startsWith('US')) return null;
-  
-  // Try to find the first digit after "US" in the SKU (position 2)
-  const skuAfterUS = sku.substring(2);
-  const firstDigit = skuAfterUS.match(/[2-7]/)?.[0];
-  
-  if (firstDigit && US_SKU_PRICES[firstDigit]) {
-    return US_SKU_PRICES[firstDigit][priceList];
+// Resolve the group key (1-7 == A-G) for a US/UC item.
+// Priority: the FIRST digit right after the US/UC prefix in the SKU,
+// then the group letter found in the description (e.g. US-d140-D300-D-R04 -> D).
+export const getGroupKey = (sku: string, description: string): string | null => {
+  const skuU = (sku || '').trim().toUpperCase();
+  const rest = skuU.replace(/^(US|UC)[^0-9A-G]*/, '');
+  const firstChar = rest.charAt(0);
+  if (/[1-7]/.test(firstChar)) return firstChar;
+  if (LETTER_TO_NUMBER[firstChar]) return LETTER_TO_NUMBER[firstChar];
+
+  const descU = (description || '').toUpperCase();
+  const parts = descU.split('-');
+  if (parts.length >= 4 && parts[3].length === 1 && LETTER_TO_NUMBER[parts[3]]) {
+    return LETTER_TO_NUMBER[parts[3]];
   }
-  
-  // Try to find the letter in the description (format: US-...-...-X-...-...)
-  // The letter is typically the 4th segment after splitting by '-'
-  const descParts = description.split('-');
-  if (descParts.length >= 4) {
-    const letterPart = descParts[3]; // Get the 4th part (index 3)
-    if (letterPart && letterPart.length === 1) {
-      const mappedNumber = US_LETTER_TO_NUMBER[letterPart];
-      if (mappedNumber && US_SKU_PRICES[mappedNumber]) {
-        return US_SKU_PRICES[mappedNumber][priceList];
-      }
-    }
+  for (const letter of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) {
+    if (descU.includes(`-${letter}-`)) return LETTER_TO_NUMBER[letter];
   }
-  
-  // Also try to find any matching letter anywhere in description
-  for (const [letter, number] of Object.entries(US_LETTER_TO_NUMBER)) {
-    if (description.includes(`-${letter}-`)) {
-      return US_SKU_PRICES[number][priceList];
-    }
-  }
-  
   return null;
 };
 
-// Get price for UC SKUs based on SKU number or description letter
+// Get price for US SKUs based on SKU group digit or description group letter
+export const getUSSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
+  if (!sku.toUpperCase().startsWith('US')) return null;
+  const key = getGroupKey(sku, description);
+  if (!key || !GROUP_PRICES[key]) return null;
+  return GROUP_PRICES[key][priceList] ?? null;
+};
+
+// Get price for UC SKUs based on SKU group digit or description group letter
 export const getUCSkuPrice = (sku: string, description: string, priceList: PriceList): number | null => {
   if (!sku.toUpperCase().startsWith('UC')) return null;
-  
-  // Try to find the first digit after "UC" in the SKU (position 2)
-  const skuAfterUC = sku.substring(2);
-  const firstDigit = skuAfterUC.match(/[1-7]/)?.[0];
-  
-  if (firstDigit && UC_SKU_PRICES[firstDigit]) {
-    return UC_SKU_PRICES[firstDigit][priceList];
-  }
-  
-  // Try to find the letter in the description (format: UC-...-...-X-...-...)
-  const descParts = description.split('-');
-  if (descParts.length >= 4) {
-    const letterPart = descParts[3]; // Get the 4th part (index 3)
-    if (letterPart && letterPart.length === 1) {
-      const mappedNumber = LETTER_TO_NUMBER[letterPart];
-      if (mappedNumber && UC_SKU_PRICES[mappedNumber]) {
-        return UC_SKU_PRICES[mappedNumber][priceList];
-      }
-    }
-  }
-  
-  // Also try to find any matching letter anywhere in description
-  for (const [letter, number] of Object.entries(LETTER_TO_NUMBER)) {
-    if (description.includes(`-${letter}-`)) {
-      return UC_SKU_PRICES[number][priceList];
-    }
-  }
-  
-  return null;
+  const key = getGroupKey(sku, description);
+  if (!key || !GROUP_PRICES[key]) return null;
+  return GROUP_PRICES[key][priceList] ?? null;
 };
+
 
 // Convert US inserts JSON to ProductItem array (dynamically)
 const getUspotProducts = (): ProductItem[] => {

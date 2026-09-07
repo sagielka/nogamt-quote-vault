@@ -1,0 +1,1 @@
+ALTER TABLE public.catalog_prices ADD COLUMN IF NOT EXISTS waydart_dollar numeric;

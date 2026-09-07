@@ -36,7 +36,7 @@ export const getUchamfInserts = (): UchamfInsertItem[] => {
   return dynamicUchamfData || uchamfInsertsFallback;
 };
 
-export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR';
+export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR' | 'WAYDART_DOLLAR';
 
 export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: string }[] = [
   { value: 'EURO', label: 'Euro Prices', baseCurrency: 'EUR' },
@@ -44,6 +44,7 @@ export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: strin
   { value: 'SHEKEL', label: 'Noga Tools Shekel Prices', baseCurrency: 'ILS' },
   { value: 'NOGA_BV_EURO', label: 'Noga BV Euro Prices', baseCurrency: 'EUR' },
   { value: 'CHINA_DOLLAR', label: 'China Dollar Prices', baseCurrency: 'USD' },
+  { value: 'WAYDART_DOLLAR', label: 'Waydart Dollar Prices', baseCurrency: 'USD' },
 ];
 
 export interface ProductItem {
@@ -55,8 +56,10 @@ export interface ProductItem {
     SHEKEL: number | null;
     NOGA_BV_EURO: number | null;
     CHINA_DOLLAR: number | null;
+    WAYDART_DOLLAR?: number | null;
   };
 }
+
 
 // Currency conversion rates (relative to USD as base)
 export const CURRENCY_RATES: Record<string, number> = {

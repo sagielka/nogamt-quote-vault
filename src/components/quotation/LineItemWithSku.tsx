@@ -73,6 +73,7 @@ export const LineItemWithSku = ({
   // Quantity price breaks (US... items only)
   const supportsPriceBreaks = isUsPriceBreakItem(item);
   const activeBreaks = getActivePriceBreaks(item);
+  const [customQty, setCustomQty] = useState('');
   const togglePriceBreaks = () => {
     onUpdate(item.id, {
       priceBreaks: activeBreaks.length > 0 ? [] : [...US_PRICE_TIERS],

@@ -422,8 +422,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     const descLines = meta.descLines;
     const noteLines = meta.noteLines;
     const rowHeight = meta.rowH;
-    const lowerBreaks = meta.breaks.filter((qty) => qty < Number(item.moq));
-    const upperBreaks = meta.breaks.filter((qty) => qty > Number(item.moq));
+    const showOwnQty = showsOwnQtyRow(item);
+    const lowerBreaks = showOwnQty ? meta.breaks.filter((qty) => qty < Number(item.moq)) : [];
+    const upperBreaks = showOwnQty ? meta.breaks.filter((qty) => qty > Number(item.moq)) : meta.breaks;
 
     const imgs = itemImages[i] || [];
     const thumbW = thumbHsel;

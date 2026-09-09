@@ -813,8 +813,10 @@ export const LineItemWithSku = ({
                   Quantity price breaks — base price is for 5 pcs
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {US_PRICE_TIERS.map((qty) => {
+              <div className="flex flex-wrap items-center gap-1.5">
+                {Array.from(new Set<number>([...US_PRICE_TIERS, ...activeBreaks]))
+                  .sort((a, b) => a - b)
+                  .map((qty) => {
                   const on = activeBreaks.includes(qty);
                   const unit = getTierNetUnitPrice(item, qty);
                   return (

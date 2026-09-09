@@ -169,8 +169,9 @@ const CustomerPortal = () => {
               <tbody>
                 {items.map((item: any, idx: number) => {
                   const breaks = getDisplayPriceBreaks(item);
-                  const lowerBreaks = breaks.filter((qty: number) => qty < Number(item.moq));
-                  const upperBreaks = breaks.filter((qty: number) => qty > Number(item.moq));
+                  const showOwnQty = showsOwnQtyRow(item);
+                  const lowerBreaks = showOwnQty ? breaks.filter((qty: number) => qty < Number(item.moq)) : [];
+                  const upperBreaks = showOwnQty ? breaks.filter((qty: number) => qty > Number(item.moq)) : breaks;
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const hl = isHighlightedQty(item, qty);
                     const cell = `py-1.5 align-middle text-sm leading-5 ${hl ? 'font-bold text-foreground' : 'text-muted-foreground'}`;

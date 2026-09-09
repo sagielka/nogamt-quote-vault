@@ -174,11 +174,13 @@ export const calculateLineTotal = (item: LineItem): number => {
   // When the customer picked a specific (bolded) quantity from the price
   // breaks, the line total — and therefore subtotal/total — follows that
   // chosen base quantity and its tier price.
+  const breaks = getActivePriceBreaks(item);
+  const fallbackQty = showsOwnQtyRow(item) ? Number(item.moq) : breaks[0] ?? Number(item.moq);
   const chosenQty =
     item.highlightQty != null && Number(item.highlightQty) > 0
       ? Number(item.highlightQty)
-      : Number(item.moq);
-  if (getActivePriceBreaks(item).length > 0) {
+      : fallbackQty;
+  if (breaks.length > 0) {
     return getTierNetUnitPrice(item, chosenQty) * chosenQty;
   }
   const gross = chosenQty * item.unitPrice;

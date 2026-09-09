@@ -902,22 +902,22 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         </div>
                       )}
                     </td>
-                    <td className={`${mainCell} text-center`}>{getTierLeadTime(item, Number(item.moq) || 1)}</td>
-                    <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
+                    <td className={`${mainCell} text-center`}>{showOwnQty ? getTierLeadTime(item, Number(item.moq) || 1) : ''}</td>
+                    <td className={`${mainCell} text-center`}>{showOwnQty ? (item.moq || 1) : ''}</td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-center ${isOrdered ? 'text-green-600 font-medium' : mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`}>
-                      {isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)}
+                      {showOwnQty ? (isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)) : ''}
                     </td>
                     <td className={`${mainCell} text-right`}>
-                      {formatCurrency(item.unitPrice, quotation.currency)}
+                      {showOwnQty ? formatCurrency(item.unitPrice, quotation.currency) : ''}
                     </td>
                     <td className={`${mainCell} text-center`}>
-                      {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                      {showOwnQty ? (item.discountPercent ? `${item.discountPercent}%` : '—') : ''}
                     </td>
                     <td className={`${mainCell} text-right`}>
-                      {item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—'}
+                      {showOwnQty ? (item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—') : ''}
                     </td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
-                      {formatCurrency(calculateMoqLineTotal(item), quotation.currency)}
+                      {showOwnQty ? formatCurrency(calculateMoqLineTotal(item), quotation.currency) : ''}
                     </td>
                   </tr>
                   {upperBreaks.map((qty, bIdx) =>

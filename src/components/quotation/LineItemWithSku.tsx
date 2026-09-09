@@ -835,6 +835,22 @@ export const LineItemWithSku = ({
                     </button>
                   );
                 })}
+                <input
+                  type="number"
+                  min={1}
+                  value={customQty}
+                  onChange={(e) => setCustomQty(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomTier();
+                    }
+                  }}
+                  onBlur={addCustomTier}
+                  placeholder="Qty"
+                  className="h-7 w-16 rounded border border-dashed border-primary/40 bg-background/50 px-1.5 text-xs font-mono text-center focus:border-primary/70 focus:outline-none"
+                  title="Type any quantity and press Enter to add it as a price break"
+                />
               </div>
 
               {/* Per-quantity lead time */}

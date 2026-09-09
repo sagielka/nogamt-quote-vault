@@ -84,6 +84,15 @@ export const LineItemWithSku = ({
       : [...activeBreaks, qty].sort((a, b) => a - b);
     onUpdate(item.id, { priceBreaks: next });
   };
+  const addCustomTier = () => {
+    const qty = parseInt(customQty, 10);
+    if (!Number.isFinite(qty) || qty <= 0 || activeBreaks.includes(qty)) {
+      setCustomQty('');
+      return;
+    }
+    onUpdate(item.id, { priceBreaks: [...activeBreaks, qty].sort((a, b) => a - b) });
+    setCustomQty('');
+  };
   const setHighlightQty = (qty: number) => {
     onUpdate(item.id, { highlightQty: Number(item.highlightQty) === qty ? null : qty });
   };

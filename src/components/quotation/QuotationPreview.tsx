@@ -839,8 +839,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
                   const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
                   const breaks = getDisplayPriceBreaks(item);
-                  const lowerBreaks = breaks.filter((qty) => qty < Number(item.moq));
-                  const upperBreaks = breaks.filter((qty) => qty > Number(item.moq));
+                  const showOwnQty = showsOwnQtyRow(item);
+                  const lowerBreaks = showOwnQty ? breaks.filter((qty) => qty < Number(item.moq)) : [];
+                  const upperBreaks = showOwnQty ? breaks.filter((qty) => qty > Number(item.moq)) : breaks;
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const tierNet = getTierNetUnitPrice(item, qty);
                     const hl = isHighlightedQty(item, qty);

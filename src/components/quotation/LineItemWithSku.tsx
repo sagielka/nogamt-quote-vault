@@ -859,7 +859,7 @@ export const LineItemWithSku = ({
                   Lead time per quantity (weeks)
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {Array.from(new Set([Number(item.moq) || 1, ...activeBreaks]))
+                  {Array.from(new Set([Math.max(Number(item.moq) || 1, 2), ...activeBreaks]))
                     .sort((a, b) => a - b)
                     .map((qty) => (
                       <div key={`lt-${qty}`} className="flex items-center gap-1">
@@ -884,7 +884,7 @@ export const LineItemWithSku = ({
                   Bold quantity (customer request)
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {Array.from(new Set([Number(item.moq) || 1, ...activeBreaks]))
+                  {Array.from(new Set([Math.max(Number(item.moq) || 1, 2), ...activeBreaks]))
                     .sort((a, b) => a - b)
                     .map((qty) => {
                       const on = Number(item.highlightQty) === qty;

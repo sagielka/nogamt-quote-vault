@@ -119,20 +119,39 @@ export const isUsPriceBreakItem = (item: Pick<LineItem, 'sku' | 'description'>):
   getItemFamily(item) !== null;
 
 // Unit price for a given tier quantity, before line discount.
-export const getTierUnitPrice = (basePrice: number, qty: number): number => {
-  const mult = TIER_MULTIPLIERS[qty];
-  return mult != null ? basePrice * mult : basePrice;
+// Multiplier for any quantity: exact tier if defined, otherwise the closest
+// lower tier (so freely chosen quantities still get a sensible tier price).
+const resolveMultiplier = (mults: Record<number, number>, qty: number): number => {
+  if (mults[qty] != null) return mults[qty];
+  const tiers = Object.keys(mults)
+    .map(Number)
+    .sort((a, b) => a - b);
+  let mult = mults[tiers[0]];
+  for (const t of tiers) {
+    if (qty >= t) mult = mults[t];
+  }
+  return mult;
 };
+
+export const getTierUnitPrice = (basePrice: number, qty: number): number =>
+  basePrice * resolveMultiplier(TIER_MULTIPLIERS, qty);
 
 // Unit price for a tier after the line discount (group/family aware).
 export const getTierNetUnitPrice = (item: LineItem, qty: number): number => {
-  const mult = getItemMultipliers(item)[qty];
-  const base = mult != null ? item.unitPrice * mult : item.unitPrice;
+  const base = item.unitPrice * resolveMultiplier(getItemMultipliers(item), qty);
   return base * (1 - (item.discountPercent || 0) / 100);
 };
 
 export const getActivePriceBreaks = (item: LineItem): number[] =>
-  (item.priceBreaks || []).filter((q) => TIER_MULTIPLIERS[q] != null).sort((a, b) => a - b);
+  (item.priceBreaks || [])
+    .map(Number)
+    .filter((q) => Number.isFinite(q) && q > 0)
+    .sort((a, b) => a - b);
+
+// When price breaks are quoted and the row's own quantity is a single piece,
+// the 1-pc line is redundant — the price break rows carry the quotation.
+export const showsOwnQtyRow = (item: LineItem): boolean =>
+  !(getActivePriceBreaks(item).length > 0 && Number(item.moq || 1) <= 1);
 
 
 // For customer-facing output: skip the tier that duplicates the row's own quantity.
@@ -155,11 +174,13 @@ export const calculateLineTotal = (item: LineItem): number => {
   // When the customer picked a specific (bolded) quantity from the price
   // breaks, the line total — and therefore subtotal/total — follows that
   // chosen base quantity and its tier price.
+  const breaks = getActivePriceBreaks(item);
+  const fallbackQty = showsOwnQtyRow(item) ? Number(item.moq) : breaks[0] ?? Number(item.moq);
   const chosenQty =
     item.highlightQty != null && Number(item.highlightQty) > 0
       ? Number(item.highlightQty)
-      : Number(item.moq);
-  if (getActivePriceBreaks(item).length > 0) {
+      : fallbackQty;
+  if (breaks.length > 0) {
     return getTierNetUnitPrice(item, chosenQty) * chosenQty;
   }
   const gross = chosenQty * item.unitPrice;

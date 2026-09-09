@@ -1,5 +1,5 @@
 import { Quotation } from '@/types/quotation';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty, showsOwnQtyRow } from '@/lib/quotation-utils';
 import jsPDF from 'jspdf';
 import logoImg from '@/assets/logo.png';
 import thinkingInsideImg from '@/assets/thinking-inside-new.png';
@@ -422,8 +422,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     const descLines = meta.descLines;
     const noteLines = meta.noteLines;
     const rowHeight = meta.rowH;
-    const lowerBreaks = meta.breaks.filter((qty) => qty < Number(item.moq));
-    const upperBreaks = meta.breaks.filter((qty) => qty > Number(item.moq));
+    const showOwnQty = showsOwnQtyRow(item);
+    const lowerBreaks = showOwnQty ? meta.breaks.filter((qty) => qty < Number(item.moq)) : [];
+    const upperBreaks = showOwnQty ? meta.breaks.filter((qty) => qty > Number(item.moq)) : meta.breaks;
 
     const imgs = itemImages[i] || [];
     const thumbW = thumbHsel;
@@ -466,17 +467,19 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     }
 
     pdf.setTextColor(...gray);
-    pdf.text(getTierLeadTime(item, Number(item.moq) || 1), colX.lt, rowY, { align: 'center' });
-    pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
-    pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price + 14, rowY, { align: 'right' });
-    pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
-    const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
-    pdf.text(item.discountPercent ? formatCurrency(netUnit, quotation.currency) : '—', colX.net + 14, rowY, { align: 'right' });
+    if (showOwnQty) {
+      pdf.text(getTierLeadTime(item, Number(item.moq) || 1), colX.lt, rowY, { align: 'center' });
+      pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
+      pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price + 14, rowY, { align: 'right' });
+      pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
+      const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+      pdf.text(item.discountPercent ? formatCurrency(netUnit, quotation.currency) : '—', colX.net + 14, rowY, { align: 'right' });
 
-    pdf.setTextColor(...black);
-    setFont(pdf, 'bold');
-    pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
-    setFont(pdf, 'normal');
+      pdf.setTextColor(...black);
+      setFont(pdf, 'bold');
+      pdf.text(formatCurrency(lineTotal, quotation.currency), colX.total, rowY, { align: 'right' });
+      setFont(pdf, 'normal');
+    }
 
     // Quantity price breaks
     if (meta.breaks.length > 0) {

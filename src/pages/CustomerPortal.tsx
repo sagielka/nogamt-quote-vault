@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, calculateMoqLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, calculateTotal, calculateSubtotal, calculateDiscount, calculateTax, calculateLineTotal, calculateMoqLineTotal, formatDate, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty, showsOwnQtyRow } from '@/lib/quotation-utils';
 import { CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.jpg';
 
@@ -169,8 +169,9 @@ const CustomerPortal = () => {
               <tbody>
                 {items.map((item: any, idx: number) => {
                   const breaks = getDisplayPriceBreaks(item);
-                  const lowerBreaks = breaks.filter((qty: number) => qty < Number(item.moq));
-                  const upperBreaks = breaks.filter((qty: number) => qty > Number(item.moq));
+                  const showOwnQty = showsOwnQtyRow(item);
+                  const lowerBreaks = showOwnQty ? breaks.filter((qty: number) => qty < Number(item.moq)) : [];
+                  const upperBreaks = showOwnQty ? breaks.filter((qty: number) => qty > Number(item.moq)) : breaks;
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const hl = isHighlightedQty(item, qty);
                     const cell = `py-1.5 align-middle text-sm leading-5 ${hl ? 'font-bold text-foreground' : 'text-muted-foreground'}`;
@@ -198,9 +199,9 @@ const CustomerPortal = () => {
                     <td className={`${mainCell} text-muted-foreground`}>{idx + 1}</td>
                     <td className={`${mainCell} font-mono text-sm`}>{item.sku || '—'}</td>
                     <td className={mainCell}>{item.description || '—'}</td>
-                    <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
-                    <td className={`${mainCell} text-right`}>{formatCurrency(item.unitPrice || 0, quotation.currency)}</td>
-                    <td className={`${mainCell} text-right font-medium`}>{formatCurrency(calculateMoqLineTotal(item), quotation.currency)}</td>
+                    <td className={`${mainCell} text-center`}>{showOwnQty ? (item.moq || 1) : ''}</td>
+                    <td className={`${mainCell} text-right`}>{showOwnQty ? formatCurrency(item.unitPrice || 0, quotation.currency) : ''}</td>
+                    <td className={`${mainCell} text-right font-medium`}>{showOwnQty ? formatCurrency(calculateMoqLineTotal(item), quotation.currency) : ''}</td>
                   </tr>
                   {upperBreaks.map((qty: number, bIdx: number) =>
                     renderBreakRow(qty, lowerBreaks.length === 0 && bIdx === 0, bIdx === upperBreaks.length - 1)

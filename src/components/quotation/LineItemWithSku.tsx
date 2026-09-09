@@ -73,6 +73,7 @@ export const LineItemWithSku = ({
   // Quantity price breaks (US... items only)
   const supportsPriceBreaks = isUsPriceBreakItem(item);
   const activeBreaks = getActivePriceBreaks(item);
+  const [customQty, setCustomQty] = useState('');
   const togglePriceBreaks = () => {
     onUpdate(item.id, {
       priceBreaks: activeBreaks.length > 0 ? [] : [...US_PRICE_TIERS],
@@ -83,6 +84,15 @@ export const LineItemWithSku = ({
       ? activeBreaks.filter((q) => q !== qty)
       : [...activeBreaks, qty].sort((a, b) => a - b);
     onUpdate(item.id, { priceBreaks: next });
+  };
+  const addCustomTier = () => {
+    const qty = parseInt(customQty, 10);
+    if (!Number.isFinite(qty) || qty <= 0 || activeBreaks.includes(qty)) {
+      setCustomQty('');
+      return;
+    }
+    onUpdate(item.id, { priceBreaks: [...activeBreaks, qty].sort((a, b) => a - b) });
+    setCustomQty('');
   };
   const setHighlightQty = (qty: number) => {
     onUpdate(item.id, { highlightQty: Number(item.highlightQty) === qty ? null : qty });
@@ -803,8 +813,10 @@ export const LineItemWithSku = ({
                   Quantity price breaks — base price is for 5 pcs
                 </span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {US_PRICE_TIERS.map((qty) => {
+              <div className="flex flex-wrap items-center gap-1.5">
+                {Array.from(new Set<number>([...US_PRICE_TIERS, ...activeBreaks]))
+                  .sort((a, b) => a - b)
+                  .map((qty) => {
                   const on = activeBreaks.includes(qty);
                   const unit = getTierNetUnitPrice(item, qty);
                   return (
@@ -823,6 +835,22 @@ export const LineItemWithSku = ({
                     </button>
                   );
                 })}
+                <input
+                  type="number"
+                  min={1}
+                  value={customQty}
+                  onChange={(e) => setCustomQty(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCustomTier();
+                    }
+                  }}
+                  onBlur={addCustomTier}
+                  placeholder="Qty"
+                  className="h-7 w-16 rounded border border-dashed border-primary/40 bg-background/50 px-1.5 text-xs font-mono text-center focus:border-primary/70 focus:outline-none"
+                  title="Type any quantity and press Enter to add it as a price break"
+                />
               </div>
 
               {/* Per-quantity lead time */}

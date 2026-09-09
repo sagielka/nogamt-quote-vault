@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty, showsOwnQtyRow } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -839,8 +839,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
                   const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
                   const breaks = getDisplayPriceBreaks(item);
-                  const lowerBreaks = breaks.filter((qty) => qty < Number(item.moq));
-                  const upperBreaks = breaks.filter((qty) => qty > Number(item.moq));
+                  const showOwnQty = showsOwnQtyRow(item);
+                  const lowerBreaks = showOwnQty ? breaks.filter((qty) => qty < Number(item.moq)) : [];
+                  const upperBreaks = showOwnQty ? breaks.filter((qty) => qty > Number(item.moq)) : breaks;
                   const renderBreakRow = (qty: number, showLabel: boolean, isLast: boolean) => {
                     const tierNet = getTierNetUnitPrice(item, qty);
                     const hl = isHighlightedQty(item, qty);
@@ -901,22 +902,22 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         </div>
                       )}
                     </td>
-                    <td className={`${mainCell} text-center`}>{getTierLeadTime(item, Number(item.moq) || 1)}</td>
-                    <td className={`${mainCell} text-center`}>{item.moq || 1}</td>
+                    <td className={`${mainCell} text-center`}>{showOwnQty ? getTierLeadTime(item, Number(item.moq) || 1) : ''}</td>
+                    <td className={`${mainCell} text-center`}>{showOwnQty ? (item.moq || 1) : ''}</td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-center ${isOrdered ? 'text-green-600 font-medium' : mainHl ? 'font-bold text-foreground print:text-gray-900' : 'text-muted-foreground print:text-gray-600'}`}>
-                      {isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)}
+                      {showOwnQty ? (isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)) : ''}
                     </td>
                     <td className={`${mainCell} text-right`}>
-                      {formatCurrency(item.unitPrice, quotation.currency)}
+                      {showOwnQty ? formatCurrency(item.unitPrice, quotation.currency) : ''}
                     </td>
                     <td className={`${mainCell} text-center`}>
-                      {item.discountPercent ? `${item.discountPercent}%` : '—'}
+                      {showOwnQty ? (item.discountPercent ? `${item.discountPercent}%` : '—') : ''}
                     </td>
                     <td className={`${mainCell} text-right`}>
-                      {item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—'}
+                      {showOwnQty ? (item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—') : ''}
                     </td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
-                      {formatCurrency(calculateMoqLineTotal(item), quotation.currency)}
+                      {showOwnQty ? formatCurrency(calculateMoqLineTotal(item), quotation.currency) : ''}
                     </td>
                   </tr>
                   {upperBreaks.map((qty, bIdx) =>

@@ -45,6 +45,7 @@ export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: strin
   { value: 'NOGA_BV_EURO', label: 'Noga BV Euro Prices', baseCurrency: 'EUR' },
   { value: 'CHINA_DOLLAR', label: 'China Dollar Prices', baseCurrency: 'USD' },
   { value: 'WAYDART_DOLLAR', label: 'Waydart Dollar Prices', baseCurrency: 'USD' },
+  { value: 'NOGA_WATERS', label: 'Noga Waters Prices', baseCurrency: 'USD' },
 ];
 
 export interface ProductItem {

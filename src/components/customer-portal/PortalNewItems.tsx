@@ -29,6 +29,7 @@ const COLUMN: Record<PriceList, string> = {
   NOGA_BV_EURO: 'noga_bv_euro',
   CHINA_DOLLAR: 'china_dollar',
   WAYDART_DOLLAR: 'waydart_dollar',
+  NOGA_WATERS: 'noga_waters',
 };
 
 export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: Props) => {

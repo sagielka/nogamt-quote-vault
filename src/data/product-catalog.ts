@@ -198,6 +198,7 @@ const getUchamfProducts = (): ProductItem[] => {
         NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
         CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.CHINA_DOLLAR ?? null,
         WAYDART_DOLLAR: UC_SKU_PRICES[priceKey]?.WAYDART_DOLLAR ?? null,
+        NOGA_WATERS: UC_SKU_PRICES[priceKey]?.NOGA_WATERS ?? null,
       },
     };
   });

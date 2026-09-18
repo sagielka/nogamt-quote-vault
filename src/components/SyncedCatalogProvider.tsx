@@ -30,6 +30,7 @@ export const SyncedCatalogProvider = ({ children }: { children: React.ReactNode 
           NOGA_BV_EURO: r.noga_bv_euro,
           CHINA_DOLLAR: r.china_dollar,
           WAYDART_DOLLAR: (r as any).waydart_dollar ?? null,
+          NOGA_WATERS: (r as any).noga_waters ?? null,
         },
       }));
 

@@ -111,6 +111,7 @@ Deno.serve(async (req) => {
     const euroCol = pickColumn(headers, (h) => h.includes('EURO') && !h.includes('BV'));
     const chinaCol = pickColumn(headers, (h) => h.includes('CHINA'));
     const waydartCol = pickColumn(headers, (h) => h.includes('WAYDART'));
+    const watersCol = pickColumn(headers, (h) => h.includes('WATERS'));
     const dollarCol = pickColumn(headers, (h) => h.includes('DOLLAR') && !h.includes('CHINA') && !h.includes('WAYDART'));
     const shekelCol = pickColumn(headers, (h) => h.includes('SHEKEL') || h.includes('NIS'));
 
@@ -129,6 +130,7 @@ Deno.serve(async (req) => {
           noga_bv_euro: bvCol ? num(r[bvCol]) : null,
           china_dollar: chinaCol ? num(r[chinaCol]) : null,
           waydart_dollar: waydartCol ? num(r[waydartCol]) : null,
+          noga_waters: watersCol ? num(r[watersCol]) : null,
           source_file: meta.name as string,
           updated_at: new Date().toISOString(),
         };

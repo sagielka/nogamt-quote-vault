@@ -29,6 +29,7 @@ const COLUMN: Record<PriceList, string> = {
   NOGA_BV_EURO: 'noga_bv_euro',
   CHINA_DOLLAR: 'china_dollar',
   WAYDART_DOLLAR: 'waydart_dollar',
+  NOGA_WATERS: 'noga_waters',
 };
 
 export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: Props) => {
@@ -52,7 +53,7 @@ export const PortalNewItems = ({ priceList, customListId, customRows, symbol }: 
       setLoading(true);
       const { data } = await supabase
         .from('catalog_prices')
-        .select('sku, description, euro, dollar, shekel, noga_bv_euro, china_dollar, waydart_dollar, created_at')
+        .select('sku, description, euro, dollar, shekel, noga_bv_euro, china_dollar, waydart_dollar, noga_waters, created_at')
         .order('created_at', { ascending: false });
       if (cancelled) return;
 

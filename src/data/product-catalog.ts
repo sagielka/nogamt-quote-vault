@@ -36,7 +36,7 @@ export const getUchamfInserts = (): UchamfInsertItem[] => {
   return dynamicUchamfData || uchamfInsertsFallback;
 };
 
-export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR' | 'WAYDART_DOLLAR';
+export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR' | 'WAYDART_DOLLAR' | 'NOGA_WATERS';
 
 export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: string }[] = [
   { value: 'EURO', label: 'Euro Prices', baseCurrency: 'EUR' },
@@ -45,6 +45,7 @@ export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: strin
   { value: 'NOGA_BV_EURO', label: 'Noga BV Euro Prices', baseCurrency: 'EUR' },
   { value: 'CHINA_DOLLAR', label: 'China Dollar Prices', baseCurrency: 'USD' },
   { value: 'WAYDART_DOLLAR', label: 'Waydart Dollar Prices', baseCurrency: 'USD' },
+  { value: 'NOGA_WATERS', label: 'Noga Waters Prices', baseCurrency: 'USD' },
 ];
 
 export interface ProductItem {
@@ -57,6 +58,7 @@ export interface ProductItem {
     NOGA_BV_EURO: number | null;
     CHINA_DOLLAR: number | null;
     WAYDART_DOLLAR?: number | null;
+    NOGA_WATERS?: number | null;
   };
 }
 
@@ -94,17 +96,17 @@ export const convertPrice = (
 };
 
 // Group price row shared by US/UC dynamic pricing
-type GroupPriceRow = { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number; WAYDART_DOLLAR: number };
+type GroupPriceRow = { EURO: number; DOLLAR: number; NOGA_BV_EURO: number; SHEKEL: number; CHINA_DOLLAR: number; WAYDART_DOLLAR: number; NOGA_WATERS: number };
 
 // Group pricing table: first digit after US/UC (1-7) == group letter (A-G)
 const GROUP_PRICES: Record<string, GroupPriceRow> = {
-  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 152.00, CHINA_DOLLAR: 46.80, WAYDART_DOLLAR: 40.53 },  // A
-  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75, WAYDART_DOLLAR: 49.15 },  // B
-  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71, WAYDART_DOLLAR: 57.78 },  // C
-  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43, WAYDART_DOLLAR: 67.94 },  // D
-  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23, WAYDART_DOLLAR: 79.89 },  // E
-  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47, WAYDART_DOLLAR: 93.94 }, // F
-  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86, WAYDART_DOLLAR: 109.88 }, // G
+  '1': { EURO: 40.00, DOLLAR: 46.80, NOGA_BV_EURO: 39.24, SHEKEL: 152.00, CHINA_DOLLAR: 46.80, WAYDART_DOLLAR: 40.53, NOGA_WATERS: 46.80 },  // A
+  '2': { EURO: 48.50, DOLLAR: 56.75, NOGA_BV_EURO: 47.57, SHEKEL: 184.31, CHINA_DOLLAR: 56.75, WAYDART_DOLLAR: 49.15, NOGA_WATERS: 56.75 },  // B
+  '3': { EURO: 57.02, DOLLAR: 66.71, NOGA_BV_EURO: 55.92, SHEKEL: 216.68, CHINA_DOLLAR: 66.71, WAYDART_DOLLAR: 57.78, NOGA_WATERS: 66.71 },  // C
+  '4': { EURO: 67.04, DOLLAR: 78.43, NOGA_BV_EURO: 65.75, SHEKEL: 254.74, CHINA_DOLLAR: 78.43, WAYDART_DOLLAR: 67.94, NOGA_WATERS: 78.43 },  // D
+  '5': { EURO: 78.83, DOLLAR: 92.23, NOGA_BV_EURO: 77.32, SHEKEL: 299.57, CHINA_DOLLAR: 92.23, WAYDART_DOLLAR: 79.89, NOGA_WATERS: 92.23 },  // E
+  '6': { EURO: 92.71, DOLLAR: 108.47, NOGA_BV_EURO: 90.93, SHEKEL: 352.31, CHINA_DOLLAR: 108.47, WAYDART_DOLLAR: 93.94, NOGA_WATERS: 108.46 }, // F
+  '7': { EURO: 108.43, DOLLAR: 126.86, NOGA_BV_EURO: 106.34, SHEKEL: 412.02, CHINA_DOLLAR: 126.86, WAYDART_DOLLAR: 109.88, NOGA_WATERS: 126.86 }, // G
 };
 
 const US_SKU_PRICES = GROUP_PRICES;
@@ -175,6 +177,7 @@ const getUspotProducts = (): ProductItem[] => {
       NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
       CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.CHINA_DOLLAR ?? null,
       WAYDART_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.WAYDART_DOLLAR ?? null,
+      NOGA_WATERS: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_WATERS ?? null,
     },
   }));
 };
@@ -195,6 +198,7 @@ const getUchamfProducts = (): ProductItem[] => {
         NOGA_BV_EURO: UC_SKU_PRICES[priceKey]?.NOGA_BV_EURO ?? null,
         CHINA_DOLLAR: UC_SKU_PRICES[priceKey]?.CHINA_DOLLAR ?? null,
         WAYDART_DOLLAR: UC_SKU_PRICES[priceKey]?.WAYDART_DOLLAR ?? null,
+        NOGA_WATERS: UC_SKU_PRICES[priceKey]?.NOGA_WATERS ?? null,
       },
     };
   });

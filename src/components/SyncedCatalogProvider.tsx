@@ -13,7 +13,7 @@ export const SyncedCatalogProvider = ({ children }: { children: React.ReactNode 
     const load = async () => {
       const { data, error } = await supabase
         .from('catalog_prices')
-        .select('sku, description, euro, dollar, shekel, noga_bv_euro, china_dollar, waydart_dollar');
+        .select('sku, description, euro, dollar, shekel, noga_bv_euro, china_dollar, waydart_dollar, noga_waters');
 
       if (error || !data || cancelled) {
         if (error) console.warn('[SyncedCatalog] Could not load synced prices:', error.message);
@@ -30,6 +30,7 @@ export const SyncedCatalogProvider = ({ children }: { children: React.ReactNode 
           NOGA_BV_EURO: r.noga_bv_euro,
           CHINA_DOLLAR: r.china_dollar,
           WAYDART_DOLLAR: (r as any).waydart_dollar ?? null,
+          NOGA_WATERS: (r as any).noga_waters ?? null,
         },
       }));
 

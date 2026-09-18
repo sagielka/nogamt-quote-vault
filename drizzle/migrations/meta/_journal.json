@@ -15,6 +15,13 @@
       "when": 1788932059263,
       "tag": "0001_allow_waydart_and_custom_price_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789744495728,
+      "tag": "0002_add_noga_waters_price_list",
+      "breakpoints": true
     }
   ]
 }

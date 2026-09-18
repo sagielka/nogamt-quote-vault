@@ -178,6 +178,7 @@ export type Database = {
           dollar: number | null
           euro: number | null
           noga_bv_euro: number | null
+          noga_waters: number | null
           shekel: number | null
           sku: string
           source_file: string | null
@@ -191,6 +192,7 @@ export type Database = {
           dollar?: number | null
           euro?: number | null
           noga_bv_euro?: number | null
+          noga_waters?: number | null
           shekel?: number | null
           sku: string
           source_file?: string | null
@@ -204,6 +206,7 @@ export type Database = {
           dollar?: number | null
           euro?: number | null
           noga_bv_euro?: number | null
+          noga_waters?: number | null
           shekel?: number | null
           sku?: string
           source_file?: string | null

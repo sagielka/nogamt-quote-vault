@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
           noga_bv_euro: bvCol ? num(r[bvCol]) : null,
           china_dollar: chinaCol ? num(r[chinaCol]) : null,
           waydart_dollar: waydartCol ? num(r[waydartCol]) : null,
+          noga_waters: watersCol ? num(r[watersCol]) : null,
           source_file: meta.name as string,
           updated_at: new Date().toISOString(),
         };

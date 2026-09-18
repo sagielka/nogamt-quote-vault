@@ -69,6 +69,7 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.NOGA_BV_EURO, '€')}</td>
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.CHINA_DOLLAR, '$')}</td>
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.WAYDART_DOLLAR ?? null, '$')}</td>
+                <td className="px-3 py-1.5 text-right">{fmt(p.prices.NOGA_WATERS ?? null, '$')}</td>
               </tr>
             ))}
             {filtered.length === 0 && (

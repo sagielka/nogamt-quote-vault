@@ -55,6 +55,7 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
               <th className="px-3 py-2 font-medium text-right">BV EUR</th>
               <th className="px-3 py-2 font-medium text-right">CN $</th>
               <th className="px-3 py-2 font-medium text-right">WAYDART $</th>
+              <th className="px-3 py-2 font-medium text-right">WATERS $</th>
             </tr>
           </thead>
           <tbody>

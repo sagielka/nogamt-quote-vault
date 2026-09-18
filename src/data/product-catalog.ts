@@ -36,7 +36,7 @@ export const getUchamfInserts = (): UchamfInsertItem[] => {
   return dynamicUchamfData || uchamfInsertsFallback;
 };
 
-export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR' | 'WAYDART_DOLLAR';
+export type PriceList = 'EURO' | 'DOLLAR' | 'SHEKEL' | 'NOGA_BV_EURO' | 'CHINA_DOLLAR' | 'WAYDART_DOLLAR' | 'NOGA_WATERS';
 
 export const PRICE_LISTS: { value: PriceList; label: string; baseCurrency: string }[] = [
   { value: 'EURO', label: 'Euro Prices', baseCurrency: 'EUR' },

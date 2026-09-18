@@ -177,6 +177,7 @@ const getUspotProducts = (): ProductItem[] => {
       NOGA_BV_EURO: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_BV_EURO ?? null,
       CHINA_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.CHINA_DOLLAR ?? null,
       WAYDART_DOLLAR: US_SKU_PRICES[item.sku.charAt(2)]?.WAYDART_DOLLAR ?? null,
+      NOGA_WATERS: US_SKU_PRICES[item.sku.charAt(2)]?.NOGA_WATERS ?? null,
     },
   }));
 };

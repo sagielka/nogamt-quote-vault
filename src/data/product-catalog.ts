@@ -58,6 +58,7 @@ export interface ProductItem {
     NOGA_BV_EURO: number | null;
     CHINA_DOLLAR: number | null;
     WAYDART_DOLLAR?: number | null;
+    NOGA_WATERS?: number | null;
   };
 }
 

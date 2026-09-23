@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, isHighlightedQty, showsOwnQtyRow } from '@/lib/quotation-utils';
+import { formatCurrency, formatDate, calculateSubtotal, calculateTax, calculateTotal, calculateDiscount, calculateLineTotal, calculateMoqLineTotal, getTierLeadTime, getDisplayPriceBreaks, getTierNetUnitPrice, getRowGrossUnitPrice, getRowNetUnitPrice, isHighlightedQty, showsOwnQtyRow } from '@/lib/quotation-utils';
 import { generateQuotationPdf, downloadQuotationPdf, getQuotationPdfBase64 } from '@/lib/pdf-generator';
 import { formatDate as formatDateUtil } from '@/lib/quotation-utils';
 import { ArrowLeft, Printer, Download, Pencil, Mail, MailOpen, Send, Eye, UserPen, ChevronDown, ChevronUp, FileText, Paperclip, Forward, Loader2, Upload, Trash2, ExternalLink, CheckCircle, Circle, Ban, Link, Copy, XCircle } from 'lucide-react';
@@ -837,7 +837,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
               <tbody>
                 {quotation.items.map((item, index) => {
                   const isOrdered = quotation.status === 'accepted' && quotation.orderedItems?.includes(item.id);
-                  const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+                  const netUnit = getRowNetUnitPrice(item);
                   const breaks = getDisplayPriceBreaks(item);
                   const showOwnQty = showsOwnQtyRow(item);
                   const lowerBreaks = showOwnQty ? breaks.filter((qty) => qty < Number(item.moq)) : [];
@@ -908,7 +908,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                       {showOwnQty ? (isOrdered ? (quotation.orderedQuantities?.[item.id] ?? item.moq ?? 1) : (item.moq || 1)) : ''}
                     </td>
                     <td className={`${mainCell} text-right`}>
-                      {showOwnQty ? formatCurrency(item.unitPrice, quotation.currency) : ''}
+                      {showOwnQty ? formatCurrency(getRowGrossUnitPrice(item), quotation.currency) : ''}
                     </td>
                     <td className={`${mainCell} text-center`}>
                       {showOwnQty ? (item.discountPercent ? `${item.discountPercent}%` : '—') : ''}

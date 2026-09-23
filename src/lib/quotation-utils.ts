@@ -187,11 +187,23 @@ export const calculateLineTotal = (item: LineItem): number => {
   return gross - gross * ((item.discountPercent || 0) / 100);
 };
 
-// Total for the row's own quantity (MOQ row), regardless of the chosen tier.
-export const calculateMoqLineTotal = (item: LineItem): number => {
-  const gross = Number(item.moq) * item.unitPrice;
-  return gross - gross * ((item.discountPercent || 0) / 100);
+// Unit price shown on the row's own quantity line. When the item is quoted with
+// quantity price breaks, that row must follow the tier price for its quantity
+// (the typed unit price is the 5 pcs base), not the raw base price.
+export const getRowGrossUnitPrice = (item: LineItem, qty?: number): number => {
+  const q = Number(qty ?? item.moq) || 1;
+  if (getActivePriceBreaks(item).length > 0) {
+    return getTierNetUnitPrice({ ...item, discountPercent: 0 }, q);
+  }
+  return item.unitPrice;
 };
+
+export const getRowNetUnitPrice = (item: LineItem, qty?: number): number =>
+  getRowGrossUnitPrice(item, qty) * (1 - (item.discountPercent || 0) / 100);
+
+// Total for the row's own quantity (MOQ row), regardless of the chosen tier.
+export const calculateMoqLineTotal = (item: LineItem): number =>
+  getRowNetUnitPrice(item) * (Number(item.moq) || 1);
 
 export const calculateSubtotal = (items: LineItem[]): number => {
   return items.reduce((sum, item) => sum + calculateLineTotal(item), 0);

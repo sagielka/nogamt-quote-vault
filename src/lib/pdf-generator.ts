@@ -384,7 +384,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
       const nL = item.notes ? wrapText(pdf, `Note: ${item.notes}`, descWidth) : [];
       const brs = getDisplayPriceBreaks(item);
       const breaksH = brs.length > 0 ? brs.length * lineH + lineH * 0.6 : 0;
-      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH : 0) + breaksH, 8);
+      const rowH = Math.max((dL.length + nL.length) * lineH + (nL.length > 0 ? lineH * 0.15 : 0) + breaksH, 8);
       const imgs = itemImages[i] || [];
       const imgRows = imgs.length > 0 ? Math.ceil(imgs.length / 3) : 0;
       const imgBlockH = imgRows > 0 ? imgRows * (thumbH + 2) + 2 : 0;
@@ -457,7 +457,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     descLines.forEach((ln, idx) => pdf.text(ln, colX.desc, rowY + idx * lineH));
 
     if (noteLines.length > 0) {
-      const noteY = rowY + descLines.length * lineH + lineH * 0.5;
+      const noteY = rowY + descLines.length * lineH + lineH * 0.15;
       setFont(pdf, 'normal');
       pdf.setFontSize(noteFontSize);
       pdf.setTextColor(...gray);
@@ -488,7 +488,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
         rowY +
         Math.max(
           descLines.length * lineH +
-            (noteLines.length > 0 ? lineH * 0.5 + noteLines.length * lineH : 0),
+            (noteLines.length > 0 ? lineH * 0.15 + noteLines.length * lineH : 0),
           lineH
         );
       pdf.setFontSize(fontSize);

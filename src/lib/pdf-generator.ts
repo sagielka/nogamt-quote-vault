@@ -470,9 +470,9 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     if (showOwnQty) {
       pdf.text(getTierLeadTime(item, Number(item.moq) || 1), colX.lt, rowY, { align: 'center' });
       pdf.text(String(item.moq || 1), colX.moq, rowY, { align: 'center' });
-      pdf.text(formatCurrency(item.unitPrice, quotation.currency), colX.price + 14, rowY, { align: 'right' });
+      pdf.text(formatCurrency(getRowGrossUnitPrice(item), quotation.currency), colX.price + 14, rowY, { align: 'right' });
       pdf.text(item.discountPercent ? `${item.discountPercent}%` : '—', colX.disc, rowY, { align: 'center' });
-      const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+      const netUnit = getRowNetUnitPrice(item);
       pdf.text(item.discountPercent ? formatCurrency(netUnit, quotation.currency) : '—', colX.net + 14, rowY, { align: 'right' });
 
       pdf.setTextColor(...black);

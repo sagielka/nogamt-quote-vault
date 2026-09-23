@@ -456,8 +456,13 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     pdf.setTextColor(...black);
     descLines.forEach((ln, idx) => pdf.text(ln, colX.desc, rowY + idx * lineH));
 
+    // Price-break rows continue directly under the quoted-quantity row so the
+    // quantity column reads as one uninterrupted list; the note goes below them.
+    const upperStartY = rowY + Math.max(descLines.length * lineH, lineH);
+
     if (noteLines.length > 0) {
-      const noteY = rowY + descLines.length * lineH + lineH * 0.15;
+      const noteY =
+        upperStartY + upperBreaks.length * lineH + lineH * 0.15;
       setFont(pdf, 'normal');
       pdf.setFontSize(noteFontSize);
       pdf.setTextColor(...gray);
@@ -484,13 +489,7 @@ export const generateQuotationPdf = async (quotation: Quotation): Promise<Genera
     // Quantity price breaks
     if (meta.breaks.length > 0) {
       const lowerStartY = y;
-      const upperStartY =
-        rowY +
-        Math.max(
-          descLines.length * lineH +
-            (noteLines.length > 0 ? lineH * 0.15 + noteLines.length * lineH : 0),
-          lineH
-        );
+
       pdf.setFontSize(fontSize);
       pdf.setTextColor(...gray);
       const renderPdfBreak = (qty: number, by: number, showLabel: boolean) => {

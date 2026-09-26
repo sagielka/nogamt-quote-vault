@@ -32,6 +32,7 @@ import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog'
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
 import ProductMediaThumb from '@/components/product-media/ProductMediaThumb';
+import { useKnownEmails } from "@/hooks/useKnownEmails";
 
 // electronAPI types are declared globally in src/vite-env.d.ts
 
@@ -590,6 +591,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     }
   };
 
+  const knownEmails = useKnownEmails();
   return (
     <div className="animate-fade-in">
       {/* Actions Bar */}
@@ -1339,10 +1341,13 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                    </label>
                  ))}
              </div>
-             <div className="flex gap-2 mt-2">
+             <datalist id="known-emails-list">{knownEmails.map(e => <option key={e} value={e} />)}</datalist>
+            <div className="flex gap-2 mt-2">
                <Input
                  type="email"
                  placeholder="Add email address..."
+                list="known-emails-list"
+                autoComplete="off"
                  value={additionalEmail}
                  onChange={(e) => setAdditionalEmail(e.target.value)}
                  onKeyDown={(e) => {
@@ -1425,10 +1430,13 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                    </label>
                  ))}
              </div>
-             <div className="flex gap-2 mt-2">
+             <datalist id="known-emails-list">{knownEmails.map(e => <option key={e} value={e} />)}</datalist>
+            <div className="flex gap-2 mt-2">
                <Input
                  type="email"
                  placeholder="Add email address..."
+                list="known-emails-list"
+                autoComplete="off"
                  value={additionalReminderEmail}
                  onChange={(e) => setAdditionalReminderEmail(e.target.value)}
                  onKeyDown={(e) => {

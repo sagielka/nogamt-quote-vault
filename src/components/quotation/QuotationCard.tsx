@@ -35,6 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useKnownEmails } from "@/hooks/useKnownEmails";
 
 interface QuotationCardProps {
   quotation: Quotation;
@@ -88,6 +89,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [selectedReminderRecipients, setSelectedReminderRecipients] = useState<string[]>([]);
   const [additionalReminderEmail, setAdditionalReminderEmail] = useState('');
+  const knownEmails = useKnownEmails(reminderDialogOpen);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);
@@ -699,10 +701,13 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   </label>
                 ))}
             </div>
+            <datalist id="known-emails-list">{knownEmails.map(e => <option key={e} value={e} />)}</datalist>
             <div className="flex gap-2 mt-2">
               <Input
                 type="email"
                 placeholder="Add email address..."
+                list="known-emails-list"
+                autoComplete="off"
                 value={additionalReminderEmail}
                 onChange={(e) => setAdditionalReminderEmail(e.target.value)}
                 onKeyDown={(e) => {

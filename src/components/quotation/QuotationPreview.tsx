@@ -32,7 +32,7 @@ import OrderLinePickerDialog from '@/components/quotation/OrderLinePickerDialog'
 import { CustomerEmailPicker } from '@/components/CustomerEmailPicker';
 import { useCustomerPortal, PortalToken } from '@/hooks/useCustomerPortal';
 import ProductMediaThumb from '@/components/product-media/ProductMediaThumb';
-import { useKnownEmails } from "@/hooks/useKnownEmails";
+import { useKnownEmails, addKnownEmail } from "@/hooks/useKnownEmails";
 
 // electronAPI types are declared globally in src/vite-env.d.ts
 
@@ -1356,6 +1356,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                      const email = additionalEmail.trim().toLowerCase();
                      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedRecipients.includes(email)) {
                        setSelectedRecipients(prev => [...prev, email]);
+                       addKnownEmail(email);
                        setAdditionalEmail('');
                      }
                    }
@@ -1371,6 +1372,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                    const email = additionalEmail.trim().toLowerCase();
                    if (email && !selectedRecipients.includes(email)) {
                      setSelectedRecipients(prev => [...prev, email]);
+                     addKnownEmail(email);
                      setAdditionalEmail('');
                    }
                  }}
@@ -1445,6 +1447,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                      const email = additionalReminderEmail.trim().toLowerCase();
                      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedReminderRecipients.includes(email)) {
                        setSelectedReminderRecipients(prev => [...prev, email]);
+                       addKnownEmail(email);
                        setAdditionalReminderEmail('');
                      }
                    }
@@ -1460,6 +1463,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                    const email = additionalReminderEmail.trim().toLowerCase();
                    if (email && !selectedReminderRecipients.includes(email)) {
                      setSelectedReminderRecipients(prev => [...prev, email]);
+                     addKnownEmail(email);
                      setAdditionalReminderEmail('');
                    }
                  }}

@@ -591,6 +591,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
     }
   };
 
+  const knownEmails = useKnownEmails();
   return (
     <div className="animate-fade-in">
       {/* Actions Bar */}

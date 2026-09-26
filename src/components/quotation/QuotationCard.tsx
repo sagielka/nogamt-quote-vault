@@ -89,6 +89,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [selectedReminderRecipients, setSelectedReminderRecipients] = useState<string[]>([]);
   const [additionalReminderEmail, setAdditionalReminderEmail] = useState('');
+  const knownEmails = useKnownEmails(reminderDialogOpen);
   const [editCustomerOpen, setEditCustomerOpen] = useState(false);
   const [editClientName, setEditClientName] = useState(quotation.clientName);
   const [editClientEmail, setEditClientEmail] = useState(quotation.clientEmail);

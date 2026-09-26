@@ -35,6 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useKnownEmails } from "@/hooks/useKnownEmails";
 
 interface QuotationCardProps {
   quotation: Quotation;
@@ -703,6 +704,8 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
               <Input
                 type="email"
                 placeholder="Add email address..."
+                list="known-emails-list"
+                autoComplete="off"
                 value={additionalReminderEmail}
                 onChange={(e) => setAdditionalReminderEmail(e.target.value)}
                 onKeyDown={(e) => {

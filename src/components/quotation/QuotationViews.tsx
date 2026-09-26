@@ -72,7 +72,7 @@ const CompactList = ({ quotations, selectedIds, onToggleSelect, onView, userName
         return (
           <div
             key={q.id}
-            className={`flex items-center gap-3 px-3 py-2 hover:bg-primary/5 transition-colors cursor-pointer ${selectedIds.includes(q.id) ? 'bg-primary/5' : ''}`}
+            className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 hover:bg-primary/5 transition-colors cursor-pointer sm:flex-nowrap ${selectedIds.includes(q.id) ? 'bg-primary/5' : ''}`}
             onClick={() => onView(q.id)}
           >
             <Checkbox
@@ -80,10 +80,10 @@ const CompactList = ({ quotations, selectedIds, onToggleSelect, onView, userName
               onCheckedChange={() => onToggleSelect(q.id)}
               onClick={(e) => e.stopPropagation()}
             />
-            <span className="font-mono text-xs text-primary w-32 shrink-0 truncate">{q.quoteNumber}</span>
-            <span className="text-sm truncate flex-1 min-w-0">{q.clientName}</span>
+            <span className="font-mono text-xs text-primary min-w-0 max-w-[calc(100%-2rem)] truncate sm:w-32 sm:shrink-0">{q.quoteNumber}</span>
+            <span className="text-sm truncate basis-full min-w-0 pl-7 sm:basis-auto sm:pl-0 sm:flex-1">{q.clientName}</span>
             <Badge variant="outline" className={`${getStatusColor(q.status)} text-[10px]`}>{getStatusLabel(q.status)}</Badge>
-            <span className="text-sm font-medium w-28 text-right shrink-0">{formatCurrency(total, q.currency)}</span>
+            <span className="text-sm font-medium ml-auto text-right shrink-0 sm:ml-0 sm:w-28">{formatCurrency(total, q.currency)}</span>
             <span className="text-xs text-muted-foreground w-24 text-right shrink-0 hidden sm:inline">{formatDate(q.createdAt)}</span>
             <span className="text-xs text-muted-foreground w-20 text-right shrink-0 hidden md:inline">
               {userNameMap[q.userId]?.split(' ')[0] || '—'}

@@ -255,36 +255,39 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
   return (
     <Card className={`card-elevated hover:shadow-prominent transition-shadow duration-200 animate-fade-in cursor-pointer ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''}`} onClick={() => onView(quotation.id)}>
       <CardContent className="px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           {/* Left: checkbox + quote info */}
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex items-start gap-2 min-w-0 w-full sm:w-auto sm:items-center sm:gap-4">
             {onToggleSelect && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={isSelected ? 'Deselect quotation' : 'Select quotation'}
                 onClick={(e) => { e.stopPropagation(); onToggleSelect(quotation.id); }}
-                className="shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+                className="shrink-0 h-7 w-7"
               >
                 {isSelected ? (
                   <CheckSquare className="w-4 h-4 text-primary" />
                 ) : (
                   <Square className="w-4 h-4 text-muted-foreground" />
                 )}
-              </button>
+              </Button>
             )}
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
                 {index !== undefined && (
-                  <span className="text-xs font-mono text-muted-foreground min-w-[2ch] text-right">{index}</span>
+                  <span className="text-xs font-mono text-muted-foreground min-w-[2ch] text-right shrink-0">{index}</span>
                 )}
-                <h3 className="font-display font-semibold text-foreground text-sm truncate">
+                <h3 className="font-display font-semibold text-foreground text-sm truncate min-w-0">
                   {quotation.quoteNumber}
                 </h3>
-                <Badge className={`${getStatusColor(quotation.status)} text-xs`} variant="secondary">
+                <Badge className={`${getStatusColor(quotation.status)} text-xs shrink-0`} variant="secondary">
                   {getStatusLabel(quotation.status)}
                 </Badge>
               </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1 min-w-0">
                 <span 
-                  className="flex items-center gap-1 truncate cursor-pointer hover:text-foreground transition-colors"
+                   className="flex items-center gap-1 min-w-0 max-w-full truncate cursor-pointer hover:text-foreground transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditClientName(quotation.clientName);
@@ -294,7 +297,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   }}
                 >
                   <User className="w-3 h-3 shrink-0" />
-                  {quotation.clientName}
+                   <span className="truncate">{quotation.clientName}</span>
                   <UserPen className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" />
                 </span>
                 <span className="flex items-center gap-1">
@@ -393,24 +396,25 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
           </div>
 
           {/* Right: total + actions */}
-          <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-wrap items-center justify-between gap-2 w-full sm:w-auto sm:justify-start sm:gap-3 sm:shrink-0" onClick={(e) => e.stopPropagation()}>
             <span className="text-base font-semibold text-primary whitespace-nowrap">
               {formatCurrency(total, quotation.currency)}
             </span>
-            <div className="flex gap-0.5">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onView(quotation.id)}>
+            <div className="flex flex-wrap gap-0.5" role="group" aria-label="Quotation actions">
+              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="View quotation" onClick={() => onView(quotation.id)}>
                 <Eye className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(quotation.id)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Edit quotation" onClick={() => onEdit(quotation.id)}>
                 <Pencil className="w-3.5 h-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDuplicate(quotation.id)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Duplicate quotation" onClick={() => onDuplicate(quotation.id)}>
                 <Copy className="w-3.5 h-3.5" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className="h-7 w-7"
+                 aria-label="Download quotation PDF"
                 onClick={handleDownloadPdf}
                 disabled={isDownloading}
               >
@@ -430,6 +434,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                       variant="ghost" 
                       size="icon" 
                       className={`h-7 w-7 ${quotation.status === 'accepted' ? 'text-green-600 hover:text-green-700' : 'text-muted-foreground hover:text-green-600'}`}
+                      aria-label={quotation.status === 'accepted' ? 'Edit ordered items' : 'Mark as order received'}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (quotation.status === 'accepted') {
@@ -470,6 +475,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                          variant="ghost" 
                          size="icon" 
                          className={`h-7 w-7 ${quotation.status === 'finished' ? 'bg-orange-500 text-white hover:bg-orange-600 rounded-md' : 'text-muted-foreground hover:text-orange-500'}`}
+                          aria-label={quotation.status === 'finished' ? 'Reopen quotation' : 'Mark as finished'}
                        >
                          <Ban className="w-3.5 h-3.5" />
                        </Button>
@@ -543,6 +549,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                         variant="ghost" 
                         size="icon" 
                         className="h-7 w-7 text-muted-foreground hover:text-primary"
+                         aria-label="Send reminder email"
                         disabled={isSendingReminder}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -568,6 +575,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    aria-label="Delete quotation"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>

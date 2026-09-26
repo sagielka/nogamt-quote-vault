@@ -700,6 +700,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   </label>
                 ))}
             </div>
+            <datalist id="known-emails-list">{knownEmails.map(e => <option key={e} value={e} />)}</datalist>
             <div className="flex gap-2 mt-2">
               <Input
                 type="email"

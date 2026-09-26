@@ -1340,7 +1340,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                    </label>
                  ))}
              </div>
-             <div className="flex gap-2 mt-2">
+             <datalist id="known-emails-list">{knownEmails.map(e => <option key={e} value={e} />)}</datalist>
+            <div className="flex gap-2 mt-2">
                <Input
                  type="email"
                  placeholder="Add email address..."
@@ -1428,7 +1429,8 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                    </label>
                  ))}
              </div>
-             <div className="flex gap-2 mt-2">
+             <datalist id="known-emails-list">{knownEmails.map(e => <option key={e} value={e} />)}</datalist>
+            <div className="flex gap-2 mt-2">
                <Input
                  type="email"
                  placeholder="Add email address..."

@@ -35,7 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useKnownEmails } from "@/hooks/useKnownEmails";
+import { useKnownEmails, addKnownEmail } from "@/hooks/useKnownEmails";
 
 interface QuotationCardProps {
   quotation: Quotation;
@@ -716,6 +716,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                     const email = additionalReminderEmail.trim();
                     if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && !selectedReminderRecipients.includes(email)) {
                       setSelectedReminderRecipients(prev => [...prev, email]);
+                      addKnownEmail(email);
                       setAdditionalReminderEmail('');
                     }
                   }
@@ -731,6 +732,7 @@ export const QuotationCard = ({ quotation, index, creatorName, userList, emailRe
                   const email = additionalReminderEmail.trim();
                   if (email && !selectedReminderRecipients.includes(email)) {
                     setSelectedReminderRecipients(prev => [...prev, email]);
+                    addKnownEmail(email);
                     setAdditionalReminderEmail('');
                   }
                 }}

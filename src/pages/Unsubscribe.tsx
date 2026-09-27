@@ -18,9 +18,10 @@ const Unsubscribe = () => {
 
       const { error } = await supabase
         .from("unsubscribed_emails")
-        .upsert({ email: email.toLowerCase() }, { onConflict: "email" });
+        .insert({ email: email.toLowerCase() });
 
-      if (error) {
+      // 23505 = already unsubscribed; treat as success
+      if (error && error.code !== "23505") {
         console.error("Unsubscribe error:", error);
         setErrorMessage("Something went wrong. Please try again.");
         setStatus("error");

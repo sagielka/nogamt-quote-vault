@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Trash2, GripVertical, StickyNote, ChevronDown, ChevronUp, Copy, ImagePlus, Pencil, X, Loader2, AlertTriangle, Sparkles, Layers } from 'lucide-react';
-import { formatCurrency, calculateLineTotal, calculateMoqLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, getActivePriceBreaks } from '@/lib/quotation-utils';
+import { formatCurrency, calculateLineTotal, calculateMoqLineTotal, US_PRICE_TIERS, isUsPriceBreakItem, getTierNetUnitPrice, getActivePriceBreaks, getRowNetUnitPrice } from '@/lib/quotation-utils';
 import { searchProducts, ProductItem, PriceList, getProductPrice, getUSSkuPrice, getUCSkuPrice, convertPrice } from '@/data/product-catalog';
 import { getProductCost, getAutoCost } from '@/data/product-costs';
 import { useCostOverrides, saveCostOverride } from '@/data/cost-overrides';
@@ -722,15 +722,15 @@ export const LineItemWithSku = ({
 
         {/* Net unit price (after discount) */}
         <div className="text-center font-mono text-sm whitespace-nowrap text-muted-foreground">
-          {item.discountPercent && item.unitPrice > 0
-            ? formatCurrency(item.unitPrice * (1 - item.discountPercent / 100), currency)
+          {(item.discountPercent || getActivePriceBreaks(item).length > 0) && item.unitPrice > 0
+            ? formatCurrency(getRowNetUnitPrice(item), currency)
             : <span>—</span>}
         </div>
 
         {/* Margin % */}
         <div className="text-center font-mono text-sm whitespace-nowrap">
           {item.costPrice && item.unitPrice > 0 ? (() => {
-            const netUnit = item.unitPrice * (1 - (item.discountPercent || 0) / 100);
+            const netUnit = getRowNetUnitPrice(item);
             const margin = netUnit > 0 ? ((netUnit - item.costPrice) / netUnit) * 100 : 0;
             return (
               <span className={margin >= 0 ? 'text-emerald-500' : 'text-destructive'}>

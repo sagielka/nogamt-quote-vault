@@ -1,3 +1,4 @@
+import { syncCustomer } from '@/lib/customer-sync';
 import { useState, useCallback, useEffect } from 'react';
 import { Quotation, QuotationFormData, LineItem, Currency } from '@/types/quotation';
 import { generateQuoteNumber } from '@/lib/quotation-utils';
@@ -227,15 +228,7 @@ export const useQuotations = () => {
       // existing customer's email (QuotationForm.saveCustomerToDatabase handles
       // appending new emails to existing customer cards).
       try {
-        await supabase.from('customers').upsert(
-          {
-            user_id: user.id,
-            name: data.clientName.trim(),
-            email: data.clientEmail.trim(),
-            address: data.clientAddress?.trim() || null,
-          },
-          { onConflict: 'user_id,email', ignoreDuplicates: true }
-        );
+        await syncCustomer(user.id, data.clientName, data.clientEmail, data.clientAddress);
       } catch {
         // Non-critical — don't block quotation creation
       }
@@ -320,15 +313,7 @@ export const useQuotations = () => {
         const clientAddress = data.clientAddress ?? existingQuotation?.clientAddress;
         if (clientEmail && clientName) {
           try {
-            await supabase.from('customers').upsert(
-              {
-                user_id: user.id,
-                name: clientName.trim(),
-                email: clientEmail.trim(),
-                address: clientAddress?.trim() || null,
-              },
-              { onConflict: 'user_id,email', ignoreDuplicates: true }
-            );
+            await syncCustomer(user.id, clientName, clientEmail, clientAddress);
           } catch {
             // Non-critical
           }

@@ -22,6 +22,13 @@
       "when": 1789744495728,
       "tag": "0002_add_noga_waters_price_list",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790777215250,
+      "tag": "0003_raise_quotation_client_email_limit",
+      "breakpoints": true
     }
   ]
 }

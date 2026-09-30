@@ -1,3 +1,4 @@
+import { splitEmails } from '@/lib/customer-sync';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { LineItem, QuotationFormData, Currency, CURRENCIES } from '@/types/quotation';
 import { searchProducts, ProductItem, PriceList, PRICE_LISTS, getPriceListBaseCurrency, convertPrice, getProductPrice } from '@/data/product-catalog';
@@ -775,7 +776,7 @@ export const QuotationForm = ({ onSubmit, initialData, isEditing, existingQuotat
               ? customers.find(c => c.name.trim().toLowerCase() === trimmedName)
               : null;
             const existingEmails = matchedCustomer
-              ? (matchedCustomer.email || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+              ? splitEmails(matchedCustomer.email)
               : [];
             const currentEmails = clientEmail.split(',').map(e => e.trim()).filter(Boolean);
             const newEmails = matchedCustomer

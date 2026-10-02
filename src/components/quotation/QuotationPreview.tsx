@@ -833,6 +833,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Unit Price ({quotation.currency})</th>
                   <th className="text-center py-3 text-sm font-medium text-muted-foreground w-16 print:text-gray-500">Disc %</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-28 print:text-gray-500">Net Unit ({quotation.currency})</th>
+                  <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:hidden">Cost</th>
                   <th className="text-right py-3 text-sm font-medium text-muted-foreground w-24 print:text-gray-500">Total</th>
                 </tr>
               </thead>

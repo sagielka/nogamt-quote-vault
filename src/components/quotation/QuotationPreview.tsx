@@ -871,6 +871,7 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                         <td className={`${cell} text-right`}>
                           {item.discountPercent > 0 ? formatCurrency(tierNet, quotation.currency) : '—'}
                         </td>
+                        <td className={`${cell} print:hidden`} />
                         <td className={`${cell} text-right`}>
                           {formatCurrency(tierNet * qty, quotation.currency)}
                         </td>
@@ -918,6 +919,9 @@ export const QuotationPreview = ({ quotation, emailTracking = [], onBack, onEdit
                     </td>
                     <td className={`${mainCell} text-right`}>
                       {showOwnQty ? (item.discountPercent > 0 ? formatCurrency(netUnit, quotation.currency) : '—') : ''}
+                    </td>
+                    <td className={`${mainCell} text-right print:hidden`}>
+                      {showOwnQty && item.costPrice ? formatCurrency(item.costPrice, quotation.currency) : ''}
                     </td>
                     <td className={`py-1.5 align-middle text-sm leading-5 text-right font-medium text-foreground print:text-gray-900 ${mainHl ? 'font-bold' : ''}`}>
                       {showOwnQty ? formatCurrency(calculateMoqLineTotal(item), quotation.currency) : ''}

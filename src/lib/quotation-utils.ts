@@ -158,6 +158,7 @@ export const showsOwnQtyRow = (item: LineItem): boolean =>
 export const getDisplayPriceBreaks = (item: LineItem): number[] =>
   getActivePriceBreaks(item)
     .filter((q) => Number(q) !== Number(item.moq))
+    .filter((q) => !(item.printHiddenBreaks || []).map(Number).includes(Number(q)))
     .sort((a, b) => a - b);
 
 // Whether a given quantity row should be emphasised (customer requested qty).

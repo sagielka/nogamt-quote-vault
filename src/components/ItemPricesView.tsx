@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, Tag } from 'lucide-react';
 import { getProductCatalog } from '@/data/product-catalog';
+import { getAutoCost } from '@/data/product-costs';
 
 const fmt = (v: number | null, symbol: string) => {
   if (v == null) return <span className="text-muted-foreground">—</span>;
@@ -56,6 +57,7 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
               <th className="px-3 py-2 font-medium text-right">CN $</th>
               <th className="px-3 py-2 font-medium text-right">WAYDART $</th>
               <th className="px-3 py-2 font-medium text-right">WATERS $</th>
+              <th className="px-3 py-2 font-medium text-right">Cost $</th>
             </tr>
           </thead>
           <tbody>
@@ -70,11 +72,12 @@ export const ItemPricesView = ({ defaultOpen = true, compact = false }: Props) =
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.CHINA_DOLLAR, '$')}</td>
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.WAYDART_DOLLAR ?? null, '$')}</td>
                 <td className="px-3 py-1.5 text-right">{fmt(p.prices.NOGA_WATERS ?? null, '$')}</td>
+                <td className="px-3 py-1.5 text-right">{fmt(getAutoCost(p.sku, p.description, 'USD'), '$')}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">
+                <td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">
                   No items match your search.
                 </td>
               </tr>

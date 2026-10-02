@@ -94,6 +94,12 @@ export const LineItemWithSku = ({
     onUpdate(item.id, { priceBreaks: [...activeBreaks, qty].sort((a, b) => a - b) });
     setCustomQty('');
   };
+  const togglePrintBreak = (qty: number) => {
+    const hidden = (item.printHiddenBreaks || []).map(Number);
+    onUpdate(item.id, {
+      printHiddenBreaks: hidden.includes(qty) ? hidden.filter((q) => q !== qty) : [...hidden, qty],
+    });
+  };
   const setHighlightQty = (qty: number) => {
     onUpdate(item.id, { highlightQty: Number(item.highlightQty) === qty ? null : qty });
   };
@@ -851,6 +857,22 @@ export const LineItemWithSku = ({
                   className="h-7 w-16 rounded border border-dashed border-primary/40 bg-background/50 px-1.5 text-xs font-mono text-center focus:border-primary/70 focus:outline-none"
                   title="Type any quantity and press Enter to add it as a price break"
                 />
+              </div>
+
+              {/* Which quantities appear on the printed quote */}
+              <div className="mt-2 pt-2 border-t border-primary/10">
+                <div className="text-xs text-muted-foreground mb-1.5">Show in print quotation</div>
+                <div className="flex flex-wrap items-center gap-3">
+                  {activeBreaks.filter((q) => q !== Number(item.moq)).map((qty) => {
+                    const shown = !(item.printHiddenBreaks || []).map(Number).includes(qty);
+                    return (
+                      <label key={qty} className="flex items-center gap-1 text-xs font-mono cursor-pointer">
+                        <input type="checkbox" checked={shown} onChange={() => togglePrintBreak(qty)} className="accent-primary" />
+                        {qty} pcs
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Per-quantity lead time */}
